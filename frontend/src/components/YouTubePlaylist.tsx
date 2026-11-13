@@ -87,7 +87,7 @@ export function YouTubePlaylist({
   return (
     <section
       className="card settings-card youtube-playlist"
-      aria-label="Playlist compartida de YouTube"
+      aria-label="Lista compartida de YouTube"
     >
       <h2>YouTube · Nuestras canciones</h2>
       <p>

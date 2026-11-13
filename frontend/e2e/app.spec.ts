@@ -383,7 +383,7 @@ test("both partners can use a shared YouTube playlist, create unlisted and confi
   });
   await page.goto("/ocio/soundtrack");
   const panel = page.getByRole("region", {
-    name: "Playlist compartida de YouTube",
+    name: "Lista compartida de YouTube",
   });
   await panel
     .getByRole("button", { name: "Crear nuestra playlist en YouTube" })
@@ -431,7 +431,7 @@ test("YouTube onboarding follows connection and shared-owner state", async ({
     );
   });
   const panel = page.getByRole("region", {
-    name: "Playlist compartida de YouTube",
+    name: "Lista compartida de YouTube",
   });
   await page.goto("/ocio/soundtrack");
   await expect(panel.getByRole("status")).toContainText("Conecta tu cuenta");
@@ -655,9 +655,9 @@ test("dashboard and all module routes render with mobile navigation and both the
     ["/recuerdos/devlog", "Nuestro diario"],
     ["/nosotros/animo", "¿Cómo está tu cielo hoy?"],
     ["/experiencias/citas", "Planes y citas"],
-    ["/creciendo/metas", "Goals & Dreams"],
+    ["/creciendo/metas", "Metas y sueños"],
     ["/creciendo/finanzas", "Nuestras finanzas"],
-    ["/ocio/watchlist", "Watchlist"],
+    ["/ocio/watchlist", "Películas y series"],
     ["/ocio/deseos", "Deseos y canciones"],
     ["/recuerdos/wrapped", "El año que construimos juntos"],
     ["/ajustes", "Ajustes"],

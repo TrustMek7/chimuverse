@@ -94,7 +94,7 @@ const config: Record<
   },
   "/creciendo/metas": {
     kind: "goal",
-    title: "Goals & Dreams",
+    title: "Metas y sueños",
     eyebrow: "CRECIENDO",
     text: "Soñarlo juntos es el primer paso.",
     singular: "meta",
@@ -671,7 +671,7 @@ export default function Collections() {
                   {kind === "goal" && (
                     <>
                       <label className="field">
-                        Un recuerdo para nuestro vision board
+                        Un recuerdo para nuestro tablero de sueños
                         <select
                           value={draft.photo_id}
                           onChange={(e) => change("photo_id", e.target.value)}
