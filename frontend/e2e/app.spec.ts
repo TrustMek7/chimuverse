@@ -5,7 +5,7 @@ const a = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
   sid = "c1111111-1111-4111-8111-111111111111",
   tid = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
 // Isolated transport fixture. Production never loads fixtures or bypasses authentication.
-async function fixture(page: Page) {
+async function fixture(page: Page, connected = false) {
   const user = {
     id: a,
     aud: "authenticated",
@@ -89,7 +89,12 @@ async function fixture(page: Page) {
     const url = new URL(route.request().url());
     const table = url.pathname.split("/").pop()!;
     if (table === "google_status")
-      return route.fulfill({ json: { status: "disconnected" } });
+      return route.fulfill({
+        json: {
+          status: connected ? "connected" : "disconnected",
+          auto_sync_pending: false,
+        },
+      });
     if (table === "verify_task_progress") {
       const body = route.request().postDataJSON();
       rows.tasks[0].verified_percent =
@@ -132,14 +137,32 @@ async function fixture(page: Page) {
       });
       return route.fulfill({ json: null });
     }
+    if (route.request().method() === "POST" && table === "calendar_events") {
+      rows.calendar_events.push({
+        ...route.request().postDataJSON(),
+        id: crypto.randomUUID(),
+        owner_id: a,
+        sync_google: connected,
+        deleted_at: null,
+        version: 1,
+      });
+      return route.fulfill({ json: null });
+    }
     return route.fulfill({
       json: table === "space_members" ? rows[table][0] : (rows[table] ?? []),
     });
   });
-  await page.routeWebSocket('**/realtime/**',socket=>socket.close());
+  await page.routeWebSocket("**/realtime/**", (socket) => socket.close());
   // Discover only the public project reference from Vite's existing configuration.
-  const config = await import("node:fs").then((fs) => fs.existsSync(new URL("../.env.local",import.meta.url))?fs.readFileSync(new URL("../.env.local",import.meta.url),'utf8'):'');
-  const ref = new URL(process.env.VITE_SUPABASE_URL??config.match(/^VITE_SUPABASE_URL=(.+)$/m)![1].trim()).hostname.split('.')[0];
+  const config = await import("node:fs").then((fs) =>
+    fs.existsSync(new URL("../.env.local", import.meta.url))
+      ? fs.readFileSync(new URL("../.env.local", import.meta.url), "utf8")
+      : "",
+  );
+  const ref = new URL(
+    process.env.VITE_SUPABASE_URL ??
+      config.match(/^VITE_SUPABASE_URL=(.+)$/m)![1].trim(),
+  ).hostname.split(".")[0];
   await page.addInitScript(
     ({ ref, user }) => {
       localStorage.setItem(
@@ -158,6 +181,42 @@ async function fixture(page: Page) {
   );
   return rows;
 }
+test("connected calendar hides onboarding and exports new plans by default; disconnected calendar offers connection", async ({
+  page,
+}) => {
+  const rows = await fixture(page, true);
+  await page.goto("/dia/calendario");
+  await expect(
+    page.getByText("Google Calendar conectado · exportación automática"),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Conectar Google Calendar →" }),
+  ).toHaveCount(0);
+  await page.getByRole("button", { name: "Nuevo evento" }).click();
+  await expect(
+    page.getByRole("checkbox", {
+      name: "Añadir también a mi calendario Chimuverse en Google",
+    }),
+  ).toHaveCount(0);
+  await page
+    .getByRole("textbox", { name: "Título", exact: true })
+    .fill("Clase de prueba automática");
+  await page.getByRole("button", { name: "Guardar el plan" }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  expect(rows.calendar_events[0].sync_google).toBe(true);
+  await page.goto("/ajustes/conexiones");
+  await expect(
+    page.getByRole("button", { name: "Conectar mi Google Calendar" }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByText("Iniciar sesión con Google no concede acceso a Calendar.", {
+      exact: false,
+    }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Traer cambios de Google" }),
+  ).toBeVisible();
+});
 test("access page is responsive, accessible and opens no third party content", async ({
   page,
 }) => {

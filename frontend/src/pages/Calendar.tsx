@@ -7,9 +7,16 @@ import interaction from "@fullcalendar/interaction";
 import rrule from "@fullcalendar/rrule";
 import luxon from "@fullcalendar/luxon3";
 import es from "@fullcalendar/core/locales/es";
-import {DateTime} from 'luxon';
-import {useQuery} from '@tanstack/react-query';
-import { Plus, CalendarDays, CloudOff, Pencil, Trash2 } from "lucide-react";
+import { DateTime } from "luxon";
+import { useQuery } from "@tanstack/react-query";
+import {
+  Plus,
+  CalendarDays,
+  CloudOff,
+  CalendarCheck,
+  Pencil,
+  Trash2,
+} from "lucide-react";
 import { useSpace, useAction } from "../lib/store";
 import { check, supabase } from "../lib/supabase";
 import type { CalendarEvent, Visibility } from "../lib/types";
@@ -32,10 +39,11 @@ type Draft = {
   kind: string;
   annual: boolean;
   all_day: boolean;
-  sync_google: boolean;
 };
-function localInput(value: string,zone:string,allDay=false) {
-  return allDay?value.slice(0,10)+'T00:00':DateTime.fromISO(value,{zone}).toFormat("yyyy-MM-dd'T'HH:mm");
+function localInput(value: string, zone: string, allDay = false) {
+  return allDay
+    ? value.slice(0, 10) + "T00:00"
+    : DateTime.fromISO(value, { zone }).toFormat("yyyy-MM-dd'T'HH:mm");
 }
 export default function Calendar() {
   const { data, spaceId, me } = useSpace();
@@ -45,8 +53,16 @@ export default function Calendar() {
   const [editing, setEditing] = useState<string | null>(null);
   const [view, setView] = useState("month");
   const action = useAction();
-  const google=useQuery({queryKey:['google-status'],queryFn:async()=>check(await supabase.rpc('google_status')) as {status:string}});
-  const blank = (date = localDay(new Date(),me.timezone)): Draft => ({
+  const google = useQuery({
+    queryKey: ["google-status"],
+    refetchInterval: 10000,
+    queryFn: async () =>
+      check(await supabase.rpc("google_status")) as {
+        status: string;
+        auto_sync_pending?: boolean;
+      },
+  });
+  const blank = (date = localDay(new Date(), me.timezone)): Draft => ({
     title: params.get("titulo") ?? "",
     description: "",
     start: date + "T18:00",
@@ -55,7 +71,6 @@ export default function Calendar() {
     kind: "event",
     annual: false,
     all_day: false,
-    sync_google: false,
   });
   const [draft, setDraft] = useState<Draft>(() => blank());
   const events = data!.calendar_events.filter((e) => !e.deleted_at);
@@ -83,10 +98,10 @@ export default function Calendar() {
     }
     const start = draft.all_day
       ? new Date(draft.start.slice(0, 10) + "T00:00:00Z")
-      : DateTime.fromISO(draft.start,{zone:me.timezone}).toJSDate();
+      : DateTime.fromISO(draft.start, { zone: me.timezone }).toJSDate();
     let end = draft.all_day
       ? new Date(draft.end.slice(0, 10) + "T00:00:00Z")
-      : DateTime.fromISO(draft.end,{zone:me.timezone}).toJSDate();
+      : DateTime.fromISO(draft.end, { zone: me.timezone }).toJSDate();
     if (draft.all_day && end <= start)
       end = new Date(start.getTime() + 86400000);
     const payload = {
@@ -99,7 +114,6 @@ export default function Calendar() {
       kind: draft.kind,
       annual: draft.annual,
       all_day: draft.all_day,
-      sync_google: draft.sync_google,
     };
     await action.run(
       async () =>
@@ -130,15 +144,30 @@ export default function Calendar() {
           Calendario
         </Link>
       </div>
-      <div className="banner calendar-banner">
-        <CloudOff size={20} />
-        <span>
-          Google Calendar se conecta por separado, con tu consentimiento.
-        </span>
-        <Link to="/ajustes/conexiones" className="text-link">
-          Ver conexión →
-        </Link>
-      </div>
+      {(google.data?.status === "disconnected" ||
+        google.data?.status === "error") && (
+        <div className="banner calendar-banner">
+          <CloudOff size={20} />
+          <span>
+            {google.data.status === "error"
+              ? "Google Calendar necesita atención. Tus eventos siguen guardados aquí."
+              : "Conecta Google Calendar una vez y tus horarios se exportarán automáticamente."}
+          </span>
+          <Link to="/ajustes/conexiones" className="text-link">
+            {google.data.status === "error"
+              ? "Revisar conexión →"
+              : "Conectar Google Calendar →"}
+          </Link>
+        </div>
+      )}
+      {google.data?.status === "connected" && (
+        <p className="small muted row gap-sm" role="status">
+          <CalendarCheck size={17} />
+          {google.data.auto_sync_pending
+            ? "Enviando cambios a Google Calendar…"
+            : "Google Calendar conectado · exportación automática"}
+        </p>
+      )}
       <ErrorMessage error={action.error} />
       <div className="toolbar">
         <div className="segments">
@@ -276,13 +305,20 @@ export default function Calendar() {
                     setDraft({
                       title: selected.title,
                       description: selected.description,
-                      start: localInput(selected.start_at,me.timezone,selected.all_day),
-                      end: localInput(selected.end_at,me.timezone,selected.all_day),
+                      start: localInput(
+                        selected.start_at,
+                        me.timezone,
+                        selected.all_day,
+                      ),
+                      end: localInput(
+                        selected.end_at,
+                        me.timezone,
+                        selected.all_day,
+                      ),
                       visibility: selected.visibility,
                       kind: selected.kind,
                       annual: selected.annual,
                       all_day: selected.all_day,
-                      sync_google: selected.sync_google,
                     });
                     setSelected(null);
                     setOpen(true);
@@ -399,19 +435,11 @@ export default function Calendar() {
             value={draft.visibility}
             onChange={(v) => field("visibility", v)}
           />
-          <label className="checkbox">
-            <input
-              type="checkbox"
-              checked={draft.sync_google}
-              disabled={google.data?.status!=='connected'&&!draft.sync_google}
-              onChange={(e) => field("sync_google", e.target.checked)}
-            />
-            Añadir también a mi calendario Chimuverse en Google
-          </label>
-          <small className="muted">
-            Solo se sincroniza tras conectar Google Calendar en Ajustes. Nunca
-            se copian tus otros calendarios.
-          </small>
+          {google.data?.status === "connected" && (
+            <small className="muted">
+              Se enviará automáticamente a tu calendario Chimuverse de Google.
+            </small>
+          )}
           <Button type="submit" busy={action.busy}>
             Guardar el plan
           </Button>

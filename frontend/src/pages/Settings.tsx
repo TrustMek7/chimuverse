@@ -5,6 +5,7 @@ import {
   Download,
   LogOut,
   CloudOff,
+  CalendarCheck,
   RefreshCw,
   Lock,
   RotateCcw,
@@ -42,6 +43,7 @@ export default function Settings() {
   const [saved, setSaved] = useState(false);
   const connection = useQuery({
     queryKey: ["google-status"],
+    refetchInterval: 10000,
     queryFn: async () =>
       check(await supabase.rpc("google_status")) as {
         status: string;
@@ -242,7 +244,11 @@ export default function Settings() {
       ) : tab === "Conexiones" ? (
         <section className="card settings-card">
           <div className="row gap">
-            <CloudOff size={30} />
+            {connection.data?.status === "connected" ? (
+              <CalendarCheck size={30} />
+            ) : (
+              <CloudOff size={30} />
+            )}
             <div>
               <h2>Google Calendar</h2>
               <p className="muted">
@@ -274,16 +280,24 @@ export default function Settings() {
           {connection.data?.last_error && (
             <div className="banner error">{connection.data.last_error}</div>
           )}
-          <div className="banner">
-            <Lock size={20} />
-            Iniciar sesión con Google no concede acceso a Calendar. La conexión
-            no lee tus otros calendarios ni comparte reuniones personales.
-          </div>
+          {connection.data?.status === "disconnected" && (
+            <div className="banner">
+              <Lock size={20} />
+              Iniciar sesión con Google no concede acceso a Calendar. La
+              conexión no lee tus otros calendarios ni comparte reuniones
+              personales.
+            </div>
+          )}
           <div className="row gap wrap">
-            <Button busy={action.busy} onClick={() => calendar("connect")}>
-              Conectar mi Google Calendar
-            </Button>
-            {connection.data?.status !== "disconnected" && (
+            {(connection.data?.status === "disconnected" ||
+              connection.data?.status === "error") && (
+              <Button busy={action.busy} onClick={() => calendar("connect")}>
+                {connection.data.status === "error"
+                  ? "Reconectar Google Calendar"
+                  : "Conectar mi Google Calendar"}
+              </Button>
+            )}
+            {connection.data && connection.data.status !== "disconnected" && (
               <>
                 <Button
                   variant="secondary"
@@ -291,7 +305,7 @@ export default function Settings() {
                   onClick={() => calendar("sync")}
                 >
                   <RefreshCw size={17} />
-                  Sincronizar ahora
+                  Traer cambios de Google
                 </Button>
                 <Button
                   variant="danger"
@@ -303,6 +317,12 @@ export default function Settings() {
               </>
             )}
           </div>
+          {connection.data?.status === "connected" && (
+            <p className="small muted">
+              Los cambios de Our Calendar se envían automáticamente. Usa «Traer
+              cambios de Google» si modificaste tu horario desde Google.
+            </p>
+          )}
           <h3>Conflictos por revisar</h3>
           {conflicts.data?.length ? (
             conflicts.data.map((c) => {

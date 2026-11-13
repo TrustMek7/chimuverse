@@ -116,6 +116,13 @@ if (process.argv.includes("--functions")) {
       value: env.SUPABASE_SECRET_KEY,
     });
   await api("/secrets", secrets);
+  const calendarUrl = (env.SUPABASE_URL + "/functions/v1/calendar").replaceAll(
+    "'",
+    "''",
+  );
+  await sql(
+    `insert into private.integration_settings(name,value) values('calendar_function_url','${calendarUrl}') on conflict(name) do update set value=excluded.value`,
+  );
   const cmd =
     process.platform === "win32"
       ? cliCommand

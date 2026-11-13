@@ -302,6 +302,26 @@ export async function sync(uid: string) {
     throw e;
   }
 }
+export async function synchronizeAutomatically(uid: string, force = false) {
+  for (let pass = 0; pass < 3; pass++) {
+    const pending = await rpc("pending_calendar_sync", { p_uid: uid });
+    if (!pending && !force) return { synced: true };
+    try {
+      await sync(uid);
+    } catch (e) {
+      if (e instanceof Error && e.message.includes("sincronización en curso"))
+        return { queued: true };
+      throw e;
+    }
+    if (pending)
+      await rpc("complete_calendar_sync", {
+        p_uid: uid,
+        p_generation: pending.generation,
+      });
+    force = false;
+  }
+  return { queued: true };
+}
 async function resolve(uid: string, id: string, choice: string) {
   const conflicts: Data[] = await service("conflicts", uid);
   const c = conflicts.find((c) => c.id === id);
@@ -426,7 +446,7 @@ export async function handler(req: Request) {
     if (req.method !== "POST")
       return new Response(null, { status: 405, headers });
     const body = await req.json();
-    if (body.action === "scheduled") {
+    if (body.action === "scheduled" || body.action === "event") {
       const secret = Deno.env.get("CRON_SECRET");
       const supplied = req.headers
         .get("authorization")
@@ -436,11 +456,21 @@ export async function handler(req: Request) {
           { error: "Sin autorización" },
           { status: 401, headers },
         );
+      if (body.action === "event") {
+        if (
+          typeof body.user_id !== "string" ||
+          !/^[0-9a-f-]{36}$/i.test(body.user_id)
+        )
+          throw new Error("Cuenta no válida.");
+        return Response.json(await synchronizeAutomatically(body.user_id), {
+          headers,
+        });
+      }
       const accounts: string[] = await rpc("calendar_accounts");
       const results = [];
       for (const uid of accounts) {
         try {
-          await sync(uid);
+          await synchronizeAutomatically(uid, true);
           results.push({ ok: true });
         } catch {
           results.push({ ok: false });
@@ -513,7 +543,8 @@ export async function handler(req: Request) {
       result = {
         url: "https://accounts.google.com/o/oauth2/v2/auth?" + params,
       };
-    } else if (body.action === "sync") result = await sync(user.id);
+    } else if (body.action === "sync")
+      result = await synchronizeAutomatically(user.id, true);
     else if (body.action === "disconnect") {
       const conn = await service("connection", user.id);
       if (conn) {

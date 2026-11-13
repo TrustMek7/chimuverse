@@ -67,37 +67,226 @@ before(async () => {
       "utf8",
     ),
   );
+  await db.exec(
+    readFileSync(
+      new URL(
+        "../supabase/migrations/202611130006_automatic_calendar.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    ),
+  );
   await db.query(
     `insert into auth.users(id,email) values ($1,'jcusilaymeg@gmail.com'),($2,'032azq@gmail.com'),($3,'stranger@example.com')`,
     [a, b, c],
   );
 });
 after(() => db.close());
-test('answers can be edited by their author without changing ownership',async()=>{
- const q=(await as(a,()=>db.query('select id from public.questions limit 1'))).rows[0].id;
- const ans=(await as(a,()=>db.query("insert into public.answers(space_id,question_id,answer) values($1,$2,'Una canción') returning id",[sid,q]))).rows[0].id;
- await as(a,()=>db.query("update public.answers set answer='Un abrazo' where id=$1",[ans]));
- await as(a,async()=>assert.equal((await db.query('select answer from public.answers where id=$1',[ans])).rows[0].answer,'Un abrazo'));
- await as(b,async()=>assert.equal((await db.query("update public.answers set answer='No soy el autor' where id=$1 returning id",[ans])).rows.length,0));
- await as(a,async()=>assert.rejects(db.query('update public.answers set respondent_id=$1 where id=$2',[b,ans]),/permission denied/));
+test("connected calendar exports inserts, edits and trash automatically without exporting quests or looping imports", async () => {
+  await db.exec("set request.jwt.claim.sub=''");
+  await db.query("select public.calendar_service('connect',$1,$2)", [
+    a,
+    JSON.stringify({
+      token: "encrypted-test",
+      calendar_id: "only-our-calendar",
+    }),
+  ]);
+  const event = (
+    await as(a, () =>
+      db.query(
+        "insert into public.calendar_events(space_id,title,start_at,end_at) values($1,'Horario automático',now()+interval '1 day',now()+interval '1 day 1 hour') returning *",
+        [sid],
+      ),
+    )
+  ).rows[0];
+  assert.equal(event.sync_google, true);
+  const generation = async () =>
+    Number(
+      (
+        await db.query(
+          "select generation from private.calendar_sync_queue where user_id=$1",
+          [a],
+        )
+      ).rows[0].generation,
+    );
+  const first = await generation();
+  await as(a, () =>
+    db.query(
+      "insert into public.tasks(space_id,title) values($1,'Una quest sin exportar')",
+      [sid],
+    ),
+  );
+  assert.equal(await generation(), first);
+  await db.exec("set request.jwt.claim.sub=''");
+  await db.query("select public.calendar_service('import',$1,$2)", [
+    a,
+    JSON.stringify({ event_id: event.id, title: "Cambio desde Google" }),
+  ]);
+  assert.equal(
+    await generation(),
+    first,
+    "Google imports must not re-enqueue themselves",
+  );
+  await as(a, () =>
+    db.query(
+      "update public.calendar_events set title='Horario corregido' where id=$1",
+      [event.id],
+    ),
+  );
+  assert.equal(await generation(), first + 1);
+  await as(a, () =>
+    db.query("select public.trash_item('calendar_events',$1)", [event.id]),
+  );
+  assert.equal(await generation(), first + 2);
+  await as(a, () =>
+    db.query("select public.trash_item('calendar_events',$1,true)", [event.id]),
+  );
+  assert.equal(await generation(), first + 3);
+  await db.query("select public.complete_calendar_sync($1,$2)", [a, first]);
+  assert.notEqual(
+    (await db.query("select public.pending_calendar_sync($1) as pending", [a]))
+      .rows[0].pending,
+    null,
+    "Older jobs must not acknowledge newer edits",
+  );
+  await as(a, async () =>
+    assert.rejects(
+      db.query("select public.pending_calendar_sync($1)", [a]),
+      /permission denied/,
+    ),
+  );
 });
-test('soft deletion hides shared content from the partner and restoration recovers it',async()=>{
- const id=(await as(a,()=>db.query('select public.save_entry($1,$2) as id',[JSON.stringify({kind:'journal',title:'Un recuerdo restaurable',visibility:'shared'}),'Nuestra historia']))).rows[0].id;
- await as(a,()=>db.query("select public.trash_item('entries',$1)",[id]));
- await as(b,async()=>{assert.equal((await db.query('select * from public.entries where id=$1',[id])).rows.length,0);assert.equal((await db.query('select * from public.entry_bodies where entry_id=$1',[id])).rows.length,0);});
- await as(a,()=>db.query("select public.trash_item('entries',$1,true)",[id]));
- await as(b,async()=>assert.equal((await db.query('select content from public.entry_bodies where entry_id=$1',[id])).rows[0].content,'Nuestra historia'));
+test("answers can be edited by their author without changing ownership", async () => {
+  const q = (
+    await as(a, () => db.query("select id from public.questions limit 1"))
+  ).rows[0].id;
+  const ans = (
+    await as(a, () =>
+      db.query(
+        "insert into public.answers(space_id,question_id,answer) values($1,$2,'Una canción') returning id",
+        [sid, q],
+      ),
+    )
+  ).rows[0].id;
+  await as(a, () =>
+    db.query("update public.answers set answer='Un abrazo' where id=$1", [ans]),
+  );
+  await as(a, async () =>
+    assert.equal(
+      (await db.query("select answer from public.answers where id=$1", [ans]))
+        .rows[0].answer,
+      "Un abrazo",
+    ),
+  );
+  await as(b, async () =>
+    assert.equal(
+      (
+        await db.query(
+          "update public.answers set answer='No soy el autor' where id=$1 returning id",
+          [ans],
+        )
+      ).rows.length,
+      0,
+    ),
+  );
+  await as(a, async () =>
+    assert.rejects(
+      db.query("update public.answers set respondent_id=$1 where id=$2", [
+        b,
+        ans,
+      ]),
+      /permission denied/,
+    ),
+  );
 });
-test('scheduled reminders are deduplicated and private events notify only their owner',async()=>{
- const task=(await as(a,()=>db.query("insert into public.tasks(space_id,title) values($1,'Un reporte pendiente') returning id",[sid]))).rows[0];
- const progress=(await as(a,()=>db.query('select public.report_task_progress($1,50) as id',[task.id]))).rows[0];
- await db.query("update public.task_progress set created_at=now()-interval '74 hours' where id=$1",[progress.id]);
- const event=(await as(a,()=>db.query("insert into public.calendar_events(space_id,title,start_at,end_at) values($1,'Un evento privado',now()+interval '30 minutes',now()+interval '90 minutes') returning id",[sid]))).rows[0];
- await db.query('select public.enqueue_reminders()');await db.query('select public.enqueue_reminders()');
- const reminders=(await db.query("select * from public.notifications where dedupe_key like $1",['reminder:'+progress.id+':%'])).rows;
- assert.equal(reminders.length,2);assert(reminders.every(n=>n.recipient_id===b));
- const events=(await db.query("select * from public.notifications where dedupe_key like $1",['event-reminder:'+event.id+':%'])).rows;
- assert.equal(events.length,1);assert.equal(events[0].recipient_id,a);
+test("soft deletion hides shared content from the partner and restoration recovers it", async () => {
+  const id = (
+    await as(a, () =>
+      db.query("select public.save_entry($1,$2) as id", [
+        JSON.stringify({
+          kind: "journal",
+          title: "Un recuerdo restaurable",
+          visibility: "shared",
+        }),
+        "Nuestra historia",
+      ]),
+    )
+  ).rows[0].id;
+  await as(a, () => db.query("select public.trash_item('entries',$1)", [id]));
+  await as(b, async () => {
+    assert.equal(
+      (await db.query("select * from public.entries where id=$1", [id])).rows
+        .length,
+      0,
+    );
+    assert.equal(
+      (
+        await db.query("select * from public.entry_bodies where entry_id=$1", [
+          id,
+        ])
+      ).rows.length,
+      0,
+    );
+  });
+  await as(a, () =>
+    db.query("select public.trash_item('entries',$1,true)", [id]),
+  );
+  await as(b, async () =>
+    assert.equal(
+      (
+        await db.query(
+          "select content from public.entry_bodies where entry_id=$1",
+          [id],
+        )
+      ).rows[0].content,
+      "Nuestra historia",
+    ),
+  );
+});
+test("scheduled reminders are deduplicated and private events notify only their owner", async () => {
+  const task = (
+    await as(a, () =>
+      db.query(
+        "insert into public.tasks(space_id,title) values($1,'Un reporte pendiente') returning id",
+        [sid],
+      ),
+    )
+  ).rows[0];
+  const progress = (
+    await as(a, () =>
+      db.query("select public.report_task_progress($1,50) as id", [task.id]),
+    )
+  ).rows[0];
+  await db.query(
+    "update public.task_progress set created_at=now()-interval '74 hours' where id=$1",
+    [progress.id],
+  );
+  const event = (
+    await as(a, () =>
+      db.query(
+        "insert into public.calendar_events(space_id,title,start_at,end_at) values($1,'Un evento privado',now()+interval '30 minutes',now()+interval '90 minutes') returning id",
+        [sid],
+      ),
+    )
+  ).rows[0];
+  await db.query("select public.enqueue_reminders()");
+  await db.query("select public.enqueue_reminders()");
+  const reminders = (
+    await db.query(
+      "select * from public.notifications where dedupe_key like $1",
+      ["reminder:" + progress.id + ":%"],
+    )
+  ).rows;
+  assert.equal(reminders.length, 2);
+  assert(reminders.every((n) => n.recipient_id === b));
+  const events = (
+    await db.query(
+      "select * from public.notifications where dedupe_key like $1",
+      ["event-reminder:" + event.id + ":%"],
+    )
+  ).rows;
+  assert.equal(events.length, 1);
+  assert.equal(events[0].recipient_id, a);
 });
 test("shared mood exposes state but never the note; personal finances stay private", async () => {
   const mood = (
@@ -457,7 +646,10 @@ test("private records stay private and capsules cannot be read or changed before
 });
 test("foreign user cannot forge memberships or notifications", async () => {
   await as(c, async () => {
-    assert.equal((await db.query('select * from public.questions')).rows.length,0);
+    assert.equal(
+      (await db.query("select * from public.questions")).rows.length,
+      0,
+    );
     await assert.rejects(
       db.query("insert into public.space_members values($1,$2)", [sid, c]),
       /permission denied/,

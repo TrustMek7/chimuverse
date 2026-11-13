@@ -1,4 +1,11 @@
-import { crypt, normalize, toRemote, sync, handler } from "./index.ts";
+import {
+  crypt,
+  normalize,
+  toRemote,
+  sync,
+  handler,
+  synchronizeAutomatically,
+} from "./index.ts";
 const uid = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const assert = (value: unknown, message = "Assertion failed") => {
   if (!value) throw new Error(message);
@@ -26,6 +33,51 @@ Deno.test("tokens use random-IV authenticated encryption", async () => {
   }
   assert(rejected, "tampering must be rejected");
 });
+Deno.test(
+  "automatic export drains edits queued during an earlier synchronization",
+  async () => {
+    const encrypted = await crypt("refresh-test");
+    let completed = 0;
+    const acknowledgements: number[] = [];
+    const original = fetch;
+    globalThis.fetch = (async (input, options) => {
+      const url = String(input);
+      if (url.endsWith("/token"))
+        return Response.json({ access_token: "test" });
+      if (url.includes("/events?"))
+        return Response.json({ items: [], nextSyncToken: "cursor" });
+      if (url.endsWith("/rpc/pending_calendar_sync"))
+        return Response.json(
+          completed < 2 ? { generation: completed + 1 } : null,
+        );
+      if (url.endsWith("/rpc/complete_calendar_sync")) {
+        completed = JSON.parse(String(options?.body)).p_generation;
+        acknowledgements.push(completed);
+        return Response.json(null);
+      }
+      if (url.endsWith("/rpc/calendar_service")) {
+        const op = JSON.parse(String(options?.body)).p_op;
+        return Response.json(
+          op === "lock"
+            ? { acquired: true }
+            : op === "connection"
+              ? { encrypted_refresh_token: encrypted, calendar_id: "test" }
+              : op === "finish"
+                ? null
+                : [],
+        );
+      }
+      throw new Error("Unexpected request");
+    }) as typeof fetch;
+    try {
+      const result = await synchronizeAutomatically(uid);
+      assert("synced" in result);
+      assert(JSON.stringify(acknowledgements) === "[1,2]");
+    } finally {
+      globalThis.fetch = original;
+    }
+  },
+);
 Deno.test(
   "all-day and annual Google contracts round-trip; unsupported recurrence is explicit",
   () => {

@@ -83,3 +83,6 @@ Vercel: raíz `frontend`, build `npm run build`, salida `dist`. Configurar solo 
 - Guardar exportaciones en almacenamiento personal cifrado. No subir backups al repositorio ni a artifacts de CI.
 
 Referencias oficiales: [migraciones](https://supabase.com/docs/guides/deployment/database-migrations), [Google Auth](https://supabase.com/docs/guides/auth/social-sign-in/auth-google), [scopes de Calendar](https://developers.google.com/workspace/calendar/api/auth), [sincronización incremental](https://developers.google.com/workspace/calendar/api/guides/sync).
+
+
+Una vez conectado Calendar, Our Calendar exporta automáticamente sus eventos y cambios. Ya no hay casilla por evento. «Traer cambios de Google» permite importar al momento cambios hechos allí; el scheduler también reconcilia periódicamente. Daily Quests no se exporta.
