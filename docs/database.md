@@ -1,6 +1,6 @@
 # Modelo de datos inicial (propuesta)
 
-No es un esquema SQL definitivo. Validar reglas y relaciones antes de crear migraciones.
+Referencia inicial de dominio. El esquema definitivo está versionado en `backend/supabase/migrations/`; las colecciones de expansión se implementan en `entries` y `entry_bodies`, con texto privado separado y RLS. Las conexiones OAuth están en el esquema `private`, accesible solo mediante funciones de servicio.
 
 | Entidad | Campos orientativos / relaciones |
 |---|---|

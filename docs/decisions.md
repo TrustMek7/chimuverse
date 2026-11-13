@@ -6,14 +6,13 @@
 - Supabase: PostgreSQL, Auth con Google, Storage, Realtime y Edge Functions.
 - Sin Django/NestJS ni backend dedicado en MVP.
 - Google Calendar: sincronización bidireccional, cuentas conectadas individualmente.
-- Diseño visual, paleta y tipografía: **sin definir**; se trabajarán con Claude Design.
+- Diseño visual: handoff v2 de `design/`, dirección Constelación doméstica.
+- Privacidad inicial Solo yo para registros personales; notas para la pareja compartidas de forma explícita.
+- Verifica siempre quien no reportó; aprobación parcial, rechazo con motivo y nuevos reportes con historial.
+- Calendar usa un calendario exclusivo de la app, conexión individual y resolución explícita de conflictos.
 
 ## Pendientes
 - Proveedor de correo: Gmail API vs Apps Script (o alternativa).
-- Política de privacidad de calendarios laborales y qué eventos compartir.
-- Estrategia exacta de conflictos de sincronización y calendarios destino.
-- Quién reporta y quién valida avance; manejo de desacuerdos.
-- Visibilidad de finanzas, diarios y estados de ánimo.
 - Spotify/YouTube: solo enlaces y CSV en MVP; permisos de API futuros.
 - Dominio, hosting final, presupuestos y límites de almacenamiento.
-- Retención, exportación y backups de fotos y datos personales.
+- Retención y backups automáticos de fotos/datos personales. La exportación manual ya está implementada.

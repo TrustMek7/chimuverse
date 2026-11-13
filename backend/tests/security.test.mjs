@@ -73,6 +73,14 @@ before(async () => {
   );
 });
 after(() => db.close());
+test('answers can be edited by their author without changing ownership',async()=>{
+ const q=(await as(a,()=>db.query('select id from public.questions limit 1'))).rows[0].id;
+ const ans=(await as(a,()=>db.query("insert into public.answers(space_id,question_id,answer) values($1,$2,'Una canción') returning id",[sid,q]))).rows[0].id;
+ await as(a,()=>db.query("update public.answers set answer='Un abrazo' where id=$1",[ans]));
+ await as(a,async()=>assert.equal((await db.query('select answer from public.answers where id=$1',[ans])).rows[0].answer,'Un abrazo'));
+ await as(b,async()=>assert.equal((await db.query("update public.answers set answer='No soy el autor' where id=$1 returning id",[ans])).rows.length,0));
+ await as(a,async()=>assert.rejects(db.query('update public.answers set respondent_id=$1 where id=$2',[b,ans]),/permission denied/));
+});
 test('soft deletion hides shared content from the partner and restoration recovers it',async()=>{
  const id=(await as(a,()=>db.query('select public.save_entry($1,$2) as id',[JSON.stringify({kind:'journal',title:'Un recuerdo restaurable',visibility:'shared'}),'Nuestra historia']))).rows[0].id;
  await as(a,()=>db.query("select public.trash_item('entries',$1)",[id]));

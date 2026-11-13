@@ -1,38 +1,42 @@
-# Roadmap de implementación
+# Roadmap y validación
 
-## Fase 0 — Base técnica
-- [ ] Crear repositorio privado, protección de rama y PRs.
-- [ ] Inicializar React + Vite + TypeScript y Tailwind.
-- [ ] Configurar Supabase CLI, proyecto y variables locales.
-- [ ] Configurar Supabase Auth Google y lista autorizada de dos usuarios.
-- [ ] Crear tablas mínimas `profiles`, `spaces`, `space_members` y RLS.
-- [ ] Configurar CI para lint, typecheck y tests.
+El código implementado se detalla en [estado de implementación](implementation-status.md). Una casilla de código no implica que el servicio remoto esté configurado.
 
-## Fase 1 — Primer flujo vertical
-- [ ] Login → perfil → dashboard funcional sin estilo final.
-- [ ] Preguntas y respuestas de Nuestro Universo.
-- [ ] Daily Quests: crear, reportar avance, aprobar/rechazar, métricas.
-- [ ] Pruebas de permisos: un usuario no puede aprobar su propio avance.
+## Base
 
-## Fase 2 — Calendario y notificaciones
-- [ ] Calendario local con FullCalendar.
-- [ ] OAuth Google Calendar individual para ambos.
-- [ ] Sincronización bidireccional con pruebas de conflicto/reintento.
-- [ ] Notificaciones internas persistidas + Realtime.
-- [ ] Elegir e implementar envío de correo.
+- [x] React + Vite + TypeScript + Tailwind, fuentes y diseño v2.
+- [x] Supabase CLI, entornos separados, migraciones y RLS.
+- [x] Lista de dos cuentas autorizadas, máximo dos miembros.
+- [x] CI, build, typecheck, pruebas SQL, Calendar y navegador.
+- [ ] Aplicar migraciones en Supabase remoto (falta Personal Access Token).
+- [ ] Habilitar Google Auth con credenciales OAuth y probar ambas cuentas.
 
-## Fase 3 — Recuerdos
-- [ ] Storage privado y subida de fotos.
-- [ ] Fechas de captura vs subida; viajes y timeline.
-- [ ] Diario digital y notas.
+## Nuestro día y nosotros
 
-## Fase 4 — Expansión
-- [ ] Date Planner, Goals & Dreams, Watchlist.
-- [ ] Mood Tracker, Our Finances, Wishlist & Soundtrack.
-- [ ] Our Wrapped (resumen anual).
+- [x] Login, perfil y dashboard conectados a Supabase.
+- [x] Preguntas, respuestas, comparación y trivia.
+- [x] Quests: crear, reportar, aprobar/rechazar/parcial, historial y métricas.
+- [x] Reglas de no autoaprobación y aislamiento probadas en PostgreSQL.
+- [x] Calendario local, agenda, fechas anuales y zona horaria.
+- [x] OAuth Calendar individual, cifrado, sincronización, conflictos y reintentos.
+- [x] Notificaciones persistentes, Realtime y recordatorios deduplicados.
+- [ ] Desplegar función/scheduler y validar sincronización real con las dos cuentas.
+- [ ] Correo y push: pendientes por decisión de producto; desactivados en la interfaz.
 
-## Definición de terminado por feature
-- [ ] Validaciones y permisos probados.
-- [ ] Tests mínimos y estados de error/carga.
-- [ ] Migración y documentación actualizadas.
-- [ ] PR revisado por la otra persona.
+## Recuerdos y expansión
+
+- [x] Storage privado, fotos comprimidas, EXIF de fecha y eliminación de GPS.
+- [x] Captura/subida separadas, viajes, timeline, descarga y reintentos.
+- [x] Diario, notas, privacidad y cápsulas selladas en servidor.
+- [x] Citas, metas/hitos/vision board, watchlist e historial.
+- [x] Ánimo con nota privada, finanzas/presupuestos/ahorros, deseos y soundtrack.
+- [x] Wrapped con datos compartidos.
+- [x] Exportaciones JSON/CSV/ZIP y papelera restaurable.
+- [ ] Activar purga de papelera y política de backups automáticos tras decidir retención.
+
+## Salida a producción
+
+- [ ] Ensayo remoto con ambos usuarios y una tercera cuenta sin acceso.
+- [ ] Comprobar subidas, descarga privada y Calendar contra servicios reales.
+- [ ] Configurar Vercel/dominio y las redirecciones definitivas.
+- [ ] Revisión del usuario y PR/push cuando se solicite.

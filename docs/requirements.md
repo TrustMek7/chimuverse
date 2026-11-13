@@ -1,6 +1,6 @@
 # Chimuverse — Catálogo de funcionalidades v0.1
 
-Documento de guía de implementación, **no especificación formal cerrada**. Dos usuarios privados. Diseño visual y paleta sin definir.
+Documento de guía de implementación, **no especificación formal cerrada**. Dos usuarios privados. Diseño visual vigente: `design/handoff/HANDOFF.md` (v2).
 
 ## Navegación conceptual (editable)
 - **Nuestro día:** Daily Quests, Our Calendar

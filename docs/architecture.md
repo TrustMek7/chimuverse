@@ -37,4 +37,6 @@ React (Vercel) --> Supabase Auth (Google login)
 - `docs`: decisiones y contratos
 
 ## Diseño
-**No definir paleta, tipografía ni componentes visuales todavía.** Se trabajará posteriormente con Claude Design.
+La fuente visual vigente es `design/handoff/HANDOFF.md` y `design/handoff/tokens.css` (revisión v2). React implementa el prototipo con fuentes autoalojadas y soporte claro/oscuro.
+
+Las colecciones de expansión comparten `entries` (metadatos y visibilidad) y `entry_bodies` (texto protegido). Las cápsulas no entregan texto antes de abrirse; las notas de ánimo solo se entregan a su autor. Las migraciones versionadas sustituyen el modelo preliminar.

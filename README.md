@@ -2,7 +2,7 @@
 
 **Un universo que construimos juntos.** Aplicación web privada para José Luis y Glenny Shinderly. Nombre de trabajo del saludo: *Chimuelitos*.
 
-> Estado: documentación y estructura inicial. **No hay aplicación funcional todavía.** Diseño, colores y componentes visuales pendientes (se trabajarán posteriormente con Claude Design).
+> Estado: aplicación implementada con el diseño v2 de `design/`. La activación remota de Supabase y Google requiere completar credenciales de administración y OAuth. Ver [estado de implementación](docs/implementation-status.md).
 
 ## Stack acordado
 - React + TypeScript + Vite; Tailwind CSS
@@ -40,13 +40,16 @@ Cada parte tendrá su instalación y despliegue independiente. Vercel debe usar 
 9. [Configuración de Supabase y Google OAuth](docs/supabase-setup.md)
 
 ## Para empezar
-1. Crear repositorio privado en GitHub y subir este contenido.
-2. Leer `docs/getting-started.md` y crear el proyecto Vite dentro de `frontend`.
-3. Crear proyecto Supabase, configurar Google OAuth y **restringir acceso a los dos usuarios**.
-4. Crear las migraciones versionadas y políticas RLS antes de almacenar datos reales.
-5. Implementar primero login, perfiles y tareas.
 
-La carpeta `frontend` es un **placeholder**: este ZIP no contiene un frontend generado ni dependencias instaladas. Los comandos de inicialización están en la guía.
+```powershell
+cd frontend
+npm ci
+npm run dev
+```
+
+Para configurar la base de datos, Google y el despliegue, seguir [la guía de arranque](docs/getting-started.md). Los entornos existentes se conservan; los secretos no se suben a Git.
+
+Diseño: [handoff v2](design/handoff/HANDOFF.md). Estado de módulos y dependencias externas: [implementación](docs/implementation-status.md).
 
 ## Reglas de colaboración
 - Una rama por funcionalidad (`feature/...`), PR revisado por la otra persona.

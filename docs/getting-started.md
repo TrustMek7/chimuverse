@@ -1,54 +1,85 @@
-# Arranque técnico paso a paso
+# Arranque de Chimuverse
 
-## Requisitos
-Node.js LTS, npm, Git, cuenta GitHub, cuenta Supabase, Google Cloud (cuando implementen OAuth). Supabase CLI opcionalmente vía `npx supabase`.
+## 1. Frontend
 
-## 1. Inicializar frontend (sin aplicación generada todavía)
-Desde la raíz del repositorio:
-```bash
-npm create vite@latest frontend -- --template react-ts
+Requiere Node 22 y npm. No volver a generar Vite ni sobrescribir los entornos existentes.
+
+```powershell
 cd frontend
-npm install
-npm install @supabase/supabase-js react-router-dom @tanstack/react-query react-hook-form zod @hookform/resolvers
-npm install tailwindcss @tailwindcss/vite
-npm install -D vitest @testing-library/react @testing-library/jest-dom @playwright/test
+npm ci
+npm run dev
 ```
-La carpeta contiene `.env.local`: conservarlo si Vite pregunta qué hacer con los archivos existentes. No seleccionar una opción que borre su contenido. Seguir la guía vigente de Tailwind para Vite (plugin `@tailwindcss/vite`) y crear la configuración mínima. El diseño se implementará después del handoff de Claude.
 
-## 2. Variables
-Crear `frontend/.env.local` a partir de `frontend/.env.example`, con `VITE_SUPABASE_URL` y `VITE_SUPABASE_PUBLISHABLE_KEY` del proyecto. **Nunca usar secret key, service_role ni Google client secret en frontend.**
+Abrir `http://localhost:5173`. `frontend/.env.local` contiene las variables de `.env.example`: URL, clave publicable y URL de la aplicación. No existe modo de demostración ni login alternativo para ocultar la falta de configuración remota.
 
-Crear `backend/.env` a partir de `backend/.env.example` para las operaciones locales de servidor. No importar ese archivo en React. Al desplegar, las funciones usan secretos configurados en Supabase; el archivo local no se publica automáticamente.
+## 2. Supabase
 
-## 3. Supabase
-```bash
-# Desde la raíz del repositorio
+En `backend/.env`, conservar las claves existentes y agregar:
+
+```dotenv
+SUPABASE_ACCESS_TOKEN=tu_personal_access_token
+APP_URL=http://localhost:5173
+GOOGLE_OAUTH_CLIENT_ID=tu_cliente_web.apps.googleusercontent.com
+GOOGLE_OAUTH_CLIENT_SECRET=tu_client_secret
+```
+
+El Personal Access Token se crea en la configuración de la cuenta de Supabase. No es una Publishable key ni una Secret key del proyecto. El script lo lee sin imprimirlo.
+
+```powershell
 cd backend
-# Solo si todavía no existe supabase/config.toml:
-npx supabase init
-npx supabase login
-npx supabase link --project-ref YOUR_PROJECT_REF
+npm ci
+npm run deploy
+# Incluir funciones, secretos y programación cada 15 minutos:
+npm run deploy -- --functions --schedule
 ```
-Dentro de `backend/`, la carpeta `supabase/` ya existe; `init` puede pedir confirmación o detectar configuración previa. Ejecutar los comandos del CLI desde `backend/`, versionar migraciones con `npx supabase migration new <nombre>` y probarlas en entorno local antes de aplicarlas. No crear tablas manualmente solo en producción.
 
-## 4. Google OAuth
-Configurar proveedor Google en Supabase Auth, redirect URIs, y restringir el acceso a los dos miembros mediante controles del servidor y RLS. Calendar requiere permisos adicionales y un flujo OAuth seguro separado o ampliado.
+Aplica únicamente migraciones pendientes y registra sus versiones. Configura redirecciones y habilita Google Auth si se proporcionaron sus credenciales. Al desplegar funciones, genera `GOOGLE_TOKEN_ENCRYPTION_KEY` y `CRON_SECRET` en el `.env` ignorado si faltaban; después configura secretos remotos por API. No cambiar la clave de cifrado con conexiones Google activas.
 
-## 5. Despliegue
-- Vercel: root directory `frontend`, build `npm run build`, output `dist`, variables `VITE_` públicas.
-- Supabase: ejecutar el CLI desde `backend/`; migraciones y Edge Functions desplegadas por separado; secretos de funciones configurados en Supabase.
-- Configurar fallback SPA para rutas React si se usa React Router.
+La lista de dos correos está en `202611130003_allowlist.sql`, en el esquema privado. Una tercera cuenta puede autenticarse en Google pero nunca recibe membresía ni acceso a datos; ve la pantalla sin acceso. No se crean contraseñas ni cuentas automáticamente.
 
-## 6. GitHub
-```bash
-git init
-git add .
-git commit -m "chore: bootstrap Chimuverse documentation"
-git branch -M main
-git remote add origin https://github.com/USUARIO/chimuverse.git
-git push -u origin main
+Alternativa: configurar Supabase CLI (`supabase link`, `supabase db push`) y aplicar el mismo historial. No crear tablas manualmente sin migraciones.
+
+## 3. Google Cloud
+
+1. Crear cliente OAuth web y habilitar Calendar API.
+2. Añadir ambas cuentas como usuarios de prueba si corresponde.
+3. Registrar dos redirecciones distintas: `https://PROJECT_REF.supabase.co/auth/v1/callback` para login y `https://PROJECT_REF.supabase.co/functions/v1/calendar` para Calendar.
+4. Configurar Client ID y Client Secret mediante el script o el proveedor Google de Supabase.
+5. Cada persona entra y conecta Calendar por separado en Ajustes. Debe elegir la misma cuenta de Google con la que inició sesión.
+
+Calendar solicita `openid email` para verificar identidad y `calendar.app.created` para usar solo un calendario creado por la aplicación. No lee otros calendarios. Hay que probar el flujo real con ambas cuentas antes de considerar validada la integración.
+
+## 4. Validación
+
+Desde `frontend/`:
+
+```powershell
+npm test
+npm run build
+npx playwright install chromium
+npm run test:e2e
 ```
-Crear el repositorio vacío en GitHub primero. Evitar subir credenciales reales. Verificar `git status` antes de hacer push.
 
-## 7. Primer issue sugerido
-`feat(auth): iniciar sesión con Google y restringir acceso a dos cuentas`, con tests de acceso no autorizado.
+Desde `backend/`:
+
+```powershell
+npm test
+npm run typecheck
+npm run test:calendar
+```
+
+Las pruebas no modifican Supabase remoto. Playwright usa fixtures de transporte. PGlite ejecuta SQL real con roles y RLS. Calendar prueba contratos externos aislados; esos tests no sustituyen la autorización de Google.
+
+## 5. Despliegue del frontend
+
+Vercel: raíz `frontend`, build `npm run build`, salida `dist`. Configurar solo las variables públicas `VITE_`. `vercel.json` define el fallback SPA. Actualizar `APP_URL` al dominio real y volver a desplegar el backend para ajustar redirecciones y CORS.
+
+## 6. Operación
+
+- Ajustes → Datos exporta registros visibles en JSON y fotos en ZIP. No incluye datos privados de la pareja ni textos de cápsulas selladas.
+- Papelera restaura registros; la purga automática a 30 días está desactivada. Completar tareas, metas y títulos no elimina su historial.
+- `--schedule` configura pg_cron/pg_net cada 15 minutos, con secreto en Vault, para Calendar y recordatorios deduplicados de quests a 24/72 horas y eventos próximos.
+- Correo y push siguen desactivados, según el handoff. Spotify/YouTube se usan mediante enlaces, sin conectar cuentas.
+- Guardar exportaciones en almacenamiento personal cifrado. No subir backups al repositorio ni a artifacts de CI.
+
+Referencias oficiales: [migraciones](https://supabase.com/docs/guides/deployment/database-migrations), [Google Auth](https://supabase.com/docs/guides/auth/social-sign-in/auth-google), [scopes de Calendar](https://developers.google.com/workspace/calendar/api/auth), [sincronización incremental](https://developers.google.com/workspace/calendar/api/guides/sync).

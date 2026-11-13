@@ -57,11 +57,11 @@ Cuando exista el dominio de producción, cambiar Site URL y añadir su callback 
 
 ## 5. Acceso exclusivo a dos personas
 
-El proyecto todavía no está listo para datos reales solo por activar Google. La implementación incluirá lista autorizada en servidor, membresías y RLS. La lista de test users de Google y los filtros en React no sustituyen esos permisos.
+El proyecto todavía no está listo para datos reales solo por activar Google. Las migraciones incluyen lista autorizada en servidor, membresías y RLS. La lista de test users de Google y los filtros en React no sustituyen esos permisos.
 
 Antes de probar con datos reales, deben estar aplicadas las migraciones y configurada la lista de las dos direcciones exactas. Se comprobará que una tercera cuenta no puede leer ni escribir datos y que nadie puede aprobar su propio avance.
 
-## 6. Aplicar migraciones cuando estén disponibles
+## 6. Aplicar las migraciones versionadas
 
 Desde la raíz del repositorio, entrar primero en `backend/`. Los siguientes comandos usan `backend/supabase/` como directorio del proyecto Supabase:
 
@@ -73,7 +73,7 @@ npx supabase db push --dry-run
 npx supabase db push
 ```
 
-No ejecutar todavía `db push`: las migraciones iniciales están pendientes de implementación. No crear tablas manuales que se desvíen de las migraciones versionadas. El inicio de sesión del CLI y la contraseña se introducen localmente cuando los solicite la herramienta.
+Las migraciones iniciales ya están implementadas y probadas localmente. Revisar el dry-run antes de aplicarlas al proyecto remoto. No crear tablas manuales que se desvíen de las migraciones versionadas. El inicio de sesión del CLI y la contraseña se introducen localmente cuando los solicite la herramienta.
 
 ## 7. Validación al terminar la implementación
 
@@ -90,4 +90,4 @@ No ejecutar todavía `db push`: las migraciones iniciales están pendientes de i
 - Redirecciones: https://supabase.com/docs/guides/auth/redirect-urls
 - Google: https://supabase.com/docs/guides/auth/social-sign-in/auth-google
 
-Esta guía cubre la preparación del proyecto. Los comandos de migración y aprovisionamiento se actualizarán junto con la implementación real.
+La guía ejecutable vigente es [getting-started.md](getting-started.md), incluyendo el script de despliegue, secretos y scheduler.
