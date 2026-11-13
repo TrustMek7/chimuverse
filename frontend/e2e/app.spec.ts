@@ -542,6 +542,45 @@ test("dashboard and all module routes render with mobile navigation and both the
   expect(dark.violations).toEqual([]);
   expect(errors).toEqual([]);
 });
+test("returning to the tab preserves unsaved forms while signing out removes the space", async ({
+  page,
+}) => {
+  await fixture(page);
+  await page.goto("/recuerdos/devlog?crear=1");
+  const title = page.getByRole("textbox", { name: "Título", exact: true });
+  await title.fill("Borrador sin guardar");
+  await page
+    .getByRole("textbox", { name: "Lo que quieres guardar" })
+    .fill("Un avance que no debe desaparecer.");
+  await page.evaluate(async () => {
+    const path = "/src/lib/supabase.ts";
+    const { supabase } = await import(path);
+    await new Promise<void>((resolve) => {
+      const { data } = supabase.auth.onAuthStateChange((event: string) => {
+        if (event === "SIGNED_IN") {
+          data.subscription.unsubscribe();
+          resolve();
+        }
+      });
+      window.dispatchEvent(new Event("visibilitychange"));
+    });
+    await new Promise<void>((resolve) =>
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+    );
+  });
+  await expect(title).toHaveValue("Borrador sin guardar");
+  await expect(
+    page.getByRole("textbox", { name: "Lo que quieres guardar" }),
+  ).toHaveValue("Un avance que no debe desaparecer.");
+  await page.evaluate(async () => {
+    const path = "/src/lib/supabase.ts";
+    const { supabase } = await import(path);
+    await supabase.auth.signOut();
+  });
+  await expect(page).toHaveURL(/\/entrar$/);
+  await expect(title).toHaveCount(0);
+});
+
 test("quest creation, cross-verification and shared journal persistence use real UI actions", async ({
   page,
 }) => {

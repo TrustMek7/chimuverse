@@ -2,6 +2,7 @@ import {
   createContext,
   useContext,
   useEffect,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -19,19 +20,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const qc = useQueryClient();
+  const account = useRef<string | null>(null);
   useEffect(() => {
     let live = true;
+    const applySession = (next: Session | null) => {
+      const nextAccount = next?.user.id ?? null;
+      // Focus checks and token renewal emit auth events for the same account.
+      // Preserve cached data and mounted forms unless the account changes.
+      if (account.current !== nextAccount) {
+        account.current = nextAccount;
+        qc.clear();
+      }
+      setSession(next);
+      setLoading(false);
+    };
     supabase.auth.getSession().then(({ data, error }) => {
       if (live) {
-        setSession(data.session);
+        applySession(data.session);
         setError(error?.message ?? null);
-        setLoading(false);
       }
     });
     const { data } = supabase.auth.onAuthStateChange((_e, s) => {
-      setSession(s);
-      setLoading(false);
-      qc.clear();
+      if (live) {
+        applySession(s);
+        setError(null);
+      }
     });
     return () => {
       live = false;
