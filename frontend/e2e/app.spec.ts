@@ -1164,6 +1164,12 @@ test("finances are shared, filtered by month, measured against the budget, and f
     entry("f5555555-5555-4555-8555-555555555555", "budget", "Presupuesto del mes", 1000, `${month}-01`, {}),
   );
   rows.finance_recurring = [];
+  rows.savings_goals = [];
+  await page.route("**/rest/v1/rpc/save_savings_goal", async (route) => {
+    const d = route.request().postDataJSON().p_data;
+    rows.savings_goals.push({ id: "a7777777-7777-4777-8777-777777777777", space_id: sid, created_by: a, title: d.title, target: d.target, target_on: d.target_on || null, person: d.person || null, deleted_at: null, created_at: new Date().toISOString() });
+    await route.fulfill({ json: null });
+  });
   const saved: any[] = [];
   await page.route("**/rest/v1/rpc/save_recurring", async (route) => {
     const body = route.request().postDataJSON();
@@ -1183,7 +1189,7 @@ test("finances are shared, filtered by month, measured against the budget, and f
   });
   await page.goto("/creciendo/finanzas");
   // The chosen month's totals count savings, and the budget shows what is left.
-  await expect(page.getByText("Disponible")).toBeVisible();
+  await expect(page.getByText("Disponible", { exact: true }).first()).toBeVisible();
   await expect(page.locator(".metric").filter({ hasText: "Disponible" })).toContainText("2,100");
   await expect(page.getByText(/Quedan S\/\s?600/)).toBeVisible();
   await expect(page.getByRole("heading", { name: "Cena del mes pasado" })).toHaveCount(0);
@@ -1215,6 +1221,31 @@ test("finances are shared, filtered by month, measured against the budget, and f
   await expect(dialog).toHaveCount(0);
   expect(saved[2]).toMatchObject({ p_data: { amount: 135, frequency: "biweekly", apply_past: true, active: false } });
   await expect(page.getByText(/cada dos semanas/)).toBeVisible();
+  // Whose money: older movements count as their author's (Glenny), shown per person.
+  const split = page.locator(".split-table");
+  await expect(split.getByRole("row").filter({ hasText: "Glenny" })).toContainText("3,000");
+  await expect(page.getByText("Ingreso de Glenny")).toBeVisible();
+  // A shared savings goal fills with the savings assigned to it.
+  await page.getByRole("button", { name: "Nueva meta" }).click();
+  await dialog.getByLabel("Nombre").fill("Viaje a Cusco");
+  await dialog.getByLabel("Meta (S/)").fill("2000");
+  await dialog.getByRole("button", { name: "Crear meta" }).click();
+  await expect(dialog).toHaveCount(0);
+  await expect(page.getByText("Viaje a Cusco")).toBeVisible();
+  await page.getByRole("button", { name: "Añadir movimiento" }).click();
+  await dialog.getByLabel("Título").fill("Para Cusco");
+  await dialog.getByLabel("Importe (S/)").fill("500");
+  await dialog.getByLabel("Tipo").selectOption("saving");
+  await expect(dialog.getByLabel("¿Quién ahorra?")).toHaveValue(a);
+  await dialog.getByLabel("¿Quién ahorra?").selectOption("");
+  await dialog.getByLabel("¿Para qué meta?").selectOption({ label: "Viaje a Cusco" });
+  await dialog.getByRole("button", { name: /Guardar/ }).click();
+  await expect(dialog).toHaveCount(0);
+  expect(rows.entries.at(-1).details).toMatchObject({ direction: "saving", person: "", goal_id: "a7777777-7777-4777-8777-777777777777" });
+  await expect(page.locator(".goal-list")).toContainText("25 %");
+  await expect(page.getByText("Ahorro de los dos · para «Viaje a Cusco»")).toBeVisible();
+  const goalsAxe = await new AxeBuilder({ page }).include(".savings-goals").include(".person-split").analyze();
+  expect(goalsAxe.violations).toEqual([]);
   const page2 = await new AxeBuilder({ page }).include(".finance-fixed").analyze();
   expect(page2.violations).toEqual([]);
 });

@@ -25,11 +25,13 @@ type Draft = {
   frequency: Rule["frequency"];
   start_on: string;
   end_on: string;
+  person: string;
+  goal_id: string;
 };
 
 /** Fixed income, expenses and savings: each one creates its movement on its own date. */
 export function FinanceRecurring() {
-  const { data, me } = useSpace();
+  const { data, me, partner } = useSpace();
   const action = useAction();
   const today = localDay(new Date(), me.timezone);
   const [editing, setEditing] = useState<Rule | null>(null);
@@ -43,6 +45,8 @@ export function FinanceRecurring() {
     frequency: "monthly",
     start_on: today,
     end_on: "",
+    person: me.id,
+    goal_id: "",
   };
   const [draft, setDraft] = useState<Draft>(blank);
   const rules = data!.finance_recurring
@@ -66,6 +70,8 @@ export function FinanceRecurring() {
             frequency: rule.frequency,
             start_on: rule.start_on,
             end_on: rule.end_on ?? "",
+            person: rule.person ?? "",
+            goal_id: rule.goal_id ?? "",
           }
         : blank,
     );
@@ -97,6 +103,13 @@ export function FinanceRecurring() {
         ),
       () => setOpen(false),
     );
+  const whose = (p: string | null) =>
+    p === null
+      ? "de los dos"
+      : p === me.id
+        ? "tuyo"
+        : `de ${data!.profiles.find((u) => u.id === p)?.display_name.split(" ")[0] ?? "?"}`;
+  const goals = data!.savings_goals.filter((g) => !g.deleted_at);
   const ended = (r: Rule) => !!r.end_on && r.next_on > r.end_on;
   return (
     <section className="card finance-fixed" aria-labelledby="fixed-title">
@@ -122,7 +135,7 @@ export function FinanceRecurring() {
               <div>
                 <strong>{r.title}</strong>
                 <small className="muted">
-                  {DIRECTIONS[r.direction]} ·{" "}
+                  {DIRECTIONS[r.direction]} · {whose(r.person ?? null)} ·{" "}
                   {FREQUENCIES[r.frequency].toLowerCase()}
                   {r.category ? ` · ${r.category}` : ""} ·{" "}
                   {ended(r)
@@ -246,6 +259,39 @@ export function FinanceRecurring() {
               ))}
             </select>
           </label>
+          <label className="field">
+            {draft.direction === "income"
+              ? "¿De quién es el ingreso?"
+              : draft.direction === "saving"
+                ? "¿Quién ahorra?"
+                : "¿Quién lo paga?"}
+            <select
+              value={draft.person}
+              onChange={(e) => set("person", e.target.value)}
+            >
+              <option value={me.id}>{me.display_name}</option>
+              {partner && (
+                <option value={partner.id}>{partner.display_name}</option>
+              )}
+              <option value="">De los dos (fondo común)</option>
+            </select>
+          </label>
+          {draft.direction === "saving" && (
+            <label className="field">
+              ¿Para qué meta?
+              <select
+                value={draft.goal_id}
+                onChange={(e) => set("goal_id", e.target.value)}
+              >
+                <option value="">Sin meta</option>
+                {goals.map((g) => (
+                  <option key={g.id} value={g.id}>
+                    {g.title}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
           <label className="field">
             Categoría
             <input

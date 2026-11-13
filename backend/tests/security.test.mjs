@@ -136,6 +136,7 @@ before(async () => {
     "202611130015_lived_dates.sql",
     "202611130016_task_carryover.sql",
     "202611130017_finances.sql",
+    "202611130018_finance_people_goals.sql",
   ]) {
     await db.exec(
       readFileSync(
@@ -1316,4 +1317,36 @@ test("both members edit and trash finances; fixed movements create each date onc
   await as(b, () => db.query("select public.delete_recurring($1)", [rule]));
   assert.ok((await made()).length >= 4);
   await assert.rejects(() => as(a, () => db.query("select public.generate_recurring()")), /permission denied/);
+});
+
+test("each movement says whose it is, fixed ones carry it, and savings feed shared or personal goals", async () => {
+  const goal = (await as(b, () => db.query("select public.save_savings_goal(null,$1) id", [JSON.stringify({ title: "Viaje a Cusco", target: 3000, target_on: "2027-07-01", person: "" })]))).rows[0].id;
+  const g = (await as(a, () => db.query("select title,target::float t,person from public.savings_goals where id=$1", [goal]))).rows[0];
+  assert.deepEqual([g.title, g.t, g.person], ["Viaje a Cusco", 3000, null]);
+  await as(a, () => db.query("select public.save_savings_goal($1,$2)", [goal, JSON.stringify({ title: "Viaje a Cusco", target: 3500, person: a })]));
+  assert.equal((await db.query("select person from public.savings_goals where id=$1", [goal])).rows[0].person, a);
+  // A one-off saving by B into the goal; invalid people, goals for non-savings, foreign goals fail.
+  const save = (d) => as(a, () => db.query("select public.save_entry($1) id", [JSON.stringify({ kind: "transaction", title: "Ahorro", amount: 200, occurred_on: "2026-11-11", details: d })]));
+  const id = (await save({ direction: "saving", person: b, goal_id: goal })).rows[0].id;
+  assert.deepEqual((await db.query("select details->>'person' p,details->>'goal_id' g from public.entries where id=$1", [id])).rows[0], { p: b, g: goal });
+  await assert.rejects(() => save({ direction: "expense", person: c }), /persona/);
+  await assert.rejects(() => save({ direction: "expense", person: a, goal_id: goal }), /ahorro/);
+  await assert.rejects(() => save({ direction: "saving", goal_id: "12345678-1234-4234-8234-123456789abc" }), /Meta/);
+  // A fixed salary belongs to whoever it is set for; a fixed saving feeds the goal from the first movement.
+  const today = (await db.query("select min((now() at time zone coalesce(p.timezone,'America/Lima'))::date)::text d from public.space_members m join public.profiles p on p.id=m.user_id")).rows[0].d;
+  const salary = (await as(a, () => db.query("select public.save_recurring(null,$1) id", [JSON.stringify({ title: "Sueldo Glenny", amount: 2500, direction: "income", frequency: "monthly", start_on: today, person: b })]))).rows[0].id;
+  const fixedSaving = (await as(b, () => db.query("select public.save_recurring(null,$1) id", [JSON.stringify({ title: "Para Cusco", amount: 300, direction: "saving", frequency: "monthly", start_on: today, person: "", goal_id: goal })]))).rows[0].id;
+  const made = async (rule) => (await db.query("select details from public.entries where details->>'recurring_id'=$1", [rule])).rows.map((r) => r.details);
+  assert.equal((await made(salary))[0].person, b);
+  assert.deepEqual([(await made(fixedSaving))[0].person, (await made(fixedSaving))[0].goal_id], ["", goal]);
+  // Pausing keeps person and goal; switching the rule to an expense drops the goal (also from the past ones).
+  await as(a, () => db.query("select public.save_recurring($1,$2)", [fixedSaving, JSON.stringify({ title: "Para Cusco", amount: 300, active: false })]));
+  assert.deepEqual((await db.query("select person,goal_id from public.finance_recurring where id=$1", [fixedSaving])).rows[0], { person: null, goal_id: goal });
+  await as(a, () => db.query("select public.save_recurring($1,$2)", [fixedSaving, JSON.stringify({ title: "Para Cusco", amount: 300, direction: "expense", active: false, apply_past: true })]));
+  assert.equal((await made(fixedSaving))[0].goal_id, undefined);
+  // Removing the goal keeps the savings and unlinks them.
+  await as(b, () => db.query("select public.delete_savings_goal($1)", [goal]));
+  assert.equal((await db.query("select details->>'goal_id' g,amount::float a from public.entries where id=$1", [id])).rows[0].g, null);
+  await assert.rejects(() => as(c, () => db.query("select public.save_savings_goal(null,$1)", [JSON.stringify({ title: "x", target: 1 })])), /Sin acceso/);
+  await assert.rejects(() => as(a, () => db.query("insert into public.savings_goals(space_id,title,target) values($1,'x',1)", [sid])), /permission denied/);
 });

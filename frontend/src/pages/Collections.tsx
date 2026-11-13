@@ -6,6 +6,8 @@ import {
 } from "../components/DateMemory";
 import { YouTubePlaylist } from "../components/YouTubePlaylist";
 import { FinanceRecurring } from "../components/FinanceRecurring";
+import { SavingsGoals } from "../components/SavingsGoals";
+import { BOTH, personLabel, personLine, personOf } from "../lib/finance";
 import { useState } from "react";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
 import {
@@ -160,6 +162,8 @@ type Draft = {
   subtype: string;
   milestones: string;
   photo_id: string;
+  person: string;
+  goal_id: string;
 };
 function initial(kind: EntryKind, entry?: Entry, capsule = false): Draft {
   return {
@@ -183,13 +187,21 @@ function initial(kind: EntryKind, entry?: Entry, capsule = false): Draft {
     subtype: String(entry?.details.subtype ?? "hicimos"),
     milestones: String(entry?.details.milestones ?? ""),
     photo_id: String(entry?.details.photo_id ?? ""),
+    person: entry
+      ? String(
+          "person" in entry.details
+            ? (entry.details.person ?? "")
+            : entry.owner_id,
+        )
+      : "",
+    goal_id: String(entry?.details.goal_id ?? ""),
   };
 }
 export default function Collections() {
   const { pathname } = useLocation();
   const cfg = config[pathname] ?? config["/recuerdos/devlog"];
   const [params, setParams] = useSearchParams();
-  const { data, me } = useSpace();
+  const { data, me, partner } = useSpace();
   const [open, setOpen] = useState(params.has("crear"));
   const [editing, setEditing] = useState<Entry | undefined>();
   const [draft, setDraft] = useState<Draft>(() =>
@@ -260,7 +272,8 @@ export default function Collections() {
   }
   function openEditor(e?: Entry) {
     setEditing(e);
-    setDraft(initial(kind, e, pathname.includes("capsulas")));
+    const fresh = initial(kind, e, pathname.includes("capsulas"));
+    setDraft(e ? fresh : { ...fresh, person: me.id });
     action.setError("");
     setOpen(true);
   }
@@ -326,6 +339,13 @@ export default function Collections() {
                 subtype: draft.subtype,
                 milestones: draft.milestones,
                 photo_id: draft.photo_id,
+                ...(kind === "transaction"
+                  ? {
+                      person: draft.person,
+                      goal_id:
+                        draft.direction === "saving" ? draft.goal_id : "",
+                    }
+                  : {}),
               },
             },
             p_content: draft.content,
@@ -465,6 +485,55 @@ export default function Collections() {
               </div>
             </div>
           )}
+          <div className="card person-split">
+            <h2>Por persona</h2>
+            <div
+              className="split-table"
+              role="table"
+              aria-label="Finanzas por persona"
+            >
+              <div role="row" className="split-head">
+                <span role="columnheader">Quién</span>
+                <span role="columnheader">Ingresos</span>
+                <span role="columnheader">Gastos</span>
+                <span role="columnheader">Ahorro</span>
+                <span role="columnheader">Disponible</span>
+              </div>
+              {[
+                [me.id, me.display_name.split(" ")[0]],
+                ...(partner
+                  ? [[partner.id, partner.display_name.split(" ")[0]]]
+                  : []),
+                [BOTH, "De los dos"],
+              ].map(([who, label]) => {
+                const sum = (direction: string) =>
+                  monthTransactions
+                    .filter(
+                      (e) =>
+                        personOf(e) === who &&
+                        e.details.direction === direction,
+                    )
+                    .reduce((s, e) => s + Number(e.amount ?? 0), 0);
+                return (
+                  <div role="row" key={who || "both"}>
+                    <span role="rowheader">{label}</span>
+                    <span role="cell" data-label="Ingresos">
+                      {money(sum("income"))}
+                    </span>
+                    <span role="cell" data-label="Gastos">
+                      {money(sum("expense"))}
+                    </span>
+                    <span role="cell" data-label="Ahorro">
+                      {money(sum("saving"))}
+                    </span>
+                    <strong role="cell" data-label="Disponible">
+                      {money(sum("income") - sum("expense") - sum("saving"))}
+                    </strong>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
           <p className="small muted inline-note">
             <Lock size={14} aria-hidden /> Las finanzas son de los dos:
             cualquiera puede añadir, corregir o quitar un movimiento.
@@ -486,7 +555,12 @@ export default function Collections() {
               </button>
             ))}
           </div>
-          {kind === "transaction" && <FinanceRecurring />}
+          {kind === "transaction" && (
+            <>
+              <SavingsGoals />
+              <FinanceRecurring />
+            </>
+          )}
         </>
       )}
       {kind === "mood" && (
@@ -780,6 +854,17 @@ export default function Collections() {
                           : "−"}
                       {money(Number(e.amount))}
                     </strong>
+                  )}
+                  {kind === "transaction" && (
+                    <p className="small">
+                      {personLine(e, data!.profiles, me.id)}
+                      {e.details.goal_id &&
+                      data!.savings_goals.some(
+                        (g) => g.id === e.details.goal_id && !g.deleted_at,
+                      )
+                        ? ` · para «${data!.savings_goals.find((g) => g.id === e.details.goal_id)!.title}»`
+                        : ""}
+                    </p>
                   )}
                   {financeKind(kind) &&
                     (e.details.recurring_id || e.details.edited_by) && (
@@ -1156,6 +1241,39 @@ export default function Collections() {
                     <option value="expense">Gasto</option>
                     <option value="income">Ingreso</option>
                     <option value="saving">Ahorro</option>
+                  </select>
+                </label>
+              )}
+              {kind === "transaction" && (
+                <label className="field">
+                  {personLabel(draft.direction)}
+                  <select
+                    value={draft.person}
+                    onChange={(e) => change("person", e.target.value)}
+                  >
+                    <option value={me.id}>{me.display_name}</option>
+                    {partner && (
+                      <option value={partner.id}>{partner.display_name}</option>
+                    )}
+                    <option value={BOTH}>De los dos (fondo común)</option>
+                  </select>
+                </label>
+              )}
+              {kind === "transaction" && draft.direction === "saving" && (
+                <label className="field">
+                  ¿Para qué meta?
+                  <select
+                    value={draft.goal_id}
+                    onChange={(e) => change("goal_id", e.target.value)}
+                  >
+                    <option value="">Sin meta</option>
+                    {data!.savings_goals
+                      .filter((g) => !g.deleted_at)
+                      .map((g) => (
+                        <option key={g.id} value={g.id}>
+                          {g.title}
+                        </option>
+                      ))}
                   </select>
                 </label>
               )}

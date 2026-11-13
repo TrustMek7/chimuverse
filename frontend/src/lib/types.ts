@@ -48,6 +48,22 @@ export type FinanceRecurring = {
   next_on: string;
   active: boolean;
   deleted_at: string | null;
+  /** null: de los dos. */
+  person?: string | null;
+  goal_id?: string | null;
+};
+/** Something we save for, alone or together. */
+export type SavingsGoal = {
+  id: string;
+  space_id: string;
+  created_by: string;
+  title: string;
+  target: number;
+  target_on: string | null;
+  /** null: a goal for both of us. */
+  person: string | null;
+  deleted_at: string | null;
+  created_at: string;
 };
 export type Progress = {
   id: string;
@@ -168,6 +184,7 @@ export type Snapshot = {
   task_verifications: Verification[];
   task_events: TaskEvent[];
   finance_recurring: FinanceRecurring[];
+  savings_goals: SavingsGoal[];
   entries: Entry[];
   calendar_events: CalendarEvent[];
   photos: Photo[];
