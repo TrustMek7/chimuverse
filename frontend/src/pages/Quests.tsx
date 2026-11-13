@@ -98,12 +98,12 @@ export default function Quests() {
     <>
       <PageHeading
         eyebrow="NUESTRO DÍA"
-        title="Daily Quests"
+        title="Tareas del día"
         text="Pequeños pasos. Dos miradas. Un mismo equipo."
         actions={
           <Button onClick={() => setOpen(true)}>
             <Plus size={18} />
-            Nueva quest
+            Nueva tarea
           </Button>
         }
       />
@@ -114,7 +114,7 @@ export default function Quests() {
             <>
               <Link to="/dia/quests" className="text-link">
                 <ArrowLeft size={17} />
-                Todas las quests
+                Todas las tareas
               </Link>
               <section className="card quest-detail">
                 <div className="row between wrap">
@@ -289,7 +289,7 @@ export default function Quests() {
                 )}
               </section>
               <section className="card">
-                <h2>La historia de esta quest</h2>
+                <h2>La historia de esta tarea</h2>
                 <ol className="timeline">
                   {reports.map((p) => {
                     const v = data!.task_verifications.find(
@@ -344,7 +344,7 @@ export default function Quests() {
                   <li>
                     <span>✦</span>
                     <div>
-                      Quest creada
+                      Tarea creada
                       <small>{formatDate(current.created_at)}</small>
                     </div>
                   </li>
@@ -353,7 +353,7 @@ export default function Quests() {
             </>
           ) : (
             <Empty
-              title="No encontramos esta quest"
+              title="No encontramos esta tarea"
               text="Puede que no exista o no tengas acceso."
             />
           )}
@@ -418,13 +418,13 @@ export default function Quests() {
             ) : (
               <Empty
                 title="Un día lleno de posibilidades"
-                text="Todavía no hay quests con estos filtros. ¿Creamos un pequeño primer paso?"
+                text="Todavía no hay tareas con estos filtros. ¿Creamos un pequeño primer paso?"
               />
             )}
           </div>
         </>
       )}
-      <Modal title="Una nueva quest" open={open} onOpenChange={close}>
+      <Modal title="Una nueva tarea" open={open} onOpenChange={close}>
         <form onSubmit={form.handleSubmit(create)} className="form">
           <ErrorMessage error={action.error} />
           <label className="field">
@@ -461,7 +461,7 @@ export default function Quests() {
             Quien haga el reporte necesita que la otra persona lo verifique.
           </p>
           <Button type="submit" busy={action.busy}>
-            Crear quest
+            Crear tarea
           </Button>
         </form>
       </Modal>

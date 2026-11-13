@@ -560,7 +560,11 @@ input[type="checkbox"] {
 }
 .date-top {
   font-size: 12px;
-  text-transform: capitalize;
+}
+/* Spanish dates capitalize only the first word ("Viernes, 13 de noviembre"). */
+.date-top::first-letter,
+.fc .fc-toolbar-title::first-letter {
+  text-transform: uppercase;
 }
 .date-top span {
   color: var(--color-ink-3);
@@ -1425,7 +1429,6 @@ input[type="checkbox"] {
 }
 .fc .fc-toolbar-title {
   font: 600 25px var(--font-display);
-  text-transform: capitalize;
 }
 .fc .fc-daygrid-day-number {
   padding: 10px;
@@ -2938,4 +2941,9 @@ a.push-pill:hover {
 }
 .card-actions {
   align-items: center;
+}
+@media (max-width: 767px) {
+  .toolbar .toolbar-select {
+    width: 100%;
+  }
 }

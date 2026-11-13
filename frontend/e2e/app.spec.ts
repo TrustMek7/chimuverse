@@ -487,7 +487,7 @@ test("YouTube onboarding follows connection and shared-owner state", async ({
   ).toHaveCount(0);
   await page.goto("/ocio/deseos");
   await expect(
-    page.getByRole("heading", { name: "Wishlist & Soundtrack" }),
+    page.getByRole("heading", { name: "Deseos y canciones" }),
   ).toBeVisible();
   await page.screenshot({
     path: `test-results/containers-light-${info.project.name}.png`,
@@ -648,17 +648,17 @@ test("dashboard and all module routes render with mobile navigation and both the
     fullPage: true,
   });
   for (const [path, title] of [
-    ["/dia/quests", "Daily Quests"],
-    ["/dia/calendario", "Our Calendar"],
+    ["/dia/quests", "Tareas del día"],
+    ["/dia/calendario", "Nuestro calendario"],
     ["/nosotros/universo", "Nuestro Universo"],
-    ["/recuerdos/vault", "Memory Vault"],
-    ["/recuerdos/devlog", "DevLog of Us"],
+    ["/recuerdos/vault", "Álbum de recuerdos"],
+    ["/recuerdos/devlog", "Nuestro diario"],
     ["/nosotros/animo", "¿Cómo está tu cielo hoy?"],
-    ["/experiencias/citas", "Date Planner"],
+    ["/experiencias/citas", "Planes y citas"],
     ["/creciendo/metas", "Goals & Dreams"],
-    ["/creciendo/finanzas", "Our Finances"],
+    ["/creciendo/finanzas", "Nuestras finanzas"],
     ["/ocio/watchlist", "Watchlist"],
-    ["/ocio/deseos", "Wishlist & Soundtrack"],
+    ["/ocio/deseos", "Deseos y canciones"],
     ["/recuerdos/wrapped", "El año que construimos juntos"],
     ["/ajustes", "Ajustes"],
   ]) {
@@ -730,11 +730,11 @@ test("quest creation, cross-verification and shared journal persistence use real
 }) => {
   const rows = await fixture(page);
   await page.goto("/dia/quests");
-  await page.getByRole("button", { name: "Nueva quest" }).click();
+  await page.getByRole("button", { name: "Nueva tarea" }).click();
   await page
     .getByRole("textbox", { name: "¿Qué vamos a hacer?" })
     .fill("Preparar una cena especial");
-  await page.getByRole("button", { name: "Crear quest", exact: true }).click();
+  await page.getByRole("button", { name: "Crear tarea", exact: true }).click();
   await expect(
     page.getByRole("heading", { name: "Preparar una cena especial" }),
   ).toBeVisible();

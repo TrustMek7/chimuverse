@@ -137,11 +137,11 @@ export default function Home() {
         <section className="sky-panel">
           <div className="row between wrap">
             <div>
-              <p className="eyebrow">DAILY QUESTS · HOY</p>
+              <p className="eyebrow">TAREAS DEL DÍA · HOY</p>
               <h2>La constelación de hoy</h2>
             </div>
             <Link className="btn btn-night" to="/dia/quests">
-              Ver quests <ArrowRight size={15} />
+              Ver tareas <ArrowRight size={15} />
             </Link>
           </div>
           <div className="sky-body">
@@ -208,7 +208,7 @@ export default function Home() {
                 Cuando haya un avance para ti, aparecerá en este rincón.
               </p>
               <Link to="/dia/quests" className="text-link">
-                Ir a nuestras quests <ArrowRight size={16} />
+                Ir a nuestras tareas <ArrowRight size={16} />
               </Link>
             </div>
           )}
@@ -292,7 +292,7 @@ export default function Home() {
             <BookOpen size={22} />
             <span>
               Algo que quiero decirte
-              <small>Deja una nota en nuestro DevLog</small>
+              <small>Deja una nota en nuestro diario</small>
             </span>
             <ArrowUpRight size={18} />
           </Link>

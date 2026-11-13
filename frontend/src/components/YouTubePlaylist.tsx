@@ -28,7 +28,7 @@ export function YouTubePlaylist({
   const qc = useQueryClient();
   const [busy, setBusy] = useState(false),
     [error, setError] = useState<unknown>(null);
-  const [title, setTitle] = useState("Nuestro soundtrack"),
+  const [title, setTitle] = useState("Nuestras canciones"),
     [video, setVideo] = useState(""),
     [confirm, setConfirm] = useState<string | null>(null);
   const [choosing, setChoosing] = useState(false),
@@ -89,7 +89,7 @@ export function YouTubePlaylist({
       className="card settings-card youtube-playlist"
       aria-label="Playlist compartida de YouTube"
     >
-      <h2>YouTube · Nuestro soundtrack</h2>
+      <h2>YouTube · Nuestras canciones</h2>
       <p>
         Una playlist para los dos. Las canciones que añadan aquí se guardan en
         YouTube.

@@ -27,7 +27,7 @@ export default function Wrapped() {
   return (
     <>
       <PageHeading
-        eyebrow="OUR WRAPPED"
+        eyebrow="NUESTRO AÑO"
         title="El año que construimos juntos"
         text="No es una cifra. Son todos esos momentos que nos trajeron hasta aquí."
         actions={
@@ -56,7 +56,7 @@ export default function Wrapped() {
         </p>
         <div className="wrapped-stats">
           {[
-            [ListChecks, quests.length, "quests completadas"],
+            [ListChecks, quests.length, "tareas completadas"],
             [Images, photos.length, "recuerdos compartidos"],
             [
               BookOpen,

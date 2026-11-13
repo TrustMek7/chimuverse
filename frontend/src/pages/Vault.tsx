@@ -107,7 +107,7 @@ export default function Vault() {
         title={
           pathname.includes("linea-de-tiempo")
             ? "Nuestra línea del tiempo"
-            : "Memory Vault"
+            : "Álbum de recuerdos"
         }
         text="Algunos instantes merecen quedarse para siempre."
         actions={

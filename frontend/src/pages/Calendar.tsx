@@ -173,7 +173,7 @@ export default function Calendar() {
     <>
       <PageHeading
         eyebrow="NUESTRO DÍA"
-        title="Our Calendar"
+        title="Nuestro calendario"
         text="Guardemos un ratito para nosotros."
         actions={
           <Button onClick={() => create()}>
@@ -183,7 +183,7 @@ export default function Calendar() {
         }
       />
       <div className="segments route-tabs">
-        <Link to="/dia/quests">Daily Quests</Link>
+        <Link to="/dia/quests">Tareas del día</Link>
         <Link to="/dia/calendario" aria-current="page">
           Calendario
         </Link>
@@ -398,7 +398,7 @@ export default function Calendar() {
         <p>
           {selected && recurrenceString(selected)
             ? "Se quitarán todas las fechas de esta serie, también en Google Calendar. Puedes recuperar el registro desde la papelera."
-            : "El evento se quitará de Our Calendar y de Google Calendar."}
+            : "El evento se quitará de Nuestro calendario y de Google Calendar."}
         </p>
         <ErrorMessage error={action.error} />
         <Button

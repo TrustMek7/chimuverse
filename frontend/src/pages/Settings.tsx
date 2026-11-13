@@ -320,7 +320,7 @@ export default function Settings() {
             </div>
             {connection.data?.status === "connected" && (
               <p className="small muted">
-                Los cambios de Our Calendar se envían automáticamente. Usa
+                Los cambios de Nuestro calendario se envían automáticamente. Usa
                 «Traer cambios de Google» si modificaste tu horario desde
                 Google.
               </p>

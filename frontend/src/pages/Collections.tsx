@@ -62,7 +62,7 @@ const config: Record<
 > = {
   "/recuerdos/devlog": {
     kind: "journal",
-    title: "DevLog of Us",
+    title: "Nuestro diario",
     eyebrow: "RECUERDOS",
     text: "Lo que vivimos. Lo que aprendemos. Lo que somos.",
     singular: "entrada",
@@ -79,14 +79,14 @@ const config: Record<
   "/nosotros/animo": {
     kind: "mood",
     title: "¿Cómo está tu cielo hoy?",
-    eyebrow: "MOOD TRACKER",
+    eyebrow: "NUESTRO ÁNIMO",
     text: "No todos los días son soleados. Aquí hay espacio para todos.",
     singular: "registro",
     icon: Smile,
   },
   "/experiencias/citas": {
     kind: "date",
-    title: "Date Planner",
+    title: "Planes y citas",
     eyebrow: "EXPERIENCIAS",
     text: "No hace falta ir lejos para vivir algo bonito.",
     singular: "idea",
@@ -102,7 +102,7 @@ const config: Record<
   },
   "/creciendo/finanzas": {
     kind: "transaction",
-    title: "Our Finances",
+    title: "Nuestras finanzas",
     eyebrow: "CRECIENDO",
     text: "Cuidar lo cotidiano también es una forma de cuidarnos.",
     singular: "movimiento",
@@ -110,7 +110,7 @@ const config: Record<
   },
   "/ocio/watchlist": {
     kind: "watch",
-    title: "Watchlist",
+    title: "Películas y series",
     eyebrow: "ENTRETENIMIENTO",
     text: "Un sofá. Algo rico. Y el siguiente «¿vemos uno más?».",
     singular: "título",
@@ -118,7 +118,7 @@ const config: Record<
   },
   "/ocio/deseos": {
     kind: "wish",
-    title: "Wishlist & Soundtrack",
+    title: "Deseos y canciones",
     eyebrow: "ENTRETENIMIENTO",
     text: "Lo que nos hace ilusión. Lo que suena a nosotros.",
     singular: "deseo",
@@ -126,7 +126,7 @@ const config: Record<
   },
   "/ocio/soundtrack": {
     kind: "track",
-    title: "Nuestro soundtrack",
+    title: "Nuestras canciones",
     eyebrow: "ENTRETENIMIENTO",
     text: "Hay canciones que siempre serán nuestras.",
     singular: "canción",
@@ -383,7 +383,7 @@ export default function Collections() {
         <div className="segments">
           {[
             ["wish", "Deseos y regalos"],
-            ["track", "Nuestro soundtrack"],
+            ["track", "Nuestras canciones"],
           ].map(([k, label]) => (
             <button
               key={k}
