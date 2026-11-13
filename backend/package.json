@@ -13,7 +13,9 @@
     "deploy:all": "node scripts/deploy.mjs --functions --schedule",
     "backup": "node scripts/preflight.mjs",
     "verify:deployment": "node scripts/verify-deployment.mjs",
-    "test:youtube": "deno test --config supabase/functions/deno.json --allow-env supabase/functions/youtube/index_test.ts"
+    "test:youtube": "deno test --config supabase/functions/deno.json --allow-env supabase/functions/youtube/index_test.ts",
+    "content:check": "node scripts/build-content-banks.mjs --check",
+    "content:build": "node scripts/build-content-banks.mjs"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.3.14",

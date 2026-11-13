@@ -19,14 +19,15 @@ const mgmt = await fetch(
     },
     body: JSON.stringify({
       query:
-        "select (select count(*) from supabase_migrations.schema_migrations)::int as migrations,(select count(*) from cron.job where jobname='chimuverse-calendar' and active)::int as scheduled_jobs,(select count(*) from private.allowed_emails)::int as allowed_accounts,(select count(*) from pg_tables where schemaname='public' and rowsecurity)::int as rls_tables,(select count(*) from public.entries where visibility='private')::int as personal_entries,(select count(*) from public.photos where visibility<>'shared')::int as personal_photos",
+        "select (select count(*) from supabase_migrations.schema_migrations)::int as migrations,(select count(*) from cron.job where jobname='chimuverse-calendar' and active)::int as scheduled_jobs,(select count(*) from private.allowed_emails)::int as allowed_accounts,(select count(*) from pg_tables where schemaname='public' and rowsecurity)::int as rls_tables,(select count(*) from public.entries where visibility='private')::int as personal_entries,(select count(*) from public.photos where visibility<>'shared')::int as personal_photos,(select count(*) from public.questions where bank_key like 'universe-v1-%')::int as seeded_questions,(select count(*) from public.entries where kind='date' and details->>'seed_key' like 'dates-v1-%')::int as seeded_dates",
       read_only: true,
     }),
   },
 );
 if (!mgmt.ok) throw new Error(`Verification failed: ${mgmt.status}`);
 const database = await mgmt.json();
-if (database.some(row => row.personal_entries || row.personal_photos)) throw new Error("Shared-space backfill incomplete");
+if (database.some((row) => row.personal_entries || row.personal_photos))
+  throw new Error("Shared-space backfill incomplete");
 console.log("Database:", JSON.stringify(database));
 const res = await fetch(env.SUPABASE_URL + "/functions/v1/calendar", {
   method: "POST",
@@ -50,5 +51,9 @@ const youtube = await fetch(env.SUPABASE_URL + "/functions/v1/youtube", {
   headers: { "Content-Type": "application/json" },
   body: JSON.stringify({ action: "status" }),
 });
-if (youtube.status !== 401) throw new Error(`YouTube authentication guard failed: ${youtube.status}`);
-console.log("YouTube function deployed; anonymous access denied:", youtube.status);
+if (youtube.status !== 401)
+  throw new Error(`YouTube authentication guard failed: ${youtube.status}`);
+console.log(
+  "YouTube function deployed; anonymous access denied:",
+  youtube.status,
+);

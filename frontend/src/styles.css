@@ -2575,6 +2575,37 @@ input[type="checkbox"] {
 .youtube-playlist > .row:empty {
   display: none;
 }
+.question-filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr));
+  gap: 14px;
+  margin: 20px 0;
+}
+.question-filters label,
+.question-filters input,
+.question-filters select {
+  display: block;
+  width: 100%;
+}
+.question-filters label {
+  font-size: 14px;
+  font-weight: 600;
+}
+.question-filters input,
+.question-filters select {
+  margin-top: 6px;
+}
+.universe-guide {
+  margin-top: 20px;
+}
+.universe-guide summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.universe-guide p,
+.universe-guide ul {
+  margin-top: 12px;
+}
 .youtube-playlist form {
   display: flex;
   flex-direction: column;

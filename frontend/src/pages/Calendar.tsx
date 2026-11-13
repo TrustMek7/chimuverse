@@ -50,7 +50,12 @@ export default function Calendar() {
   const { data, spaceId, me } = useSpace();
   const [params, setParams] = useSearchParams();
   const [open, setOpen] = useState(params.has("crear"));
-  const [selected, setSelected] = useState<CalendarEvent | null>(null);
+  const linkedEvent = data!.calendar_events.find(
+    (e) => e.id === params.get("evento") && !e.deleted_at,
+  );
+  const [selected, setSelected] = useState<CalendarEvent | null>(
+    linkedEvent ?? null,
+  );
   const [occurrence, setOccurrence] = useState<{
     start: string;
     end: string;
@@ -70,7 +75,9 @@ export default function Calendar() {
       1,
     ).toISOString(),
   });
-  const [visibleDate, setVisibleDate] = useState(new Date().toISOString());
+  const [visibleDate, setVisibleDate] = useState(
+    linkedEvent?.start_at ?? new Date().toISOString(),
+  );
   const action = useAction();
   const google = useQuery({
     queryKey: ["google-status"],

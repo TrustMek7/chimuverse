@@ -127,8 +127,160 @@ before(async () => {
       "utf8",
     ),
   );
+  for (const name of [
+    "202611130010_universe_bank.sql",
+    "202611130011_date_ideas.sql",
+    "202611130012_schedule_dates.sql",
+  ]) {
+    await db.exec(
+      readFileSync(
+        new URL("../supabase/migrations/" + name, import.meta.url),
+        "utf8",
+      ),
+    );
+  }
 });
 after(() => db.close());
+
+test("question bank has 300 original prompts across 20 topics and three depths without removing existing questions", async () => {
+  const bank = (
+    await as(a, () =>
+      db.query(
+        "select category,depth,title,source_id from public.questions where bank_key is not null",
+      ),
+    )
+  ).rows;
+  assert.equal(bank.length, 300);
+  assert.equal(new Set(bank.map((q) => q.category)).size, 20);
+  for (const n of [1, 2, 3])
+    assert.equal(bank.filter((q) => q.depth === n).length, 100);
+  assert.equal(
+    new Set(
+      bank.map((q) =>
+        q.title.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase(),
+      ),
+    ).size,
+    300,
+  );
+  assert.ok(bank.every((q) => q.title.length <= 240 && q.source_id));
+  assert.equal(
+    (
+      await as(a, () =>
+        db.query("select * from public.questions where bank_key is null"),
+      )
+    ).rows.length,
+    6,
+  );
+  assert.equal(
+    (await as(c, () => db.query("select * from public.questions"))).rows.length,
+    0,
+  );
+  assert.equal(
+    (await as(c, () => db.query("select * from public.question_sources"))).rows
+      .length,
+    0,
+  );
+  const seed = readFileSync(
+    new URL(
+      "../supabase/migrations/202611130010_universe_bank.sql",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  await db.exec(seed.slice(seed.indexOf("insert into public.questions(")));
+  assert.equal(
+    (
+      await db.query(
+        "select count(*)::int n from public.questions where bank_key is not null",
+      )
+    ).rows[0].n,
+    300,
+  );
+});
+
+test("date ideas are shared and repeatable; either member can schedule and reschedule one linked event", async () => {
+  const seed = readFileSync(
+    new URL(
+      "../supabase/migrations/202611130011_date_ideas.sql",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  await db.exec(seed);
+  const dates = (
+    await as(b, () =>
+      db.query("select * from public.entries where kind='date'"),
+    )
+  ).rows;
+  assert.equal(dates.length, 150);
+  assert.ok(
+    dates.every((e) => e.visibility === "shared" && e.status === "pending"),
+  );
+  const id = dates[0].id;
+  await db.query("select public.calendar_service('connect',$1,$2)", [
+    a,
+    JSON.stringify({
+      token: "encrypted-date-test",
+      calendar_id: "our-calendar",
+    }),
+  ]);
+  const schedule = (uid, start, end) =>
+    as(uid, () =>
+      db.query("select public.schedule_date($1,$2,$3) id", [id, start, end]),
+    );
+  const first = (
+    await schedule(a, "2027-03-12T23:00:00Z", "2027-03-13T01:00:00Z")
+  ).rows[0].id;
+  assert.equal(
+    (
+      await db.query(
+        "select sync_google from public.calendar_events where id=$1",
+        [first],
+      )
+    ).rows[0].sync_google,
+    true,
+  );
+  assert.ok(
+    (
+      await db.query(
+        "select generation from private.calendar_sync_queue where user_id=$1",
+        [a],
+      )
+    ).rows[0].generation > 0,
+  );
+  assert.equal(
+    (
+      await as(b, () =>
+        db.query("select calendar_event_id from public.entries where id=$1", [
+          id,
+        ]),
+      )
+    ).rows[0].calendar_event_id,
+    first,
+  );
+  assert.equal(
+    (await schedule(b, "2027-03-14T23:00:00Z", "2027-03-15T01:00:00Z")).rows[0]
+      .id,
+    first,
+  );
+  assert.equal(
+    (
+      await db.query(
+        "select count(*)::int n from public.calendar_events where id=$1",
+        [first],
+      )
+    ).rows[0].n,
+    1,
+  );
+  await assert.rejects(
+    () => schedule(c, "2027-03-12T23:00:00Z", "2027-03-13T01:00:00Z"),
+    /disponible/,
+  );
+  await assert.rejects(
+    () => schedule(a, "2027-03-12T23:00:00Z", "2027-03-12T22:00:00Z"),
+    /horario/,
+  );
+});
 
 test("migration shares existing mood notes and photos and forces shared writes", async () => {
   await as(b, async () => {

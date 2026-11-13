@@ -47,3 +47,4 @@ jobs:
       - run: npm run typecheck
       - run: npm run test:calendar
       - run: npm run test:youtube
+      - run: npm run content:check

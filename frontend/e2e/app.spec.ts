@@ -125,6 +125,40 @@ async function fixture(page: Page, connected = false) {
       });
       return route.fulfill({ json: rows.entries.at(-1).id });
     }
+    if (table === "schedule_date") {
+      const body = route.request().postDataJSON();
+      const entry = rows.entries.find((e) => e.id === body.p_entry_id);
+      let event = rows.calendar_events.find(
+        (e) => e.id === entry.calendar_event_id,
+      );
+      if (!event) {
+        event = {
+          id: crypto.randomUUID(),
+          owner_id: a,
+          space_id: sid,
+          title: entry.title,
+          description: entry.title,
+          visibility: "shared",
+          kind: "event",
+          all_day: false,
+          recurrence: [],
+          recurrence_timezone: "America/Lima",
+          deleted_at: null,
+        };
+        rows.calendar_events.push(event);
+        entry.calendar_event_id = event.id;
+      }
+      event.start_at = body.p_start_at;
+      event.end_at = body.p_end_at;
+      return route.fulfill({ json: event.id });
+    }
+    if (table === "answers" && route.request().method() === "POST") {
+      rows.answers.push({
+        ...route.request().postDataJSON(),
+        id: crypto.randomUUID(),
+      });
+      return route.fulfill({ json: null });
+    }
     if (route.request().method() === "POST" && table === "tasks") {
       rows.tasks.push({
         ...route.request().postDataJSON(),
@@ -196,6 +230,116 @@ async function fixture(page: Page, connected = false) {
   );
   return rows;
 }
+test("universe bank supports bounded rendering, topic and depth filters and saving answers", async ({
+  page,
+}) => {
+  const rows = await fixture(page);
+  const bank = JSON.parse(
+    (await import("node:fs")).readFileSync(
+      new URL("../../backend/content/universe-questions.json", import.meta.url),
+      "utf8",
+    ),
+  );
+  rows.questions = bank.flatMap((g: any) =>
+    g.questions.map((title: string, i: number) => ({
+      id: crypto.randomUUID(),
+      category: g.category,
+      title,
+      depth: Math.floor(i / 5) + 1,
+      source_id: g.source,
+    })),
+  );
+  await page.goto("/nosotros/universo");
+  await expect(page.getByRole("status")).toContainText(
+    "300 preguntas encontradas",
+  );
+  await expect(page.locator(".universe-question")).toHaveCount(24);
+  await page.getByRole("button", { name: "Ver más preguntas (276)" }).click();
+  await expect(page.locator(".universe-question")).toHaveCount(48);
+  await page
+    .getByLabel("Tema", { exact: true })
+    .selectOption("Autonomía y límites");
+  await page.getByLabel("Profundidad", { exact: true }).selectOption("3");
+  await expect(page.locator(".universe-question")).toHaveCount(5);
+  await page.getByLabel("Buscar preguntas").fill("limita");
+  await expect(page.locator(".universe-question")).toHaveCount(1);
+  await page.getByRole("button", { name: "Compartir mi respuesta" }).click();
+  await page
+    .getByRole("textbox", { name: "Tu respuesta", exact: true })
+    .fill("Podemos revisar nuestros acuerdos con calma.");
+  await page.getByRole("button", { name: "Guardar respuesta" }).click();
+  await expect(
+    page.getByText("Podemos revisar nuestros acuerdos con calma.", {
+      exact: true,
+    }),
+  ).toBeVisible();
+  await page
+    .getByLabel("Respuestas", { exact: true })
+    .selectOption("Pendientes");
+  await expect(page.locator(".universe-question")).toHaveCount(0);
+});
+
+test("a date can be scheduled in the app calendar and rescheduled without duplication", async ({
+  page,
+}) => {
+  const rows = await fixture(page, true);
+  rows.entries.push({
+    id: "d1111111-1111-4111-8111-111111111111",
+    owner_id: b,
+    space_id: sid,
+    kind: "date",
+    title: "Nuestro picnic",
+    details: {
+      category: "Naturaleza",
+      duration_minutes: 120,
+      budget: "Bajo",
+      setting: "Aire libre",
+    },
+    visibility: "shared",
+    status: "pending",
+    occurred_on: "2026-11-13",
+    created_at: new Date().toISOString(),
+    deleted_at: null,
+    entry_bodies: null,
+  });
+  await page.goto("/experiencias/citas");
+  await page.getByRole("button", { name: "Agendar cita", exact: true }).click();
+  await page.getByLabel("Inicio de la cita").fill("2027-04-15T18:00");
+  await page.getByLabel("Fin de la cita").fill("2027-04-15T20:00");
+  await expect(
+    page.getByText(
+      "Se exportará automáticamente a Google Calendar con ambos correos como invitados.",
+    ),
+  ).toBeVisible();
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: "Agendar cita", exact: true })
+    .click();
+  await expect(page.getByRole("status")).toContainText(
+    "La cita quedó guardada",
+  );
+  await page
+    .getByRole("link", { name: "Ver en nuestro calendario", exact: true })
+    .click();
+  await expect(
+    page
+      .getByRole("dialog")
+      .getByRole("heading", { name: "Nuestro picnic", exact: true }),
+  ).toBeVisible();
+  await page.goto("/experiencias/citas");
+  await page
+    .getByRole("button", { name: "Cambiar horario de la cita" })
+    .click();
+  await page.getByLabel("Inicio de la cita").fill("2027-04-16T18:00");
+  await page.getByLabel("Fin de la cita").fill("2027-04-16T20:00");
+  await page.getByRole("button", { name: "Guardar nuevo horario" }).click();
+  await expect(page.getByRole("status")).toContainText(
+    "La cita quedó guardada",
+  );
+  expect(rows.calendar_events).toHaveLength(1);
+  expect(rows.entries[0].calendar_event_id).toBe(rows.calendar_events[0].id);
+});
+
 test("both partners can use a shared YouTube playlist, create unlisted and confirm removals", async ({
   page,
 }) => {

@@ -69,3 +69,7 @@ En Nuestro soundtrack, sin conexión ni playlist se muestra el aviso de conectar
 ## Espacio compartido sin visibilidad individual
 
 Migración 009: convierte a compartidos todos los registros y fotos existentes, impone defaults/triggers/constraints compartidos y normaliza escrituras de clientes antiguos. Las notas de ánimo son legibles para ambos, igual que las finanzas; los presupuestos suman los registros de los dos. La UI elimina filtros y selectores «Solo yo», y el tipo de visibilidad solo admite compartido o cápsula. YouTube crea playlists no listadas y elimina la opción visible solo al propietario. Las cápsulas conservan su fecha de apertura; siguen vigentes membresía, secretos de servidor, autoría, papelera y bloqueo de terceros. Los tests prueban la conversión de datos previos y el rechazo de accesos externos.
+
+## Banco de preguntas e ideas de citas
+
+Migraciones 010 a 012, aplicadas en Supabase el 13 de noviembre de 2026: 300 preguntas en 20 temas y tres niveles, con fuentes editoriales, más 150 ideas de citas compartidas y pendientes. Se conservaron las preguntas, respuestas y citas creadas por los usuarios. Universo permite buscar sin tildes y filtrar por tema, nivel y estado. En Citas se puede elegir una idea y agendarla con `schedule_date`, que crea o reutiliza un único evento compartido del calendario, o marcarla como vivida. Detalle y fuentes en [universe-content-framework.md](universe-content-framework.md). `npm run verify:deployment` comprueba `seeded_questions=300` y `seeded_dates=150`.

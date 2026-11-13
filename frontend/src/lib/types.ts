@@ -49,6 +49,7 @@ export type EntryKind =
   | "budget"
   | "trip";
 export type Entry = {
+  calendar_event_id?: string | null;
   id: string;
   space_id: string;
   owner_id: string;
@@ -107,7 +108,14 @@ export type Notification = {
   read_at: string | null;
   created_at: string;
 };
-export type Question = { id: string; category: string; title: string };
+export type Question = {
+  id: string;
+  category: string;
+  title: string;
+  depth?: number;
+  source_id?: string | null;
+  bank_key?: string | null;
+};
 export type Answer = {
   id: string;
   question_id: string;

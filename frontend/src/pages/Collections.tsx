@@ -1,3 +1,4 @@
+import { ScheduleDate } from "../components/ScheduleDate";
 import { YouTubePlaylist } from "../components/YouTubePlaylist";
 import { useState } from "react";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
@@ -189,7 +190,10 @@ export default function Collections() {
   );
   const [filter, setFilter] = useState("Todas");
   const [search, setSearch] = useState("");
+  const [dateCategory, setDateCategory] = useState("Todas");
+  const [dateLimit, setDateLimit] = useState(24);
   const [roulette, setRoulette] = useState<Entry | null>(null);
+  const [scheduled, setScheduled] = useState<Entry | null>(null);
   const action = useAction();
   const [selectedKind, setSelectedKind] = useState<EntryKind>(cfg.kind);
   const kind =
@@ -206,6 +210,9 @@ export default function Collections() {
         (!pathname.includes("capsulas") || e.visibility === "capsule") &&
         (filter !== "Pendientes" || e.status !== "done") &&
         (filter !== "Historial" || e.status === "done") &&
+        (kind !== "date" ||
+          dateCategory === "Todas" ||
+          String(e.details.category || "Sin categoría") === dateCategory) &&
         e.title.toLocaleLowerCase().includes(search.toLocaleLowerCase()),
     )
     .sort((a, b) => b.occurred_on.localeCompare(a.occurred_on));
@@ -469,8 +476,36 @@ export default function Collections() {
           className="search-input"
           placeholder="Buscar en nuestros momentos…"
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setDateLimit(24);
+          }}
         />
+        {kind === "date" && (
+          <label>
+            Categoría de cita
+            <select
+              value={dateCategory}
+              onChange={(e) => {
+                setDateCategory(e.target.value);
+                setDateLimit(24);
+              }}
+            >
+              <option>Todas</option>
+              {[
+                ...new Set(
+                  data!.entries
+                    .filter((e) => e.kind === "date" && !e.deleted_at)
+                    .map((e) => String(e.details.category || "Sin categoría")),
+                ),
+              ]
+                .sort()
+                .map((c) => (
+                  <option key={c}>{c}</option>
+                ))}
+            </select>
+          </label>
+        )}
         {["date", "watch"].includes(kind) && (
           <Button
             variant="secondary"
@@ -521,230 +556,252 @@ export default function Collections() {
         <div
           className={`collection-grid ${kind === "journal" ? "journal-grid" : ""}`}
         >
-          {entries.map((e) => {
-            const sealed =
-              e.visibility === "capsule" && new Date(e.unlock_at!) > new Date();
-            return (
-              <article
-                className={`card collection-card kind-${kind}`}
-                key={e.id}
-              >
-                <div className="row between">
-                  <span className="collection-icon">
-                    {kind === "mood" ? (
-                      <span className="mood-emoji">
-                        {moodEmoji(String(e.details.mood))}
-                      </span>
-                    ) : (
-                      <Icon size={23} />
-                    )}
-                  </span>
-                  <VisibilityPill value={e.visibility} />
-                </div>
-                <div className="row gap wrap">
-                  <small className="eyebrow">
-                    {e.details.category ||
-                      e.details.subtype ||
-                      formatDate(e.occurred_on)}
-                  </small>
-                  {["watch", "date", "goal", "wish"].includes(kind) && (
-                    <Status value={e.status} />
-                  )}
-                </div>
-                {kind === "goal" &&
-                  e.details.photo_id &&
-                  data!.photos.some(
-                    (p) => p.id === e.details.photo_id && !p.deleted_at,
-                  ) && (
-                    <div className="goal-photo">
-                      <PhotoImage
-                        photo={data!.photos.find(
-                          (p) => p.id === e.details.photo_id,
-                        )!}
-                      />
-                    </div>
-                  )}
-                <h2>{e.title}</h2>
-                {e.details.artist && (
-                  <p className="muted">{e.details.artist}</p>
-                )}
-                {sealed ? (
-                  <div className="sealed">
-                    <Lock size={22} />
-                    <p>Un mensaje esperando su momento.</p>
-                    <strong>Se abre el {formatDate(e.unlock_at!)}</strong>
+          {(kind === "date" ? entries.slice(0, dateLimit) : entries).map(
+            (e) => {
+              const sealed =
+                e.visibility === "capsule" &&
+                new Date(e.unlock_at!) > new Date();
+              return (
+                <article
+                  className={`card collection-card kind-${kind}`}
+                  key={e.id}
+                >
+                  <div className="row between">
+                    <span className="collection-icon">
+                      {kind === "mood" ? (
+                        <span className="mood-emoji">
+                          {moodEmoji(String(e.details.mood))}
+                        </span>
+                      ) : (
+                        <Icon size={23} />
+                      )}
+                    </span>
+                    <VisibilityPill value={e.visibility} />
                   </div>
-                ) : (
-                  e.entry_bodies?.content && (
-                    <p
-                      className={`entry-content ${kind === "journal" ? "hand-note" : ""}`}
-                    >
-                      {e.entry_bodies.content}
-                    </p>
-                  )
-                )}
-                {kind === "goal" && (
-                  <>
-                    <label className="field">
-                      Un recuerdo para nuestro vision board
-                      <select
-                        value={draft.photo_id}
-                        onChange={(e) => change("photo_id", e.target.value)}
-                      >
-                        <option value="">Sin imagen</option>
-                        {data!.photos
-                          .filter((p) => !p.deleted_at)
-                          .map((p) => (
-                            <option key={p.id} value={p.id}>
-                              {p.title} · {"Compartido"}
-                            </option>
-                          ))}
-                      </select>
-                      <small className="muted">
-                        La imagen también se comparte entre los dos.
-                      </small>
-                    </label>
-                    <div className="row between">
-                      <small>Progreso de la meta</small>
-                      <strong>{e.progress} %</strong>
-                    </div>
-                    <div
-                      className="track"
-                      role="meter"
-                      aria-label="Progreso de la meta"
-                      aria-valuenow={e.progress}
-                      aria-valuemin={0}
-                      aria-valuemax={100}
-                    >
-                      <span
-                        className="fill verified"
-                        style={{ width: `${e.progress}%` }}
-                      />
-                    </div>
-                    {e.details.milestones && (
-                      <ul className="milestones">
-                        {String(e.details.milestones)
-                          .split("\n")
-                          .filter(Boolean)
-                          .map((m, i) => (
-                            <li key={i}>
-                              {m.startsWith("[x]") ? "✓" : "○"}{" "}
-                              {m.replace(/^\[[x ]\]\s*/, "")}
-                            </li>
-                          ))}
-                      </ul>
+                  <div className="row gap wrap">
+                    <small className="eyebrow">
+                      {e.details.category ||
+                        e.details.subtype ||
+                        formatDate(e.occurred_on)}
+                    </small>
+                    {["watch", "date", "goal", "wish"].includes(kind) && (
+                      <Status value={e.status} />
                     )}
-                  </>
-                )}
-                {["transaction", "budget"].includes(kind) && (
-                  <strong
-                    className={`amount ${e.details.direction === "income" ? "income" : ""}`}
-                  >
-                    {e.details.direction === "income"
-                      ? "+"
-                      : kind === "budget"
-                        ? ""
-                        : "−"}
-                    {money(Number(e.amount))}
-                  </strong>
-                )}
-                {e.details.location && (
-                  <p className="muted">⌖ {e.details.location}</p>
-                )}
-                {e.details.link && safeLink(String(e.details.link)) && (
-                  <a
-                    className="text-link"
-                    href={safeLink(String(e.details.link))!}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {kind === "track" ? "Escuchar" : "Abrir enlace"}{" "}
-                    <ArrowUpRight size={16} />
-                  </a>
-                )}
-                <div className="row between card-meta">
-                  <small>
-                    {formatDate(e.occurred_on)} ·{" "}
-                    {e.owner_id === me.id
-                      ? "Tú"
-                      : data!.profiles
-                          .find((p) => p.id === e.owner_id)
-                          ?.display_name.split(" ")[0]}
-                  </small>
-                  {e.owner_id === me.id && !sealed && (
-                    <div className="row gap-sm">
-                      <button
-                        className="icon-button"
-                        aria-label={`Editar ${e.title}`}
-                        onClick={() => openEditor(e)}
-                      >
-                        <Pencil size={16} />
-                      </button>
-                      <button
-                        className="icon-button"
-                        aria-label={`Enviar ${e.title} a la papelera`}
-                        onClick={() =>
-                          action.run(async () =>
-                            check(
-                              await supabase.rpc("trash_item", {
-                                p_table: "entries",
-                                p_id: e.id,
-                              }),
-                            ),
-                          )
-                        }
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
+                  </div>
+                  {kind === "goal" &&
+                    e.details.photo_id &&
+                    data!.photos.some(
+                      (p) => p.id === e.details.photo_id && !p.deleted_at,
+                    ) && (
+                      <div className="goal-photo">
+                        <PhotoImage
+                          photo={data!.photos.find(
+                            (p) => p.id === e.details.photo_id,
+                          )!}
+                        />
+                      </div>
+                    )}
+                  <h2>{e.title}</h2>
+                  {kind === "date" && e.details.duration_minutes && (
+                    <p className="small muted">
+                      {e.details.setting} · Duración sugerida:{" "}
+                      {Number(e.details.duration_minutes) / 60} h · Presupuesto
+                      orientativo: {e.details.budget}
+                    </p>
                   )}
-                </div>
-                {e.owner_id === me.id &&
-                  ["watch", "date", "wish"].includes(kind) &&
-                  e.status !== "done" && (
-                    <div className="row gap-sm">
+                  {e.details.artist && (
+                    <p className="muted">{e.details.artist}</p>
+                  )}
+                  {sealed ? (
+                    <div className="sealed">
+                      <Lock size={22} />
+                      <p>Un mensaje esperando su momento.</p>
+                      <strong>Se abre el {formatDate(e.unlock_at!)}</strong>
+                    </div>
+                  ) : (
+                    e.entry_bodies?.content && (
+                      <p
+                        className={`entry-content ${kind === "journal" ? "hand-note" : ""}`}
+                      >
+                        {e.entry_bodies.content}
+                      </p>
+                    )
+                  )}
+                  {kind === "goal" && (
+                    <>
+                      <label className="field">
+                        Un recuerdo para nuestro vision board
+                        <select
+                          value={draft.photo_id}
+                          onChange={(e) => change("photo_id", e.target.value)}
+                        >
+                          <option value="">Sin imagen</option>
+                          {data!.photos
+                            .filter((p) => !p.deleted_at)
+                            .map((p) => (
+                              <option key={p.id} value={p.id}>
+                                {p.title} · {"Compartido"}
+                              </option>
+                            ))}
+                        </select>
+                        <small className="muted">
+                          La imagen también se comparte entre los dos.
+                        </small>
+                      </label>
+                      <div className="row between">
+                        <small>Progreso de la meta</small>
+                        <strong>{e.progress} %</strong>
+                      </div>
+                      <div
+                        className="track"
+                        role="meter"
+                        aria-label="Progreso de la meta"
+                        aria-valuenow={e.progress}
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                      >
+                        <span
+                          className="fill verified"
+                          style={{ width: `${e.progress}%` }}
+                        />
+                      </div>
+                      {e.details.milestones && (
+                        <ul className="milestones">
+                          {String(e.details.milestones)
+                            .split("\n")
+                            .filter(Boolean)
+                            .map((m, i) => (
+                              <li key={i}>
+                                {m.startsWith("[x]") ? "✓" : "○"}{" "}
+                                {m.replace(/^\[[x ]\]\s*/, "")}
+                              </li>
+                            ))}
+                        </ul>
+                      )}
+                    </>
+                  )}
+                  {["transaction", "budget"].includes(kind) && (
+                    <strong
+                      className={`amount ${e.details.direction === "income" ? "income" : ""}`}
+                    >
+                      {e.details.direction === "income"
+                        ? "+"
+                        : kind === "budget"
+                          ? ""
+                          : "−"}
+                      {money(Number(e.amount))}
+                    </strong>
+                  )}
+                  {e.details.location && (
+                    <p className="muted">⌖ {e.details.location}</p>
+                  )}
+                  {e.details.link && safeLink(String(e.details.link)) && (
+                    <a
+                      className="text-link"
+                      href={safeLink(String(e.details.link))!}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {kind === "track" ? "Escuchar" : "Abrir enlace"}{" "}
+                      <ArrowUpRight size={16} />
+                    </a>
+                  )}
+                  <div className="row between card-meta">
+                    <small>
+                      {formatDate(e.occurred_on)} ·{" "}
+                      {e.owner_id === me.id
+                        ? "Tú"
+                        : data!.profiles
+                            .find((p) => p.id === e.owner_id)
+                            ?.display_name.split(" ")[0]}
+                    </small>
+                    {e.owner_id === me.id && !sealed && (
+                      <div className="row gap-sm">
+                        <button
+                          className="icon-button"
+                          aria-label={`Editar ${e.title}`}
+                          onClick={() => openEditor(e)}
+                        >
+                          <Pencil size={16} />
+                        </button>
+                        <button
+                          className="icon-button"
+                          aria-label={`Enviar ${e.title} a la papelera`}
+                          onClick={() =>
+                            action.run(async () =>
+                              check(
+                                await supabase.rpc("trash_item", {
+                                  p_table: "entries",
+                                  p_id: e.id,
+                                }),
+                              ),
+                            )
+                          }
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  {e.owner_id === me.id &&
+                    ["watch", "date", "wish"].includes(kind) &&
+                    e.status !== "done" && (
+                      <div className="row gap-sm">
+                        <Button
+                          variant="secondary"
+                          busy={action.busy}
+                          onClick={() => setStatus(e, "done")}
+                        >
+                          <Check size={16} />
+                          {kind === "wish"
+                            ? "¡Deseo cumplido!"
+                            : kind === "date"
+                              ? "Ya la vivimos"
+                              : "Marcar como completado"}
+                        </Button>
+                        {kind === "watch" && e.status === "pending" && (
+                          <Button
+                            variant="ghost"
+                            busy={action.busy}
+                            onClick={() => setStatus(e, "progress")}
+                          >
+                            Empezar
+                          </Button>
+                        )}
+                      </div>
+                    )}
+                  {kind === "date" && (
+                    <div className="row gap wrap">
                       <Button
                         variant="secondary"
-                        busy={action.busy}
-                        onClick={() => setStatus(e, "done")}
+                        onClick={() => setScheduled(e)}
                       >
-                        <Check size={16} />
-                        {kind === "wish"
-                          ? "¡Deseo cumplido!"
-                          : kind === "date"
-                            ? "Ya la vivimos"
-                            : "Marcar como completado"}
+                        {e.calendar_event_id
+                          ? "Cambiar horario de la cita"
+                          : "Agendar cita"}
                       </Button>
-                      {kind === "watch" && e.status === "pending" && (
-                        <Button
-                          variant="ghost"
-                          busy={action.busy}
-                          onClick={() => setStatus(e, "progress")}
+                      {e.calendar_event_id && (
+                        <Link
+                          className="text-link"
+                          to={`/dia/calendario?evento=${e.calendar_event_id}`}
                         >
-                          Empezar
-                        </Button>
+                          Ver en el calendario <ArrowUpRight size={16} />
+                        </Link>
                       )}
                     </div>
                   )}
-                {kind === "date" && (
-                  <Link
-                    to={`/dia/calendario?crear=1&titulo=${encodeURIComponent(e.title)}`}
-                    className="text-link"
-                  >
-                    Planear en el calendario <ArrowUpRight size={16} />
-                  </Link>
-                )}
-                {kind === "trip" && (
-                  <Link
-                    to={`/recuerdos/vault?viaje=${e.id}`}
-                    className="text-link"
-                  >
-                    Ver el álbum <ArrowUpRight size={16} />
-                  </Link>
-                )}
-              </article>
-            );
-          })}
+                  {kind === "trip" && (
+                    <Link
+                      to={`/recuerdos/vault?viaje=${e.id}`}
+                      className="text-link"
+                    >
+                      Ver el álbum <ArrowUpRight size={16} />
+                    </Link>
+                  )}
+                </article>
+              );
+            },
+          )}
         </div>
       ) : (
         <Empty
@@ -755,6 +812,11 @@ export default function Collections() {
           }
           text="No hay registros con estos filtros. Lo que añadas aquí se guardará en nuestro espacio."
         />
+      )}
+      {kind === "date" && entries.length > dateLimit && (
+        <Button variant="secondary" onClick={() => setDateLimit((n) => n + 24)}>
+          Ver más citas ({entries.length - dateLimit})
+        </Button>
       )}
       <Modal
         title={
@@ -1009,6 +1071,13 @@ export default function Collections() {
           </Button>
         </form>
       </Modal>
+      {scheduled && (
+        <ScheduleDate
+          key={scheduled.id}
+          entry={scheduled}
+          close={() => setScheduled(null)}
+        />
+      )}
       <Modal
         title="El universo eligió…"
         open={!!roulette}
@@ -1020,12 +1089,14 @@ export default function Collections() {
             <h2>{roulette.title}</h2>
             <p>{roulette.entry_bodies?.content}</p>
             {roulette.kind === "date" && (
-              <Link
-                to={`/dia/calendario?crear=1&titulo=${encodeURIComponent(roulette.title)}`}
-                className="btn btn-primary"
+              <Button
+                onClick={() => {
+                  setScheduled(roulette);
+                  setRoulette(null);
+                }}
               >
-                Hagamos el plan
-              </Link>
+                Agendar esta cita
+              </Button>
             )}
           </div>
         )}

@@ -14,6 +14,10 @@ export default function Universe() {
   const { data, me, partner, spaceId } = useSpace();
   const [tab, setTab] = useState("Preguntas");
   const [category, setCategory] = useState("Todas");
+  const [search, setSearch] = useState("");
+  const [depth, setDepth] = useState("Todas");
+  const [progress, setProgress] = useState("Todas");
+  const [limit, setLimit] = useState(24);
   const [answer, setAnswer] = useState("");
   const [selected, setSelected] = useState<string | null>(null);
   const [newQuestion, setNewQuestion] = useState(false);
@@ -27,9 +31,56 @@ export default function Universe() {
     "Todas",
     ...new Set(data!.questions.map((q) => q.category)),
   ];
-  const questions = data!.questions.filter(
-    (q) => category === "Todas" || q.category === category,
-  );
+  const normalize = (s: string) =>
+    s.normalize("NFD").replace(/\p{M}/gu, "").toLocaleLowerCase("es");
+  const questions = data!.questions
+    .filter((q) => {
+      const own = data!.answers.some(
+        (a) => a.question_id === q.id && a.respondent_id === me.id,
+      );
+      const other = data!.answers.some(
+        (a) => a.question_id === q.id && a.respondent_id !== me.id,
+      );
+      return (
+        (category === "Todas" || q.category === category) &&
+        (depth === "Todas" || String(q.depth ?? 1) === depth) &&
+        normalize(q.title).includes(normalize(search)) &&
+        (progress === "Todas" ||
+          (progress === "Pendientes" && !own) ||
+          (progress === "Mis respuestas" && own) ||
+          (progress === "Ambos respondimos" && own && other))
+      );
+    })
+    .sort(
+      (a, b) =>
+        (a.depth ?? 1) - (b.depth ?? 1) ||
+        a.category.localeCompare(b.category, "es") ||
+        a.title.localeCompare(b.title, "es"),
+    );
+  const sources: Record<string, { title: string; url: string }> = {
+    love_maps: {
+      title: "Mapas del mundo de la pareja · Gottman",
+      url: "https://www.gottman.com/blog/build-love-maps/",
+    },
+    disclosure: {
+      title: "Apertura personal gradual · Aron y colaboradores",
+      url: "https://journals.sagepub.com/doi/10.1177/0146167297234003",
+    },
+    needs: {
+      title: "Autonomía, competencia y conexión",
+      url: "https://selfdeterminationtheory.org/topics/application-relationships/",
+    },
+    repair: {
+      title: "Comunicación e intentos de reparación · Gottman",
+      url: "https://www.gottman.com/blog/make-repair-attempts-partner-feels-loved/",
+    },
+    capitalization: {
+      title: "Compartir buenas noticias · Gable y colaboradores",
+      url: "https://pubmed.ncbi.nlm.nih.gov/15301629/",
+    },
+  };
+  const depthName = (n = 1) =>
+    ["", "Para empezar", "Para conocernos", "Para profundizar"][n];
   const triviaQuestions = data!.questions.filter((q) =>
     data!.answers.some(
       (a) => a.question_id === q.id && a.respondent_id !== me.id,
@@ -143,19 +194,103 @@ export default function Universe() {
         </section>
       ) : (
         <>
-          <div className="segments category-tabs">
-            {categories.map((c) => (
-              <button
-                key={c}
-                aria-pressed={c === category}
-                onClick={() => setCategory(c)}
+          <details className="card universe-guide">
+            <summary>
+              Conversar a nuestro ritmo · origen de las preguntas
+            </summary>
+            <p>
+              Preguntas originales en tres niveles, inspiradas en estos
+              enfoques. Pueden elegir cualquier tema, responder por turnos o
+              saltar una pregunta.
+            </p>
+            <ul>
+              {Object.entries(sources).map(([id, s]) => (
+                <li key={id}>
+                  <a
+                    className="text-link"
+                    href={s.url}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {s.title}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </details>
+          <div className="question-filters">
+            <label>
+              Buscar preguntas
+              <input
+                type="search"
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setLimit(24);
+                }}
+                placeholder="Una palabra o un tema…"
+              />
+            </label>
+            <label>
+              Tema
+              <select
+                aria-label="Tema"
+                value={category}
+                onChange={(e) => {
+                  setCategory(e.target.value);
+                  setLimit(24);
+                }}
               >
-                {c}
-              </button>
-            ))}
+                {categories.map((c) => (
+                  <option key={c}>{c}</option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Profundidad
+              <select
+                aria-label="Profundidad"
+                value={depth}
+                onChange={(e) => {
+                  setDepth(e.target.value);
+                  setLimit(24);
+                }}
+              >
+                <option>Todas</option>
+                {[1, 2, 3].map((n) => (
+                  <option key={n} value={n}>
+                    {depthName(n)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Respuestas
+              <select
+                aria-label="Respuestas"
+                value={progress}
+                onChange={(e) => {
+                  setProgress(e.target.value);
+                  setLimit(24);
+                }}
+              >
+                {[
+                  "Todas",
+                  "Pendientes",
+                  "Mis respuestas",
+                  "Ambos respondimos",
+                ].map((p) => (
+                  <option key={p}>{p}</option>
+                ))}
+              </select>
+            </label>
           </div>
+          <p className="small muted" role="status">
+            {questions.length} preguntas encontradas · {data!.questions.length}{" "}
+            en nuestro universo
+          </p>
           <div className="collection-grid">
-            {questions.map((q) => {
+            {questions.slice(0, limit).map((q) => {
               const own = data!.answers.find(
                 (a) => a.question_id === q.id && a.respondent_id === me.id,
               );
@@ -169,6 +304,7 @@ export default function Universe() {
                     <Orbit size={22} />
                   </div>
                   <h2>{q.title}</h2>
+                  <small className="muted">{depthName(q.depth)}</small>
                   {own ? (
                     <>
                       <div className="answer own">
@@ -200,10 +336,25 @@ export default function Universe() {
                     {own ? "Editar mi respuesta" : "Compartir mi respuesta"}{" "}
                     <ArrowRight size={16} />
                   </Button>
+                  {q.source_id && sources[q.source_id] && (
+                    <a
+                      className="text-link small"
+                      href={sources[q.source_id].url}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Sobre este enfoque ↗
+                    </a>
+                  )}
                 </section>
               );
             })}
           </div>
+          {questions.length > limit && (
+            <Button variant="secondary" onClick={() => setLimit((n) => n + 24)}>
+              Ver más preguntas ({questions.length - limit})
+            </Button>
+          )}
           {!questions.length && <Empty title="Una nueva conversación" />}
         </>
       )}
@@ -218,8 +369,23 @@ export default function Universe() {
             e.preventDefault();
             void action.run(
               async () => {
-                const existing=data!.answers.find(a=>a.question_id===selected&&a.respondent_id===me.id);
-                return check(await (existing?supabase.from('answers').update({answer:answer.trim()}).eq('id',existing.id):supabase.from('answers').insert({question_id:selected,space_id:spaceId,respondent_id:me.id,answer:answer.trim()})));
+                const existing = data!.answers.find(
+                  (a) =>
+                    a.question_id === selected && a.respondent_id === me.id,
+                );
+                return check(
+                  await (existing
+                    ? supabase
+                        .from("answers")
+                        .update({ answer: answer.trim() })
+                        .eq("id", existing.id)
+                    : supabase.from("answers").insert({
+                        question_id: selected,
+                        space_id: spaceId,
+                        respondent_id: me.id,
+                        answer: answer.trim(),
+                      })),
+                );
               },
               () => setSelected(null),
             );
