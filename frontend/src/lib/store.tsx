@@ -139,7 +139,7 @@ export function useSnapshot() {
             const result = await supabase
               .from(table)
               .select(table === "entries" ? "*,entry_bodies(content)" : "*")
-              .order("id")
+              .order(table === "question_hidden" ? "question_id" : "id")
               .range(offset, offset + 499);
             if (
               ["calendar_overrides", "task_events", "finance_recurring", "savings_goals", "question_hidden"].includes(table) &&

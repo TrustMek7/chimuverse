@@ -88,6 +88,9 @@ async function fixture(page: Page, connected = false) {
   await page.route("**/rest/v1/**", async (route) => {
     const url = new URL(route.request().url());
     const table = url.pathname.split("/").pop()!;
+    // Like PostgREST: ordering by a column the table lacks is an error (question_hidden has no id).
+    if (table === "question_hidden" && url.searchParams.get("order")?.startsWith("id"))
+      return route.fulfill({ status: 400, json: { code: "42703", message: "column question_hidden.id does not exist" } });
     if (table === "google_status")
       return route.fulfill({
         json: {
