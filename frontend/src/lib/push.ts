@@ -179,11 +179,6 @@ export function usePush() {
       set(supported() && Notification.permission === "denied" ? "denied" : "off");
       await qc.invalidateQueries({ queryKey: ["push-devices"] });
     },
-    async test() {
-      const { data, error } = await supabase.functions.invoke("push", { body: { action: "test" } });
-      if (error) throw new Error("No se pudo enviar la prueba.");
-      return data as { sent: number; removed: number; failed: number };
-    },
   };
 }
 

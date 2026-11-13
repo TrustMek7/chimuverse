@@ -13,6 +13,8 @@ self.addEventListener("push", (event) => {
     self.registration.showNotification(message.title, {
       body: message.body,
       tag: message.tag,
+      // Replacing a notification with the same tag must still alert, not update silently.
+      renotify: true,
       icon: "/icons/icon-192.png",
       badge: "/icons/badge-96.png",
       lang: "es",

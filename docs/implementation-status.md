@@ -81,7 +81,7 @@ Migración 013 y Edge Function `push`. Cada notificación de la app (`notificati
 - **Activación:** en Inicio, una tarjeta ofrece «Activar notificaciones». Con un toque aparece el permiso del navegador, que los navegadores solo muestran tras un gesto. «Ahora no» deja visible el estado «Notificaciones desactivadas · Activar». Una vez activas, Inicio muestra «Notificaciones activadas», que enlaza a Ajustes. Si el dispositivo ya tenía permiso (al volver a iniciar sesión o si el navegador rotó la suscripción), se vuelve a vincular sin preguntar.
 - **iPhone/iPad:** Apple solo permite push a la app instalada en el inicio (iOS 16.4 o posterior). En una pestaña de Safari la tarjeta guía «Compartir → Agregar a inicio». Android y escritorio funcionan sin instalar; en escritorio el navegador debe estar abierto, aunque sea en segundo plano.
 - **Permiso bloqueado:** la web no puede volver a pedirlo; la tarjeta explica cómo permitirlo en el navegador.
-- **Ajustes → Perfil:** activar o desactivar este dispositivo, enviar una prueba y ver o quitar los dispositivos de la cuenta.
+- **Ajustes → Perfil:** activar o desactivar este dispositivo y ver o quitar los dispositivos de la cuenta. Los avisos de sistema reemplazan a otros con la misma etiqueta y vuelven a alertar (`renotify`). La función conserva la acción `test` (aviso de prueba a los dispositivos de quien la llama, con su sesión) para diagnóstico, sin botón en la interfaz.
 - **Seguridad:**
   - `push_subscriptions` solo es visible para su dueño y el cliente no puede leer las claves.
   - Guardar pasa por `save_push_subscription`, que exige membresía. Un navegador compartido pasa a quien inició sesión por última vez.

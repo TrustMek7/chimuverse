@@ -797,7 +797,6 @@ test("dashboard offers one-tap notifications, shows their status and lists devic
     navigator.serviceWorker.getRegistration = async () => reg;
   });
   const saved: any[] = [];
-  let tested = 0;
   await page.route("**/rest/v1/rpc/save_push_subscription", async (route) => {
     saved.push(route.request().postDataJSON());
     await route.fulfill({ json: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee" });
@@ -811,10 +810,9 @@ test("dashboard offers one-tap notifications, shows their status and lists devic
   );
   await page.route("**/functions/v1/push", async (route) => {
     const body = route.request().postDataJSON();
-    if (body.action === "test") tested++;
-    await route.fulfill({
-      json: body.action === "key" ? { publicKey: "B" + "A".repeat(86) } : { sent: 1, removed: 0, failed: 0 },
-    });
+    await route.fulfill(
+      body.action === "key" ? { json: { publicKey: "B" + "A".repeat(86) } } : { status: 400, json: { error: "Acción no válida" } },
+    );
   });
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "¿Te avisamos cuando te toque?" })).toBeVisible();
@@ -833,7 +831,5 @@ test("dashboard offers one-tap notifications, shows their status and lists devic
   await page.getByRole("link", { name: /Notificaciones activadas/ }).click();
   await expect(page.getByRole("heading", { name: "Notificaciones en tus dispositivos" })).toBeVisible();
   await expect(page.getByText("Este dispositivo", { exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "Enviar una prueba" }).click();
-  await expect(page.getByText("Prueba enviada.")).toBeVisible();
-  expect(tested).toBe(1);
+  await expect(page.getByRole("button", { name: "Desactivar aquí" })).toBeVisible();
 });

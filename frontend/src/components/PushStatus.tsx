@@ -123,13 +123,12 @@ export function PushStatus() {
 
 type Device = { id: string; label: string; created_at: string; last_seen_at: string; endpoint: string };
 
-/** Settings: this device's switch, a test push and the list of the member's devices. */
+/** Settings: this device's switch and the list of the member's devices. */
 export function PushSettings() {
   const push = usePush();
   const qc = useQueryClient();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(null);
-  const [note, setNote] = useState("");
   const devices = useQuery({
     queryKey: ["push-devices"],
     queryFn: async () => {
@@ -143,7 +142,6 @@ export function PushSettings() {
   async function run(fn: () => Promise<unknown>) {
     setBusy(true);
     setError(null);
-    setNote("");
     try {
       await fn();
     } catch (e) {
@@ -167,30 +165,15 @@ export function PushSettings() {
           <p className="muted">{push.state ? text : "Comprobando…"}</p>
         </div>
         {push.state === "active" ? (
-          <div className="row gap wrap">
-            <Button
-              variant="secondary"
-              busy={busy}
-              onClick={() =>
-                run(async () => {
-                  const r = await push.test();
-                  setNote(r.sent ? "Prueba enviada. Debería llegarte en unos segundos." : "No hay dispositivos activos para recibir la prueba.");
-                })
-              }
-            >
-              Enviar una prueba
-            </Button>
-            <Button variant="secondary" busy={busy} onClick={() => run(push.disable)}>
-              Desactivar aquí
-            </Button>
-          </div>
+          <Button variant="secondary" busy={busy} onClick={() => run(push.disable)}>
+            Desactivar aquí
+          </Button>
         ) : push.state === "off" ? (
           <Button busy={busy} onClick={() => run(push.enable)}>
             <Bell size={17} /> Activar en este dispositivo
           </Button>
         ) : null}
       </div>
-      {note && <p className="banner" role="status">{note}</p>}
       <ErrorMessage error={error ?? devices.error} />
       {devices.data && devices.data.list.length > 0 && (
         <ul className="device-list">
