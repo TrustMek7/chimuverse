@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { check, supabase } from "./supabase";
 
@@ -147,10 +148,24 @@ export function usePush() {
   const state = useQuery({
     queryKey: ["push-state"],
     queryFn: readPushState,
-    staleTime: Infinity,
+    // Re-read when returning to the tab: the person may have changed the permission meanwhile.
+    staleTime: 0,
     refetchOnWindowFocus: true,
     retry: false,
   });
+  useEffect(() => {
+    // Chrome and Firefox report permission changes live; Safari falls back to the focus refetch.
+    let status: PermissionStatus | undefined;
+    const refresh = () => void qc.invalidateQueries({ queryKey: ["push-state"] });
+    navigator.permissions
+      ?.query({ name: "notifications" as PermissionName })
+      .then((s) => {
+        status = s;
+        s.addEventListener("change", refresh);
+      })
+      .catch(() => undefined);
+    return () => status?.removeEventListener("change", refresh);
+  }, [qc]);
   const set = (s: PushState) => qc.setQueryData(["push-state"], s);
   return {
     state: state.data,
