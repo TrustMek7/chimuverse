@@ -79,7 +79,7 @@ Vercel: raíz `frontend`, build `npm run build`, salida `dist`. Configurar solo 
 - Ajustes → Datos exporta registros visibles en JSON y fotos en ZIP. No incluye datos privados de la pareja ni textos de cápsulas selladas.
 - Papelera restaura registros; la purga automática a 30 días está desactivada. Completar tareas, metas y títulos no elimina su historial.
 - `--schedule` configura pg_cron/pg_net cada 15 minutos, con secreto en Vault, para Calendar y recordatorios deduplicados de quests a 24/72 horas y eventos próximos.
-- Correo y push siguen desactivados, según el handoff. Spotify/YouTube se usan mediante enlaces, sin conectar cuentas.
+- Correo y push siguen desactivados, según el handoff. Spotify usa enlaces. YouTube cuenta con conexión OAuth y playlist común (ver la guía al final).
 - Guardar exportaciones en almacenamiento personal cifrado. No subir backups al repositorio ni a artifacts de CI.
 
 Referencias oficiales: [migraciones](https://supabase.com/docs/guides/deployment/database-migrations), [Google Auth](https://supabase.com/docs/guides/auth/social-sign-in/auth-google), [scopes de Calendar](https://developers.google.com/workspace/calendar/api/auth), [sincronización incremental](https://developers.google.com/workspace/calendar/api/guides/sync).
@@ -89,3 +89,16 @@ Una vez conectado Calendar, Our Calendar exporta automáticamente sus eventos y 
 
 
 Our Calendar siempre es compartido. En Repetición se elige frecuencia, días e intervalo; Finaliza ofrece Nunca, fecha incluida o número de repeticiones. Editar serie y Eliminar serie afectan a todas sus fechas. Los cambios se exportan automáticamente e incluyen a los dos correos autorizados como invitados en Google; cada persona podría tener que aceptar la invitación según sus ajustes.
+
+
+## Conectar YouTube y crear nuestra playlist
+
+1. En el proyecto de Google Cloud habilitar YouTube Data API v3. En Google Auth Platform → Acceso a los datos añadir `https://www.googleapis.com/auth/youtube.force-ssl`. Mantener los dos correos autorizados como usuarios de prueba.
+2. En Clientes → cliente de aplicación web → URI de redireccionamiento autorizado añadir `https://xlzttaqjajnjukikvcyj.supabase.co/functions/v1/youtube`. Es una redirección, no un origen JavaScript. No quitar las URI existentes de login y Calendar.
+3. Por defecto se reutilizan `GOOGLE_OAUTH_CLIENT_ID` y `GOOGLE_OAUTH_CLIENT_SECRET` de `backend/.env`. También se admite cliente separado mediante `YOUTUBE_OAUTH_CLIENT_ID` y `YOUTUBE_OAUTH_CLIENT_SECRET`. Para importar su JSON, guardarlo como `backend/.env.youtube-oauth.json` (ignorado por Git), ejecutar `node scripts/import-youtube-oauth.mjs` desde backend y después `npm run deploy:all`. Ningún secreto lleva prefijo VITE_.
+4. En Ajustes → Conexiones o Nuestro soundtrack pulsar Conectar mi YouTube. Aceptar el permiso con el mismo correo del login. La cuenta necesita tener canal de YouTube.
+5. Elegir Crear nuestra playlist en YouTube. La opción No listada permite verla a cualquiera con el enlace; Privada la mantiene visible solo para el propietario en YouTube. Ambos miembros pueden editar desde Chimuverse usando la conexión del propietario. También se puede importar una playlist existente de su propio canal.
+6. Si desean editar también desde YouTube, usar playlist no listada y, desde la cuenta propietaria, abrir YouTube → playlist → Compartir → Invitar colaboradores y compartir el enlace con la otra persona. La API de YouTube no permite invitar directamente a los dos correos. La otra cuenta debe aceptar el enlace.
+7. Añadir o quitar canciones en el panel actualiza YouTube inmediatamente. Los cambios externos aparecen al actualizar o en un minuto mientras el panel esté abierto. Exportar canciones compartidas añade sus enlaces de YouTube sin duplicados; las canciones locales privadas y Spotify quedan fuera. Una exportación interrumpida puede añadir algunas canciones: actualizar antes de repetir conserva lo ya añadido.
+
+El scope permite más operaciones que las que usa la app; no existe un scope oficial limitado a una sola playlist. Desconectar quita la credencial guardada sin borrar la playlist. Revocar el cliente desde Google puede afectar también Calendar si comparten cliente OAuth. Documentación: https://developers.google.com/youtube/data/reference/rest/v3/playlists y https://support.google.com/youtube/answer/6109639.

@@ -1,3 +1,4 @@
+import { YouTubePlaylist } from "../components/YouTubePlaylist";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocation, Link } from "react-router-dom";
@@ -242,154 +243,158 @@ export default function Settings() {
           </Button>
         </section>
       ) : tab === "Conexiones" ? (
-        <section className="card settings-card">
-          <div className="row gap">
-            {connection.data?.status === "connected" ? (
-              <CalendarCheck size={30} />
-            ) : (
-              <CloudOff size={30} />
-            )}
-            <div>
-              <h2>Google Calendar</h2>
-              <p className="muted">
-                Una conexión individual, solo para tu calendario «Chimuverse».
-              </p>
+        <>
+          <YouTubePlaylist />
+          <section className="card settings-card">
+            <div className="row gap">
+              {connection.data?.status === "connected" ? (
+                <CalendarCheck size={30} />
+              ) : (
+                <CloudOff size={30} />
+              )}
+              <div>
+                <h2>Google Calendar</h2>
+                <p className="muted">
+                  Una conexión individual, solo para tu calendario «Chimuverse».
+                </p>
+              </div>
             </div>
-          </div>
-          <ErrorMessage error={connection.error} />
-          <p>
-            Estado:{" "}
-            <strong>
-              {{
-                connected: "Conectado",
-                disconnected: "Sin conectar",
-                error: "Requiere atención",
-              }[connection.data?.status ?? "disconnected"] ??
-                connection.data?.status}
-            </strong>
-          </p>
-          {connection.data?.last_sync_at && (
+            <ErrorMessage error={connection.error} />
             <p>
-              Última sincronización:{" "}
-              {formatDate(connection.data.last_sync_at, {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
+              Estado:{" "}
+              <strong>
+                {{
+                  connected: "Conectado",
+                  disconnected: "Sin conectar",
+                  error: "Requiere atención",
+                }[connection.data?.status ?? "disconnected"] ??
+                  connection.data?.status}
+              </strong>
             </p>
-          )}
-          {connection.data?.last_error && (
-            <div className="banner error">{connection.data.last_error}</div>
-          )}
-          {connection.data?.status === "disconnected" && (
-            <div className="banner">
-              <Lock size={20} />
-              Iniciar sesión con Google no concede acceso a Calendar. La
-              conexión no lee tus otros calendarios ni comparte reuniones
-              personales.
+            {connection.data?.last_sync_at && (
+              <p>
+                Última sincronización:{" "}
+                {formatDate(connection.data.last_sync_at, {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </p>
+            )}
+            {connection.data?.last_error && (
+              <div className="banner error">{connection.data.last_error}</div>
+            )}
+            {connection.data?.status === "disconnected" && (
+              <div className="banner">
+                <Lock size={20} />
+                Iniciar sesión con Google no concede acceso a Calendar. La
+                conexión no lee tus otros calendarios ni comparte reuniones
+                personales.
+              </div>
+            )}
+            <div className="row gap wrap">
+              {(connection.data?.status === "disconnected" ||
+                connection.data?.status === "error") && (
+                <Button busy={action.busy} onClick={() => calendar("connect")}>
+                  {connection.data.status === "error"
+                    ? "Reconectar Google Calendar"
+                    : "Conectar mi Google Calendar"}
+                </Button>
+              )}
+              {connection.data && connection.data.status !== "disconnected" && (
+                <>
+                  <Button
+                    variant="secondary"
+                    busy={action.busy}
+                    onClick={() => calendar("sync")}
+                  >
+                    <RefreshCw size={17} />
+                    Traer cambios de Google
+                  </Button>
+                  <Button
+                    variant="danger"
+                    busy={action.busy}
+                    onClick={() => calendar("disconnect")}
+                  >
+                    Desconectar
+                  </Button>
+                </>
+              )}
             </div>
-          )}
-          <div className="row gap wrap">
-            {(connection.data?.status === "disconnected" ||
-              connection.data?.status === "error") && (
-              <Button busy={action.busy} onClick={() => calendar("connect")}>
-                {connection.data.status === "error"
-                  ? "Reconectar Google Calendar"
-                  : "Conectar mi Google Calendar"}
-              </Button>
+            {connection.data?.status === "connected" && (
+              <p className="small muted">
+                Los cambios de Our Calendar se envían automáticamente. Usa
+                «Traer cambios de Google» si modificaste tu horario desde
+                Google.
+              </p>
             )}
-            {connection.data && connection.data.status !== "disconnected" && (
-              <>
-                <Button
-                  variant="secondary"
-                  busy={action.busy}
-                  onClick={() => calendar("sync")}
-                >
-                  <RefreshCw size={17} />
-                  Traer cambios de Google
-                </Button>
-                <Button
-                  variant="danger"
-                  busy={action.busy}
-                  onClick={() => calendar("disconnect")}
-                >
-                  Desconectar
-                </Button>
-              </>
-            )}
-          </div>
-          {connection.data?.status === "connected" && (
-            <p className="small muted">
-              Los cambios de Our Calendar se envían automáticamente. Usa «Traer
-              cambios de Google» si modificaste tu horario desde Google.
-            </p>
-          )}
-          <h3>Conflictos por revisar</h3>
-          {conflicts.data?.length ? (
-            conflicts.data.map((c) => {
-              const event = data!.calendar_events.find(
-                (e) => e.id === c.event_id,
-              );
-              return (
-                <div className="card" key={c.id}>
-                  <div className="compare-grid">
-                    <div>
-                      <small>Chimuverse</small>
-                      <h3>{event?.title}</h3>
-                      <p>
-                        {event?.start_at &&
-                          formatDate(event.start_at, {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                      </p>
-                      <p>{event?.description}</p>
+            <h3>Conflictos por revisar</h3>
+            {conflicts.data?.length ? (
+              conflicts.data.map((c) => {
+                const event = data!.calendar_events.find(
+                  (e) => e.id === c.event_id,
+                );
+                return (
+                  <div className="card" key={c.id}>
+                    <div className="compare-grid">
+                      <div>
+                        <small>Chimuverse</small>
+                        <h3>{event?.title}</h3>
+                        <p>
+                          {event?.start_at &&
+                            formatDate(event.start_at, {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                        </p>
+                        <p>{event?.description}</p>
+                      </div>
+                      <div>
+                        <small>Google</small>
+                        <h3>{c.remote_event.summary}</h3>
+                        <p>
+                          {c.remote_event.start?.dateTime ??
+                            c.remote_event.start?.date}
+                        </p>
+                        <p>{c.remote_event.description}</p>
+                        {c.remote_event.status === "cancelled" && (
+                          <strong>Eliminado en Google</strong>
+                        )}
+                      </div>
                     </div>
-                    <div>
-                      <small>Google</small>
-                      <h3>{c.remote_event.summary}</h3>
-                      <p>
-                        {c.remote_event.start?.dateTime ??
-                          c.remote_event.start?.date}
-                      </p>
-                      <p>{c.remote_event.description}</p>
-                      {c.remote_event.status === "cancelled" && (
-                        <strong>Eliminado en Google</strong>
-                      )}
+                    <div className="row gap wrap">
+                      <Button
+                        busy={action.busy}
+                        onClick={() =>
+                          calendar("resolve", {
+                            conflict_id: c.id,
+                            choice: "local",
+                          })
+                        }
+                      >
+                        Mantener Chimuverse
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        busy={action.busy}
+                        onClick={() =>
+                          calendar("resolve", {
+                            conflict_id: c.id,
+                            choice: "remote",
+                          })
+                        }
+                      >
+                        Usar la de Google
+                      </Button>
                     </div>
                   </div>
-                  <div className="row gap wrap">
-                    <Button
-                      busy={action.busy}
-                      onClick={() =>
-                        calendar("resolve", {
-                          conflict_id: c.id,
-                          choice: "local",
-                        })
-                      }
-                    >
-                      Mantener Chimuverse
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      busy={action.busy}
-                      onClick={() =>
-                        calendar("resolve", {
-                          conflict_id: c.id,
-                          choice: "remote",
-                        })
-                      }
-                    >
-                      Usar la de Google
-                    </Button>
-                  </div>
-                </div>
-              );
-            })
-          ) : (
-            <p className="muted">No hay conflictos pendientes.</p>
-          )}
-          <ErrorMessage error={conflicts.error} />
-        </section>
+                );
+              })
+            ) : (
+              <p className="muted">No hay conflictos pendientes.</p>
+            )}
+            <ErrorMessage error={conflicts.error} />
+          </section>
+        </>
       ) : tab === "Datos" ? (
         <section className="card settings-card">
           <h2>Lo nuestro, también en tus manos</h2>

@@ -1,3 +1,4 @@
+import { YouTubePlaylist } from "../components/YouTubePlaylist";
 import { useState } from "react";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
 import {
@@ -338,6 +339,7 @@ export default function Collections() {
         }
       />
       <ErrorMessage error={action.error} />
+      {kind === "track" && <YouTubePlaylist />}
       {kind === "journal" && (
         <div className="segments route-tabs">
           <Link
@@ -765,7 +767,18 @@ export default function Collections() {
         title={
           editing
             ? "Editar este momento"
-            : ({journal:'Una nueva entrada',mood:'Registrar cómo me siento',date:'Una nueva idea',goal:'Una meta por construir',watch:'Algo que queremos ver',wish:'Un nuevo deseo',track:'Una canción nuestra',transaction:'Un nuevo movimiento',budget:'Un nuevo presupuesto',trip:'Un nuevo viaje'}[kind])
+            : {
+                journal: "Una nueva entrada",
+                mood: "Registrar cómo me siento",
+                date: "Una nueva idea",
+                goal: "Una meta por construir",
+                watch: "Algo que queremos ver",
+                wish: "Un nuevo deseo",
+                track: "Una canción nuestra",
+                transaction: "Un nuevo movimiento",
+                budget: "Un nuevo presupuesto",
+                trip: "Un nuevo viaje",
+              }[kind]
         }
         open={open}
         onOpenChange={close}

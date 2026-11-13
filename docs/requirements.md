@@ -62,4 +62,4 @@ Documento de guía de implementación, **no especificación formal cerrada**. Do
 
 ## Ampliación confirmada: YouTube
 
-Conectar individualmente las cuentas de YouTube, importar/exportar playlists y sincronizar sus modificaciones entre Chimuverse y YouTube. Esta ampliación sustituye el alcance previo de solo enlaces; los permisos OAuth deben solicitarse por separado al login y a Calendar. Implementación pendiente.
+Conectar individualmente las cuentas de YouTube, importar/exportar playlists y sincronizar sus modificaciones entre Chimuverse y YouTube. Esta ampliación sustituye el alcance previo de solo enlaces; los permisos OAuth deben solicitarse por separado al login y a Calendar. Implementada la playlist común con OAuth separado; ver `getting-started.md` para activar el callback y el consentimiento. La colaboración nativa se comparte por enlace en YouTube, ya que su API no permite invitar por correo.

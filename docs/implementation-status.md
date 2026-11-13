@@ -19,9 +19,9 @@
 
 ## Activación pendiente en servicios externos
 
-Validación local ejecutada: build de producción y typecheck correctos; 13 tests PostgreSQL/RLS, 7 tests Calendar, 10 unitarios y 10 de navegador (40 en total). Axe sin violaciones en acceso y dashboard en los temas revisados. Las pruebas SQL incluyen almacenamiento privado, notas de ánimo, cápsulas, restauración y recordatorios deduplicados.
+Validación local ejecutada: build de producción y typecheck correctos; 14 tests PostgreSQL/RLS, 7 tests Calendar, 4 tests YouTube, 10 unitarios y 12 de navegador (47 en total). Axe sin violaciones en acceso y dashboard en los temas revisados. Las pruebas SQL incluyen almacenamiento privado, notas de ánimo, cápsulas, restauración y recordatorios deduplicados.
 
-El token de administración ya está configurado. Se aplicaron las siete migraciones al proyecto remoto, se desplegó la función Calendar y se programaron sincronización/recordatorios cada 15 minutos. Antes del despliegue se guardó una instantánea cifrada del catálogo y datos públicos: el proyecto tenía cero tablas públicas y cero usuarios. La copia está fuera de Git y no incluye Auth ni objetos Storage.
+El token de administración ya está configurado. Se aplicaron las ocho migraciones al proyecto remoto, se desplegaron las funciones Calendar y YouTube y se programaron sincronización/recordatorios cada 15 minutos. Antes del despliegue se guardó una instantánea cifrada del catálogo y datos públicos: el proyecto tenía cero tablas públicas y cero usuarios. La copia está fuera de Git y no incluye Auth ni objetos Storage.
 
 Cliente OAuth importado desde JSON y ambas redirecciones validadas. Google Auth ya está habilitado; las credenciales también están desplegadas para Calendar. Pendiente que las dos personas inicien sesión y autoricen sus conexiones en el navegador. Ver `getting-started.md`.
 
@@ -29,7 +29,7 @@ No se declara listo para producción ni validada la sincronización real hasta c
 
 ## Límites explícitos
 
-- Correo y push desactivados. Spotify continúa por enlaces. El usuario amplió YouTube a conexión individual e importación/exportación y sincronización de playlists; esa integración aún está pendiente de implementar.
+- Correo y push desactivados. Spotify continúa por enlaces. El usuario amplió YouTube a conexión individual e importación/exportación y sincronización de playlists; implementada con OAuth separado, una playlist común por espacio, importación desde el canal propietario, exportación de canciones compartidas, altas/bajas directas en YouTube y lectura automática cada minuto. Las invitaciones nativas por correo no están disponibles en la API; se activa colaboración por enlace en YouTube. Pendiente consentimiento real y registrar el callback OAuth.
 - Papelera restaurable, sin purga automática activada; nada se elimina definitivamente sin esa configuración.
 - Calendar admite recurrencia diaria, semanal, mensual y anual; conserva reglas personalizadas de Google y sus excepciones. La edición de una única ocurrencia desde la app no está disponible: las acciones indican claramente que afectan a la serie.
 - No se ha publicado el frontend en Vercel ni se han enviado commits al remoto.
@@ -46,3 +46,14 @@ Se verificó el envío inmediato con la conexión real, sin crear eventos de pru
 ## Series compartidas e invitados
 
 La migración 007 conserva reglas RFC5545 y zonas horarias. La interfaz expande únicamente el rango visible, por lo que Nunca no genera miles de filas. Ambas personas pueden ver los eventos; se quitó Solo yo del calendario. Google recibe a los dos correos autorizados como invitados con sendUpdates=all al crear o actualizar un evento; la aceptación depende de la configuración de cada cuenta. No se crean ni envían invitaciones sintéticas durante las pruebas.
+
+
+## Playlist común de YouTube
+
+Migración 008 y Edge Function `youtube`. Ambas personas pueden editar la misma playlist en Chimuverse mediante el token cifrado del propietario; no se envían credenciales al navegador. OAuth con PKCE, estado de un uso, identidad del correo comprobada y scope `youtube.force-ssl`, separado del login y Calendar. Se puede crear una playlist no listada (el enlace permite verla) o privada (solo el propietario la ve en YouTube), o importar una de su propio canal. La app lee directamente YouTube cada minuto y permite actualizar al instante. Altas/bajas se escriben inmediatamente y las bajas requieren confirmación. Exportar canciones locales incluye solo registros compartidos, con enlace válido de YouTube y sin duplicados; nunca exporta canciones privadas. Límite de 50 altas por exportación y 5000 elementos por playlist. No se elimina la playlist externa al desconectar.
+
+La API no expone invitaciones de colaboradores por correo: se configura una vez en YouTube mediante Compartir → Invitar colaboradores. Desde Chimuverse ambos ya tienen acceso a editar por su membresía. La desconexión elimina la credencial local sin revocación global de Google, para no invalidar Calendar cuando se comparte cliente OAuth. Puede revocarse el acceso completo desde la cuenta Google.
+
+No se han creado playlists reales ni enviado invitaciones durante las pruebas. Falta el consentimiento interactivo de Google del propietario para crear la playlist real; no se puede sustituir con el token de login o Calendar.
+
+Despliegue YouTube verificado: ocho migraciones remotas, endpoint público rechaza solicitudes anónimas (401), Calendar conserva su scheduler sin fallos. Snapshot público cifrado realizado antes de la migración 008. El JSON OAuth local aún no contiene el callback de YouTube; debe añadirse en Google Cloud.

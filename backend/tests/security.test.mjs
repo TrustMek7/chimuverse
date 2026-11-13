@@ -85,12 +85,85 @@ before(async () => {
       "utf8",
     ),
   );
+  await db.exec(
+    readFileSync(
+      new URL(
+        "../supabase/migrations/202611130008_youtube.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    ),
+  );
   await db.query(
     `insert into auth.users(id,email) values ($1,'jcusilaymeg@gmail.com'),($2,'032azq@gmail.com'),($3,'stranger@example.com')`,
     [a, b, c],
   );
 });
 after(() => db.close());
+
+test("YouTube credentials are service-only, state single-use, and both members share one locked playlist", async () => {
+  await assert.rejects(() =>
+    as(a, () =>
+      db.query("select public.youtube_service('connection',$1)", [a]),
+    ),
+  );
+  await assert.rejects(() =>
+    as(b, () => db.query("select * from private.youtube_connections")),
+  );
+  await assert.rejects(() =>
+    db.query("select public.youtube_service('connection',$1)", [c]),
+  );
+  await db.query("select public.youtube_service('connect',$1,$2)", [
+    a,
+    JSON.stringify({ token: "encrypted-test-only" }),
+  ]);
+  await db.query("select public.youtube_service('state',$1,$2)", [
+    a,
+    JSON.stringify({ state: "youtube-state", verifier: "pkce" }),
+  ]);
+  assert.equal(
+    (await db.query("select public.consume_youtube_state('youtube-state') s"))
+      .rows[0].s.user_id,
+    a,
+  );
+  assert.equal(
+    (await db.query("select public.consume_youtube_state('youtube-state') s"))
+      .rows[0].s,
+    null,
+  );
+  assert.equal(
+    (await db.query("select public.youtube_service('lock',$1) s", [a])).rows[0]
+      .s.acquired,
+    true,
+  );
+  assert.equal(
+    (await db.query("select public.youtube_service('lock',$1) s", [b])).rows[0]
+      .s.acquired,
+    false,
+  );
+  await db.query("select public.youtube_service('save',$1,$2)", [
+    a,
+    JSON.stringify({ id: "playlist-test", title: "Nuestro soundtrack" }),
+  ]);
+  const shared = (
+    await db.query("select public.youtube_service('playlist',$1) s", [b])
+  ).rows[0].s;
+  assert.equal(shared.playlist_id, "playlist-test");
+  assert.equal(shared.owner_id, a);
+  await assert.rejects(() =>
+    db.query("select public.youtube_service('save',$1,$2)", [
+      b,
+      JSON.stringify({ id: "replacement", title: "Other" }),
+    ]),
+  );
+  await db.query("select public.youtube_service('unlock',$1)", [a]);
+  await db.query("select public.youtube_service('disconnect',$1)", [a]);
+  assert.equal(
+    (await db.query("select public.youtube_service('playlist',$1) s", [b]))
+      .rows[0].s.token,
+    null,
+  );
+});
 test("calendar series are shared, retain recurrence, and delete as one sequence", async () => {
   const rules = ["RRULE:FREQ=WEEKLY;BYDAY=MO,WE"];
   const e = (

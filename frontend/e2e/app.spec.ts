@@ -165,6 +165,9 @@ async function fixture(page: Page, connected = false) {
     });
   });
   await page.routeWebSocket("**/realtime/**", (socket) => socket.close());
+  await page.route("**/functions/v1/youtube", (route) =>
+    route.fulfill({ json: { connected: false, playlist: null } }),
+  );
   // Discover only the public project reference from Vite's existing configuration.
   const config = await import("node:fs").then((fs) =>
     fs.existsSync(new URL("../.env.local", import.meta.url))
@@ -193,6 +196,75 @@ async function fixture(page: Page, connected = false) {
   );
   return rows;
 }
+test("both partners can use a shared YouTube playlist, create unlisted and confirm removals", async ({
+  page,
+}) => {
+  await fixture(page);
+  let playlist: any = null;
+  let items: any[] = [];
+  const actions: string[] = [];
+  await page.route("**/functions/v1/youtube", async (route) => {
+    const body = route.request().postDataJSON();
+    actions.push(body.action);
+    if (body.action === "status")
+      return route.fulfill({ json: { connected: true, playlist } });
+    if (body.action === "create") {
+      expect(body.privacy).toBe("unlisted");
+      playlist = {
+        id: "PLshared123456",
+        title: body.title,
+        owner: true,
+        available: true,
+      };
+      return route.fulfill({ json: { id: playlist.id } });
+    }
+    if (body.action === "list") return route.fulfill({ json: { items } });
+    if (body.action === "add") {
+      items = [
+        {
+          id: "item1",
+          title: "Nuestra canción",
+          video_id: "dQw4w9WgXcQ",
+          etag: "etag1",
+        },
+      ];
+      return route.fulfill({ json: { saved: true } });
+    }
+    if (body.action === "remove") {
+      expect(body.etag).toBe("etag1");
+      items = [];
+      return route.fulfill({ json: { removed: true } });
+    }
+    return route.fulfill({ json: {} });
+  });
+  await page.goto("/ocio/soundtrack");
+  const panel = page.getByRole("region", {
+    name: "Playlist compartida de YouTube",
+  });
+  await panel
+    .getByRole("button", { name: "Crear nuestra playlist en YouTube" })
+    .click();
+  await expect(
+    panel.getByRole("link", { name: "Abrir playlist en YouTube" }),
+  ).toBeVisible();
+  await panel
+    .getByLabel("Enlace del video de YouTube")
+    .fill("https://youtu.be/dQw4w9WgXcQ");
+  await panel
+    .getByRole("button", { name: "Añadir a nuestra playlist" })
+    .click();
+  await expect(
+    panel.getByRole("link", { name: "Nuestra canción", exact: true }),
+  ).toBeVisible();
+  await panel.getByRole("button", { name: "Quitar", exact: true }).click();
+  expect(actions.filter((a) => a === "remove")).toHaveLength(0);
+  await panel
+    .getByRole("button", { name: "Confirmar quitar de YouTube" })
+    .click();
+  await expect(panel.getByText("La primera canción los espera.")).toBeVisible();
+  expect(actions.filter((a) => a === "create")).toHaveLength(1);
+});
+
 test("weekly series supports selected days, inclusive end date, no end and deleting the whole series", async ({
   page,
 }) => {

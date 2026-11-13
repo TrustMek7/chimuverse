@@ -22,3 +22,5 @@
 - Spotify/YouTube: solo enlaces y CSV en MVP; permisos de API futuros.
 - Dominio, hosting final, presupuestos y límites de almacenamiento.
 - Retención y backups automáticos de fotos/datos personales. La exportación manual ya está implementada.
+
+- YouTube: OAuth independiente (`youtube.force-ssl`), una playlist común por espacio y edición de ambos mediante el propietario. Las invitaciones nativas se aceptan mediante enlace de colaboración generado en YouTube; no hay API para invitar por correo. No listada o privada según elección explícita al crear.

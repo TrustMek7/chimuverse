@@ -43,3 +43,10 @@ const auth = await fetch(env.SUPABASE_URL + "/auth/v1/settings", {
 });
 const config = await auth.json();
 console.log("Google Auth enabled:", config.external?.google === true);
+const youtube = await fetch(env.SUPABASE_URL + "/functions/v1/youtube", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ action: "status" }),
+});
+if (youtube.status !== 401) throw new Error(`YouTube authentication guard failed: ${youtube.status}`);
+console.log("YouTube function deployed; anonymous access denied:", youtube.status);

@@ -104,6 +104,8 @@ if (process.argv.includes("--functions")) {
     ...[
       "GOOGLE_OAUTH_CLIENT_ID",
       "GOOGLE_OAUTH_CLIENT_SECRET",
+      "YOUTUBE_OAUTH_CLIENT_ID",
+      "YOUTUBE_OAUTH_CLIENT_SECRET",
       "GOOGLE_TOKEN_ENCRYPTION_KEY",
       "CRON_SECRET",
     ]
@@ -127,20 +129,22 @@ if (process.argv.includes("--functions")) {
     process.platform === "win32"
       ? cliCommand
       : root + "node_modules/.bin/supabase";
-  const result = spawnSync(
-    cmd,
-    [
-      "functions",
-      "deploy",
-      "calendar",
-      "--project-ref",
-      ref,
-      "--no-verify-jwt",
-      "--use-api",
-    ],
-    { cwd: root, env, stdio: "inherit" },
-  );
-  if (result.status !== 0) process.exit(result.status ?? 1);
+  for (const functionName of ["calendar", "youtube"]) {
+    const result = spawnSync(
+      cmd,
+      [
+        "functions",
+        "deploy",
+        functionName,
+        "--project-ref",
+        ref,
+        "--no-verify-jwt",
+        "--use-api",
+      ],
+      { cwd: root, env, stdio: "inherit" },
+    );
+    if (result.status !== 0) process.exit(result.status ?? 1);
+  }
   if (process.argv.includes("--schedule")) {
     const secret = env.CRON_SECRET.replaceAll("'", "''");
     const functionUrl = (
