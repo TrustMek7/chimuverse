@@ -76,12 +76,108 @@ before(async () => {
       "utf8",
     ),
   );
+  await db.exec(
+    readFileSync(
+      new URL(
+        "../supabase/migrations/202611130007_calendar_recurrence.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    ),
+  );
   await db.query(
     `insert into auth.users(id,email) values ($1,'jcusilaymeg@gmail.com'),($2,'032azq@gmail.com'),($3,'stranger@example.com')`,
     [a, b, c],
   );
 });
 after(() => db.close());
+test("calendar series are shared, retain recurrence, and delete as one sequence", async () => {
+  const rules = ["RRULE:FREQ=WEEKLY;BYDAY=MO,WE"];
+  const e = (
+    await as(a, () =>
+      db.query(
+        "insert into public.calendar_events(space_id,title,start_at,end_at,visibility,recurrence) values($1,'Una serie semanal',now()+interval '1 day',now()+interval '1 day 1 hour','private',$2) returning *",
+        [sid, rules],
+      ),
+    )
+  ).rows[0];
+  assert.equal(e.visibility, "shared");
+  assert.deepEqual(e.recurrence, rules);
+  await as(b, async () =>
+    assert.equal(
+      (
+        await db.query("select id from public.calendar_events where id=$1", [
+          e.id,
+        ])
+      ).rows.length,
+      1,
+    ),
+  );
+  await db.exec("set request.jwt.claim.sub=''");
+  await db.query("select public.import_calendar_override($1,$2)", [
+    a,
+    JSON.stringify({
+      event_id: e.id,
+      google_event_id: "exception-one",
+      original_start: "2026-11-23T14:00:00Z",
+      cancelled: true,
+    }),
+  ]);
+  await as(b, async () =>
+    assert.equal(
+      (
+        await db.query(
+          "select * from public.calendar_overrides where event_id=$1",
+          [e.id],
+        )
+      ).rows.length,
+      1,
+    ),
+  );
+  await as(c, async () => {
+    assert.equal(
+      (
+        await db.query(
+          "select * from public.calendar_overrides where event_id=$1",
+          [e.id],
+        )
+      ).rows.length,
+      0,
+    );
+    await assert.rejects(
+      db.query("select public.calendar_invitees($1)", [a]),
+      /permission denied/,
+    );
+  });
+  assert.deepEqual(
+    (
+      await db.query("select public.calendar_invitees($1) as emails", [a])
+    ).rows[0].emails.sort(),
+    ["032azq@gmail.com", "jcusilaymeg@gmail.com"].sort(),
+  );
+  await as(a, () =>
+    db.query("select public.trash_item('calendar_events',$1)", [e.id]),
+  );
+  await as(b, async () => {
+    assert.equal(
+      (
+        await db.query("select * from public.calendar_events where id=$1", [
+          e.id,
+        ])
+      ).rows.length,
+      0,
+    );
+    assert.equal(
+      (
+        await db.query(
+          "select * from public.calendar_overrides where event_id=$1",
+          [e.id],
+        )
+      ).rows.length,
+      0,
+    );
+  });
+});
 test("connected calendar exports inserts, edits and trash automatically without exporting quests or looping imports", async () => {
   await db.exec("set request.jwt.claim.sub=''");
   await db.query("select public.calendar_service('connect',$1,$2)", [
@@ -243,7 +339,7 @@ test("soft deletion hides shared content from the partner and restoration recove
     ),
   );
 });
-test("scheduled reminders are deduplicated and private events notify only their owner", async () => {
+test("scheduled reminders are deduplicated and calendar events notify both members", async () => {
   const task = (
     await as(a, () =>
       db.query(
@@ -285,8 +381,8 @@ test("scheduled reminders are deduplicated and private events notify only their 
       ["event-reminder:" + event.id + ":%"],
     )
   ).rows;
-  assert.equal(events.length, 1);
-  assert.equal(events[0].recipient_id, a);
+  assert.equal(events.length, 2);
+  assert.deepEqual(events.map((e) => e.recipient_id).sort(), [a, b].sort());
 });
 test("shared mood exposes state but never the note; personal finances stay private", async () => {
   const mood = (

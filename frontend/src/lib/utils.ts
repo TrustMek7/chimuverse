@@ -72,21 +72,4 @@ export const statusNames: Record<string, string> = {
   in_talk: "Lo hablamos",
   archived: "Archivada",
 };
-export function nextOccurrence<
-  T extends { start_at: string; end_at: string; annual: boolean },
->(event: T, now = new Date()): T {
-  if (!event.annual) return event;
-  const start = new Date(event.start_at),
-    original = new Date(event.start_at);
-  const duration = new Date(event.end_at).getTime() - start.getTime();
-  start.setUTCFullYear(
-    Math.max(original.getUTCFullYear(), now.getUTCFullYear()),
-  );
-  if (start.getTime() + duration <= now.getTime())
-    start.setUTCFullYear(start.getUTCFullYear() + 1);
-  return {
-    ...event,
-    start_at: start.toISOString(),
-    end_at: new Date(start.getTime() + duration).toISOString(),
-  };
-}
+export { nextSeriesOccurrence as nextOccurrence } from "./recurrence";

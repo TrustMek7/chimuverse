@@ -78,6 +78,8 @@ export type CalendarEvent = {
   visibility: Visibility;
   kind: string;
   annual: boolean;
+  recurrence?: string[];
+  recurrence_timezone?: string;
   sync_google: boolean;
   version: number;
   deleted_at: string | null;
@@ -113,6 +115,15 @@ export type Answer = {
   answer: string;
 };
 export type Snapshot = {
+  calendar_overrides: {
+    event_id: string;
+    google_event_id: string;
+    original_start: string;
+    start_at: string | null;
+    end_at: string | null;
+    title: string | null;
+    cancelled: boolean;
+  }[];
   profiles: Profile[];
   tasks: Task[];
   task_progress: Progress[];

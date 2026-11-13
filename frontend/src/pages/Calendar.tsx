@@ -4,40 +4,41 @@ import FullCalendar from "@fullcalendar/react";
 import dayGrid from "@fullcalendar/daygrid";
 import list from "@fullcalendar/list";
 import interaction from "@fullcalendar/interaction";
-import rrule from "@fullcalendar/rrule";
+
 import luxon from "@fullcalendar/luxon3";
 import es from "@fullcalendar/core/locales/es";
 import { DateTime } from "luxon";
 import { useQuery } from "@tanstack/react-query";
-import {
-  Plus,
-  CalendarDays,
-  CloudOff,
-  CalendarCheck,
-  Pencil,
-  Trash2,
-} from "lucide-react";
+import { Plus, CloudOff, CalendarCheck, Pencil, Trash2 } from "lucide-react";
 import { useSpace, useAction } from "../lib/store";
 import { check, supabase } from "../lib/supabase";
-import type { CalendarEvent, Visibility } from "../lib/types";
-import { localDay, formatDate, nextOccurrence } from "../lib/utils";
+import type { CalendarEvent } from "../lib/types";
+import { localDay, formatDate } from "../lib/utils";
+import {
+  blankRepeat,
+  parseRepeat,
+  makeRecurrence,
+  recurrenceString,
+  recurrenceText,
+  seriesOccurrences,
+  weekDays,
+  type RepeatDraft,
+} from "../lib/recurrence";
 import {
   Button,
   Modal,
   PageHeading,
   ErrorMessage,
-  VisibilityPicker,
   VisibilityPill,
-  Empty,
 } from "../components/ui";
 type Draft = {
   title: string;
   description: string;
   start: string;
   end: string;
-  visibility: Visibility;
   kind: string;
-  annual: boolean;
+  repeat: RepeatDraft;
+  zone: string;
   all_day: boolean;
 };
 function localInput(value: string, zone: string, allDay = false) {
@@ -50,8 +51,26 @@ export default function Calendar() {
   const [params, setParams] = useSearchParams();
   const [open, setOpen] = useState(params.has("crear"));
   const [selected, setSelected] = useState<CalendarEvent | null>(null);
+  const [occurrence, setOccurrence] = useState<{
+    start: string;
+    end: string;
+  } | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
   const [view, setView] = useState("month");
+  const [range, setRange] = useState({
+    from: new Date(
+      new Date().getFullYear(),
+      new Date().getMonth() - 1,
+      1,
+    ).toISOString(),
+    to: new Date(
+      new Date().getFullYear(),
+      new Date().getMonth() + 2,
+      1,
+    ).toISOString(),
+  });
+  const [visibleDate, setVisibleDate] = useState(new Date().toISOString());
   const action = useAction();
   const google = useQuery({
     queryKey: ["google-status"],
@@ -67,9 +86,12 @@ export default function Calendar() {
     description: "",
     start: date + "T18:00",
     end: date + "T19:00",
-    visibility: "private",
     kind: "event",
-    annual: false,
+    repeat: {
+      ...blankRepeat(),
+      days: [weekDays[DateTime.fromISO(date).weekday - 1][0]],
+    },
+    zone: me.timezone,
     all_day: false,
   });
   const [draft, setDraft] = useState<Draft>(() => blank());
@@ -98,21 +120,36 @@ export default function Calendar() {
     }
     const start = draft.all_day
       ? new Date(draft.start.slice(0, 10) + "T00:00:00Z")
-      : DateTime.fromISO(draft.start, { zone: me.timezone }).toJSDate();
+      : DateTime.fromISO(draft.start, { zone: draft.zone }).toJSDate();
     let end = draft.all_day
       ? new Date(draft.end.slice(0, 10) + "T00:00:00Z")
-      : DateTime.fromISO(draft.end, { zone: me.timezone }).toJSDate();
+      : DateTime.fromISO(draft.end, { zone: draft.zone }).toJSDate();
     if (draft.all_day && end <= start)
       end = new Date(start.getTime() + 86400000);
+    let recurrence: string[];
+    try {
+      recurrence = makeRecurrence(
+        draft.repeat,
+        draft.start,
+        draft.zone,
+        draft.all_day,
+        events.find((e) => e.id === editing)?.recurrence ?? [],
+      );
+    } catch (e) {
+      action.setError(e instanceof Error ? e.message : "Revisa la repetición.");
+      return;
+    }
     const payload = {
       space_id: spaceId,
       title: draft.title.trim(),
       description: draft.description,
       start_at: start.toISOString(),
       end_at: end.toISOString(),
-      visibility: draft.visibility,
+      visibility: "shared",
       kind: draft.kind,
-      annual: draft.annual,
+      annual: false,
+      recurrence,
+      recurrence_timezone: draft.zone,
       all_day: draft.all_day,
     };
     await action.run(
@@ -189,88 +226,88 @@ export default function Calendar() {
       <section
         className={`card calendar-card ${view === "month" ? "month-view" : ""}`}
       >
-        {view === "month" ? (
-          <FullCalendar
-            plugins={[dayGrid, list, interaction, rrule, luxon]}
-            timeZone={me.timezone}
-            initialView="dayGridMonth"
-            locale={es}
-            firstDay={1}
-            height="auto"
-            headerToolbar={{
-              left: "prev,next today",
-              center: "title",
-              right: "",
-            }}
-            events={events.map((e) => ({
-              id: e.id,
-              title: e.title,
-              ...(e.annual
-                ? {
-                    rrule: {
-                      freq: "yearly",
-                      dtstart: e.all_day ? e.start_at.slice(0, 10) : e.start_at,
-                    },
-                    duration: {
-                      milliseconds:
-                        new Date(e.end_at).getTime() -
-                        new Date(e.start_at).getTime(),
-                    },
-                  }
-                : {
-                    start: e.all_day ? e.start_at.slice(0, 10) : e.start_at,
-                    end: e.all_day ? e.end_at.slice(0, 10) : e.end_at,
-                  }),
+        <FullCalendar
+          key={view}
+          plugins={[dayGrid, list, interaction, luxon]}
+          timeZone={me.timezone}
+          initialView={view === "month" ? "dayGridMonth" : "listMonth"}
+          noEventsContent="Todavía no hay planes en estas fechas."
+          locale={es}
+          firstDay={1}
+          height="auto"
+          headerToolbar={{
+            left: "prev,next today",
+            center: "title",
+            right: "",
+          }}
+          events={events.flatMap((e) => {
+            const exceptions =
+              data!.calendar_overrides?.filter((o) => o.event_id === e.id) ??
+              [];
+            const from = new Date(range.from),
+              to = new Date(range.to);
+            const occurrences = seriesOccurrences(
+              e,
+              from,
+              to,
+              exceptions.map((o) => o.original_start),
+            );
+            const changed = exceptions
+              .filter(
+                (o) =>
+                  !o.cancelled &&
+                  o.start_at &&
+                  o.end_at &&
+                  new Date(o.start_at) < to &&
+                  new Date(o.end_at) > from,
+              )
+              .map((o) => ({
+                start: new Date(o.start_at!),
+                end: new Date(o.end_at!),
+                title: o.title ?? e.title,
+              }));
+            return [
+              ...occurrences.map((o) => ({ ...o, title: e.title })),
+              ...changed,
+            ].map((o) => ({
+              id: e.id + ":" + o.start.toISOString(),
+              extendedProps: { series_id: e.id },
+              title: o.title,
+              start: e.all_day
+                ? o.start.toISOString().slice(0, 10)
+                : o.start.toISOString(),
+              end: e.all_day
+                ? o.end.toISOString().slice(0, 10)
+                : o.end.toISOString(),
               allDay: e.all_day,
-              className: `event-${e.visibility} event-${e.kind}`,
-              backgroundColor:
-                e.visibility === "private"
-                  ? "#6B45D8"
-                  : e.kind === "special"
-                    ? "#B8255E"
-                    : "#137B6D",
-            }))}
-            dateClick={(info) => create(info.dateStr)}
-            eventClick={(info) =>
-              setSelected(events.find((e) => e.id === info.event.id) ?? null)
-            }
-          />
-        ) : (
-          <div className="agenda-list">
-            {events.length ? (
-              events
-                .map((e) => nextOccurrence(e))
-                .sort((a, b) => a.start_at.localeCompare(b.start_at))
-                .map((e) => (
-                  <button
-                    key={e.id}
-                    className="agenda-item"
-                    onClick={() => setSelected(e)}
-                  >
-                    <CalendarDays size={23} />
-                    <div>
-                      <small>
-                        {formatDate(e.start_at, { weekday: "long" })}
-                      </small>
-                      <h3>{e.title}</h3>
-                      <p>
-                        {formatDate(e.start_at, {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </p>
-                    </div>
-                    <VisibilityPill value={e.visibility} />
-                  </button>
-                ))
-            ) : (
-              <Empty
-                title="Tiempo para algo bonito"
-                text="Añade tu primer evento o fecha especial."
-              />
-            )}
-          </div>
-        )}
+              backgroundColor: e.kind === "special" ? "#B8255E" : "#137B6D",
+            }));
+          })}
+          initialDate={visibleDate}
+          datesSet={(info) => {
+            setVisibleDate(info.view.currentStart.toISOString());
+            setRange((old) =>
+              old.from === info.start.toISOString() &&
+              old.to === info.end.toISOString()
+                ? old
+                : {
+                    from: info.start.toISOString(),
+                    to: info.end.toISOString(),
+                  },
+            );
+          }}
+          dateClick={(info) => create(info.dateStr)}
+          eventClick={(info) => {
+            setSelected(
+              events.find((e) => e.id === info.event.extendedProps.series_id) ??
+                null,
+            );
+            setOccurrence({
+              start: info.event.startStr,
+              end: info.event.endStr,
+            });
+          }}
+        />
       </section>
       <Modal
         title={selected?.title ?? "Evento"}
@@ -281,21 +318,19 @@ export default function Calendar() {
           <>
             <VisibilityPill value={selected.visibility} />
             <p>
-              {formatDate(selected.start_at, {
+              {formatDate(occurrence?.start || selected.start_at, {
                 weekday: "long",
                 hour: "2-digit",
                 minute: "2-digit",
               })}{" "}
               —{" "}
-              {formatDate(selected.end_at, {
+              {formatDate(occurrence?.end || selected.end_at, {
                 hour: "2-digit",
                 minute: "2-digit",
               })}
             </p>
             <p className="entry-content">{selected.description}</p>
-            {selected.annual && (
-              <p className="muted">Fecha especial que se recuerda cada año.</p>
-            )}
+            <p className="muted">{recurrenceText(selected)}</p>
             {selected.owner_id === me.id ? (
               <div className="row gap">
                 <Button
@@ -307,17 +342,17 @@ export default function Calendar() {
                       description: selected.description,
                       start: localInput(
                         selected.start_at,
-                        me.timezone,
+                        selected.recurrence_timezone ?? me.timezone,
                         selected.all_day,
                       ),
                       end: localInput(
                         selected.end_at,
-                        me.timezone,
+                        selected.recurrence_timezone ?? me.timezone,
                         selected.all_day,
                       ),
-                      visibility: selected.visibility,
                       kind: selected.kind,
-                      annual: selected.annual,
+                      repeat: parseRepeat(selected),
+                      zone: selected.recurrence_timezone ?? me.timezone,
                       all_day: selected.all_day,
                     });
                     setSelected(null);
@@ -325,26 +360,17 @@ export default function Calendar() {
                   }}
                 >
                   <Pencil size={16} />
-                  Editar
+                  {recurrenceString(selected) ? "Editar serie" : "Editar"}
                 </Button>
                 <Button
                   variant="danger"
                   busy={action.busy}
-                  onClick={() =>
-                    action.run(
-                      async () =>
-                        check(
-                          await supabase.rpc("trash_item", {
-                            p_table: "calendar_events",
-                            p_id: selected.id,
-                          }),
-                        ),
-                      () => setSelected(null),
-                    )
-                  }
+                  onClick={() => setDeleting(true)}
                 >
                   <Trash2 size={16} />
-                  Papelera
+                  {recurrenceString(selected)
+                    ? "Eliminar serie"
+                    : "Eliminar evento"}
                 </Button>
               </div>
             ) : (
@@ -352,6 +378,43 @@ export default function Calendar() {
             )}
           </>
         )}
+      </Modal>
+      <Modal
+        open={deleting}
+        onOpenChange={setDeleting}
+        title={
+          selected && recurrenceString(selected)
+            ? "¿Eliminar toda la serie?"
+            : "¿Eliminar este evento?"
+        }
+      >
+        <p>
+          {selected && recurrenceString(selected)
+            ? "Se quitarán todas las fechas de esta serie, también en Google Calendar. Puedes recuperar el registro desde la papelera."
+            : "El evento se quitará de Our Calendar y de Google Calendar."}
+        </p>
+        <ErrorMessage error={action.error} />
+        <Button
+          variant="danger"
+          busy={action.busy}
+          onClick={() =>
+            action.run(
+              async () =>
+                check(
+                  await supabase.rpc("trash_item", {
+                    p_table: "calendar_events",
+                    p_id: selected!.id,
+                  }),
+                ),
+              () => {
+                setDeleting(false);
+                setSelected(null);
+              },
+            )
+          }
+        >
+          Confirmar eliminación
+        </Button>
       </Modal>
       <Modal
         title={editing ? "Editar nuestro plan" : "Un momento en el calendario"}
@@ -421,20 +484,133 @@ export default function Calendar() {
             />
             Todo el día
           </label>
-          {draft.kind === "special" && (
-            <label className="checkbox">
-              <input
-                type="checkbox"
-                checked={draft.annual}
-                onChange={(e) => field("annual", e.target.checked)}
-              />
-              Recordar cada año
-            </label>
-          )}
-          <VisibilityPicker
-            value={draft.visibility}
-            onChange={(v) => field("visibility", v)}
-          />
+          <label className="field">
+            Repetición
+            <select
+              aria-label="Repetición"
+              value={draft.repeat.frequency}
+              onChange={(e) =>
+                field("repeat", {
+                  ...draft.repeat,
+                  frequency: e.target.value as RepeatDraft["frequency"],
+                })
+              }
+            >
+              <option value="none">No se repite</option>
+              <option value="DAILY">Cada día</option>
+              <option value="WEEKLY">Cada semana · elegir días</option>
+              <option value="MONTHLY">Cada mes</option>
+              <option value="YEARLY">Cada año</option>
+              {draft.repeat.frequency === "custom" && (
+                <option value="custom">
+                  Regla personalizada de Google (se conserva)
+                </option>
+              )}
+            </select>
+          </label>
+          {draft.repeat.frequency !== "none" &&
+            draft.repeat.frequency !== "custom" && (
+              <fieldset className="repeat-options">
+                <legend>Opciones de repetición</legend>
+                <label className="field">
+                  Repetir cada
+                  <input
+                    aria-label="Intervalo de repetición"
+                    type="number"
+                    min={1}
+                    max={99}
+                    value={draft.repeat.interval}
+                    onChange={(e) =>
+                      field("repeat", {
+                        ...draft.repeat,
+                        interval: Number(e.target.value),
+                      })
+                    }
+                  />
+                </label>
+                {draft.repeat.frequency === "WEEKLY" && (
+                  <div className="field">
+                    <span>Días que se repite</span>
+                    <div className="segments">
+                      {weekDays.map(([code, name]) => (
+                        <button
+                          key={code}
+                          type="button"
+                          aria-label={name}
+                          aria-pressed={draft.repeat.days.includes(code)}
+                          onClick={() =>
+                            field("repeat", {
+                              ...draft.repeat,
+                              days: draft.repeat.days.includes(code)
+                                ? draft.repeat.days.filter((d) => d !== code)
+                                : [...draft.repeat.days, code],
+                            })
+                          }
+                        >
+                          {name.slice(0, 2)}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <label className="field">
+                  Finaliza
+                  <select
+                    aria-label="Finaliza"
+                    value={draft.repeat.end}
+                    onChange={(e) =>
+                      field("repeat", {
+                        ...draft.repeat,
+                        end: e.target.value as RepeatDraft["end"],
+                      })
+                    }
+                  >
+                    <option value="never">Nunca · sin fecha límite</option>
+                    <option value="until">En una fecha</option>
+                    <option value="count">Después de un número de veces</option>
+                  </select>
+                </label>
+                {draft.repeat.end === "until" && (
+                  <label className="field">
+                    Repetir hasta (incluido)
+                    <input
+                      required
+                      type="date"
+                      min={draft.start.slice(0, 10)}
+                      value={draft.repeat.until}
+                      onChange={(e) =>
+                        field("repeat", {
+                          ...draft.repeat,
+                          until: e.target.value,
+                        })
+                      }
+                    />
+                  </label>
+                )}
+                {draft.repeat.end === "count" && (
+                  <label className="field">
+                    Número de repeticiones
+                    <input
+                      required
+                      type="number"
+                      min={1}
+                      max={10000}
+                      value={draft.repeat.count}
+                      onChange={(e) =>
+                        field("repeat", {
+                          ...draft.repeat,
+                          count: Number(e.target.value),
+                        })
+                      }
+                    />
+                  </label>
+                )}
+              </fieldset>
+            )}
+          <p className="small muted">
+            Compartido entre los dos. Al exportarlo a Google se incluirán sus
+            dos correos como invitados.
+          </p>
           {google.data?.status === "connected" && (
             <small className="muted">
               Se enviará automáticamente a tu calendario Chimuverse de Google.

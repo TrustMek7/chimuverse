@@ -109,6 +109,7 @@ export function useSnapshot() {
         "task_verifications",
         "entries",
         "calendar_events",
+        "calendar_overrides",
         "photos",
         "notifications",
         "questions",
@@ -123,6 +124,11 @@ export function useSnapshot() {
               .select(table === "entries" ? "*,entry_bodies(content)" : "*")
               .order("id")
               .range(offset, offset + 499);
+            if (
+              table === "calendar_overrides" &&
+              result.error?.code === "PGRST205"
+            )
+              return [table, []];
             const page =
               (check(result) as unknown as Record<string, unknown>[] | null) ??
               [];

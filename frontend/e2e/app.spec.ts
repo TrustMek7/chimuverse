@@ -148,6 +148,18 @@ async function fixture(page: Page, connected = false) {
       });
       return route.fulfill({ json: null });
     }
+    if (route.request().method() === "PATCH" && table === "calendar_events") {
+      const id = url.searchParams.get("id")?.replace("eq.", "");
+      const e = rows.calendar_events.find((e) => e.id === id);
+      Object.assign(e, route.request().postDataJSON());
+      return route.fulfill({ json: null });
+    }
+    if (table === "trash_item") {
+      const body = route.request().postDataJSON();
+      const e = rows[body.p_table]?.find((e) => e.id === body.p_id);
+      if (e) e.deleted_at = body.p_restore ? null : new Date().toISOString();
+      return route.fulfill({ json: null });
+    }
     return route.fulfill({
       json: table === "space_members" ? rows[table][0] : (rows[table] ?? []),
     });
@@ -181,6 +193,75 @@ async function fixture(page: Page, connected = false) {
   );
   return rows;
 }
+test("weekly series supports selected days, inclusive end date, no end and deleting the whole series", async ({
+  page,
+}) => {
+  const rows = await fixture(page, true);
+  await page.goto("/dia/calendario");
+  await page.getByRole("button", { name: "Nuevo evento" }).click();
+  const monday = new Date();
+  monday.setDate(1);
+  while (monday.getDay() !== 1) monday.setDate(monday.getDate() + 1);
+  const day = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const until = new Date(monday);
+  until.setDate(until.getDate() + 9);
+  await page
+    .getByRole("textbox", { name: "Título", exact: true })
+    .fill("Nuestro horario semanal");
+  await page.getByLabel("Empieza").fill(day(monday) + "T09:00");
+  await page.getByLabel("Termina").fill(day(monday) + "T10:00");
+  await expect(
+    page.getByRole("button", { name: "Solo yo", exact: true }),
+  ).toHaveCount(0);
+  await page.getByLabel("Repetición", { exact: true }).selectOption("WEEKLY");
+  for (const name of [
+    "Lunes",
+    "Martes",
+    "Miércoles",
+    "Jueves",
+    "Viernes",
+    "Sábado",
+    "Domingo",
+  ]) {
+    const button = page.getByRole("button", { name, exact: true });
+    const desired = ["Lunes", "Miércoles"].includes(name);
+    if (((await button.getAttribute("aria-pressed")) === "true") !== desired)
+      await button.click();
+  }
+  await page.getByLabel("Finaliza", { exact: true }).selectOption("until");
+  await page.getByLabel("Repetir hasta (incluido)").fill(day(until));
+  await page.getByRole("button", { name: "Guardar el plan" }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  const events = page
+    .locator(".fc-daygrid-event")
+    .filter({ hasText: "Nuestro horario semanal" });
+  await expect(events).toHaveCount(4);
+  expect(rows.calendar_events[0].visibility).toBe("shared");
+  expect(rows.calendar_events[0].recurrence[0]).toContain("BYDAY=MO,WE");
+  await events.first().click();
+  await page.getByRole("button", { name: "Editar serie", exact: true }).click();
+  await page.getByLabel("Finaliza", { exact: true }).selectOption("never");
+  await page.getByRole("button", { name: "Guardar el plan" }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  expect(rows.calendar_events[0].recurrence[0]).not.toMatch(/UNTIL|COUNT/);
+  await page
+    .locator(".fc-daygrid-event")
+    .filter({ hasText: "Nuestro horario semanal" })
+    .first()
+    .click();
+  await page
+    .getByRole("button", { name: "Eliminar serie", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Confirmar eliminación" }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(
+    page
+      .locator(".fc-daygrid-event")
+      .filter({ hasText: "Nuestro horario semanal" }),
+  ).toHaveCount(0);
+  expect(rows.calendar_events[0].deleted_at).toBeTruthy();
+});
 test("connected calendar hides onboarding and exports new plans by default; disconnected calendar offers connection", async ({
   page,
 }) => {

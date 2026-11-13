@@ -86,3 +86,6 @@ Referencias oficiales: [migraciones](https://supabase.com/docs/guides/deployment
 
 
 Una vez conectado Calendar, Our Calendar exporta automáticamente sus eventos y cambios. Ya no hay casilla por evento. «Traer cambios de Google» permite importar al momento cambios hechos allí; el scheduler también reconcilia periódicamente. Daily Quests no se exporta.
+
+
+Our Calendar siempre es compartido. En Repetición se elige frecuencia, días e intervalo; Finaliza ofrece Nunca, fecha incluida o número de repeticiones. Editar serie y Eliminar serie afectan a todas sus fechas. Los cambios se exportan automáticamente e incluyen a los dos correos autorizados como invitados en Google; cada persona podría tener que aceptar la invitación según sus ajustes.

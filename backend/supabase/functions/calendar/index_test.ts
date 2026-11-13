@@ -44,6 +44,8 @@ Deno.test(
       const url = String(input);
       if (url.endsWith("/token"))
         return Response.json({ access_token: "test" });
+      if (url.endsWith("/rpc/calendar_invitees"))
+        return Response.json(["one@example.test", "two@example.test"]);
       if (url.includes("/events?"))
         return Response.json({ items: [], nextSyncToken: "cursor" });
       if (url.endsWith("/rpc/pending_calendar_sync"))
@@ -79,7 +81,7 @@ Deno.test(
   },
 );
 Deno.test(
-  "all-day and annual Google contracts round-trip; unsupported recurrence is explicit",
+  "all-day, weekly and annual rules round-trip with both invited members",
   () => {
     const e = {
       id: uid,
@@ -95,13 +97,17 @@ Deno.test(
     assert(remote.end.date === "2026-12-21");
     assert(normalize(remote, uid).annual);
     assert(normalize({ status: "cancelled" }, uid).deleted);
-    let rejected = false;
-    try {
-      normalize({ recurrence: ["RRULE:FREQ=WEEKLY"] });
-    } catch {
-      rejected = true;
-    }
-    assert(rejected);
+    const weekly = normalize({
+      ...remote,
+      recurrence: ["RRULE:FREQ=WEEKLY;BYDAY=MO,WE;UNTIL=20261231T235959Z"],
+    });
+    assert(weekly.recurrence[0].includes("BYDAY=MO,WE"));
+    const wire = toRemote({ ...e, ...weekly }, [
+      "one@example.test",
+      "two@example.test",
+    ]);
+    assert(wire.recurrence[0] === weekly.recurrence[0]);
+    assert(wire.attendees?.length === 2);
   },
 );
 async function scenario(mode: "expired" | "conflict" | "outgoing") {
@@ -134,6 +140,8 @@ async function scenario(mode: "expired" | "conflict" | "outgoing") {
     const url = String(input);
     if (url.endsWith("/token"))
       return Response.json({ access_token: "access-test" });
+    if (url.endsWith("/rpc/calendar_invitees"))
+      return Response.json(["one@example.test", "two@example.test"]);
     if (url.includes("/rpc/calendar_service")) {
       const args = JSON.parse(String(options?.body));
       const op = args.p_op;
@@ -170,7 +178,12 @@ async function scenario(mode: "expired" | "conflict" | "outgoing") {
         nextSyncToken: "new-cursor",
       });
     }
-    if (url.endsWith("/events/google-event") && options?.method === "PUT") {
+    if (
+      url.split("?")[0].endsWith("/events/google-event") &&
+      options?.method === "PUT"
+    ) {
+      assert(new URL(url).searchParams.get("sendUpdates") === "all");
+      assert(JSON.parse(String(options.body)).attendees.length === 2);
       assert(new Headers(options.headers).get("If-Match") === "remote-new");
       return Response.json({ ...remote, summary: local.title });
     }

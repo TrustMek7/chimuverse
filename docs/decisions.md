@@ -14,6 +14,9 @@
 - Con Google Calendar conectado, crear/editar/borrar/restaurar eventos en Our Calendar los exporta automáticamente desde el servidor. No se exportan Daily Quests.
 - El aviso y el botón de conectar se ocultan al estar conectado. La acción manual «Traer cambios de Google» queda para cambios hechos allí.
 
+- Our Calendar es compartido entre los dos: sin opción Solo yo. Los eventos exportados incluyen a los dos correos autorizados como invitados de Google.
+- Repeticiones diarias/semanales/mensuales/anuales, selección de días, intervalo, final por fecha o número de veces y sin fecha límite. Edición y eliminación afectan a toda la serie.
+
 ## Pendientes
 - Proveedor de correo: Gmail API vs Apps Script (o alternativa).
 - Spotify/YouTube: solo enlaces y CSV en MVP; permisos de API futuros.

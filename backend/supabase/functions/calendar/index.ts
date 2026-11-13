@@ -114,10 +114,6 @@ async function refresh(encrypted: string) {
 export function normalize(remote: Data, eventId?: string) {
   if (remote.status === "cancelled")
     return { event_id: eventId ?? null, deleted: true };
-  if (remote.recurrence?.some((r: string) => r !== "RRULE:FREQ=YEARLY"))
-    throw new Error(
-      "Este calendario contiene una recurrencia no anual. Edítala en Google antes de sincronizar.",
-    );
   return {
     event_id: eventId ?? null,
     title: remote.summary ?? "Sin título",
@@ -129,22 +125,39 @@ export function normalize(remote: Data, eventId?: string) {
       remote.end?.dateTime ??
       (remote.end?.date ? remote.end.date + "T00:00:00Z" : undefined),
     all_day: !!remote.start?.date,
-    annual: !!remote.recurrence?.length,
+    recurrence: remote.recurrence ?? [],
+    recurrence_timezone: remote.start?.timeZone ?? "America/Lima",
+    annual:
+      remote.recurrence?.length === 1 &&
+      remote.recurrence[0] === "RRULE:FREQ=YEARLY",
     deleted: remote.status === "cancelled",
   };
 }
-export function toRemote(e: Data) {
+export function toRemote(e: Data, invitees: string[] = []) {
   return {
     summary: e.title,
     description: e.description,
     visibility: "private",
     start: e.all_day
       ? { date: e.start_at.slice(0, 10) }
-      : { dateTime: e.start_at, timeZone: "America/Lima" },
+      : {
+          dateTime: e.start_at,
+          timeZone: e.recurrence_timezone ?? "America/Lima",
+        },
     end: e.all_day
       ? { date: e.end_at.slice(0, 10) }
-      : { dateTime: e.end_at, timeZone: "America/Lima" },
-    recurrence: e.annual ? ["RRULE:FREQ=YEARLY"] : [],
+      : {
+          dateTime: e.end_at,
+          timeZone: e.recurrence_timezone ?? "America/Lima",
+        },
+    recurrence: e.recurrence ?? (e.annual ? ["RRULE:FREQ=YEARLY"] : []),
+    ...(invitees.length
+      ? {
+          attendees: invitees.map((email) => ({ email })),
+          guestsCanInviteOthers: false,
+          guestsCanModify: false,
+        }
+      : {}),
     extendedProperties: { private: { chimuverse_id: e.id } },
   };
 }
@@ -168,6 +181,7 @@ export async function sync(uid: string) {
     const conn = await service("connection", uid);
     if (!conn) throw new Error("Conecta primero tu Google Calendar.");
     const token = await refresh(conn.encrypted_refresh_token);
+    const invitees: string[] = await rpc("calendar_invitees", { p_uid: uid });
     const base =
       "calendars/" + encodeURIComponent(conn.calendar_id) + "/events";
     let links: Data[] = await service("links", uid);
@@ -175,6 +189,7 @@ export async function sync(uid: string) {
     let page: string | undefined;
     let reset = false;
     const seen = new Set<string>();
+    const overrides: Data[] = [];
     for (;;) {
       const params = new URLSearchParams({
         maxResults: "250",
@@ -196,14 +211,27 @@ export async function sync(uid: string) {
         throw e;
       }
       for (const remote of batch.items ?? []) {
+        if (remote.recurringEventId) {
+          overrides.push(remote);
+          continue;
+        }
         seen.add(remote.id);
         const l = links.find((l) => l.google_event_id === remote.id);
         let local = l ? events.find((e) => e.id === l.event_id) : undefined;
         // Recover a deterministic event created before a failed link write.
-        if (!local && remote.extendedProperties?.private?.chimuverse_id)
-          local = events.find(
+        if (!local && remote.extendedProperties?.private?.chimuverse_id) {
+          const candidate = events.find(
             (e) => e.id === remote.extendedProperties.private.chimuverse_id,
           );
+          const existing = candidate
+            ? links.find((l) => l.event_id === candidate.id)
+            : undefined;
+          if (
+            !existing ||
+            (existing.etag === null && remote.status !== "cancelled")
+          )
+            local = candidate;
+        }
         if (!local) {
           if (remote.status === "cancelled") continue;
           const imported = await service("import", uid, normalize(remote));
@@ -212,6 +240,7 @@ export async function sync(uid: string) {
         }
         // Removing the opt-in must not delete the event in Chimuverse on the next pull.
         if (!local.sync_google && !local.deleted_at) continue;
+        if (l?.etag === null && remote.status === "cancelled") continue;
         if (l?.etag === remote.etag) continue;
         if (l && local.version !== l.local_version) {
           await service("conflict", uid, { event_id: local.id, remote });
@@ -229,6 +258,26 @@ export async function sync(uid: string) {
       if (!page) break;
     }
     links = await service("links", uid);
+    for (const remote of overrides) {
+      const parent = links.find(
+        (l) => l.google_event_id === remote.recurringEventId,
+      );
+      if (!parent) continue;
+      const start = (value: Data | undefined) =>
+        value?.dateTime ?? (value?.date ? value.date + "T00:00:00Z" : null);
+      await rpc("import_calendar_override", {
+        p_uid: uid,
+        p_data: {
+          event_id: parent.event_id,
+          google_event_id: remote.id,
+          original_start: start(remote.originalStartTime),
+          start_at: start(remote.start),
+          end_at: start(remote.end),
+          title: remote.summary ?? null,
+          cancelled: remote.status === "cancelled",
+        },
+      });
+    }
     events = await service("events", uid);
     const conflicts: Data[] = await service("conflicts", uid);
     for (const event of events) {
@@ -236,9 +285,10 @@ export async function sync(uid: string) {
       const l = links.find((l) => l.event_id === event.id);
       const remoteId = l?.google_event_id ?? event.id.replaceAll("-", "");
       if (l && (event.deleted_at || !event.sync_google)) {
+        if (l.etag === null) continue;
         try {
           await google(
-            base + "/" + encodeURIComponent(remoteId),
+            base + "/" + encodeURIComponent(remoteId) + "?sendUpdates=all",
             token,
             "DELETE",
             undefined,
@@ -264,19 +314,19 @@ export async function sync(uid: string) {
         continue;
       try {
         let remote: Data;
-        if (l) {
+        if (l && l.etag !== null) {
           remote = await google(
-            base + "/" + encodeURIComponent(remoteId),
+            base + "/" + encodeURIComponent(remoteId) + "?sendUpdates=all",
             token,
             "PUT",
-            toRemote(event),
+            toRemote(event, invitees),
             l.etag,
           );
         } else {
           try {
-            remote = await google(base, token, "POST", {
-              id: remoteId,
-              ...toRemote(event),
+            remote = await google(base + "?sendUpdates=all", token, "POST", {
+              ...(l ? {} : { id: remoteId }),
+              ...toRemote(event, invitees),
             });
           } catch (e) {
             if (!(e instanceof GoogleError && e.status === 409)) throw e;
@@ -335,6 +385,7 @@ async function resolve(uid: string, id: string, choice: string) {
   } else if (choice === "local") {
     const conn = await service("connection", uid);
     const token = await refresh(conn.encrypted_refresh_token);
+    const invitees: string[] = await rpc("calendar_invitees", { p_uid: uid });
     const path =
       "calendars/" +
       encodeURIComponent(conn.calendar_id) +
@@ -342,21 +393,29 @@ async function resolve(uid: string, id: string, choice: string) {
       encodeURIComponent(c.remote_event.id);
     let r: Data;
     if (local.deleted_at) {
-      await google(path, token, "DELETE", undefined, c.remote_event.etag);
+      await google(
+        path + "?sendUpdates=all",
+        token,
+        "DELETE",
+        undefined,
+        c.remote_event.etag,
+      );
       r = { ...c.remote_event, etag: null };
     } else if (c.remote_event.status === "cancelled") {
       r = await google(
-        "calendars/" + encodeURIComponent(conn.calendar_id) + "/events",
+        "calendars/" +
+          encodeURIComponent(conn.calendar_id) +
+          "/events?sendUpdates=all",
         token,
         "POST",
-        { ...toRemote(local) },
+        { ...toRemote(local, invitees) },
       );
     } else
       r = await google(
-        path,
+        path + "?sendUpdates=all",
         token,
         "PUT",
-        toRemote(local),
+        toRemote(local, invitees),
         c.remote_event.etag,
       );
     await link(uid, local, r);

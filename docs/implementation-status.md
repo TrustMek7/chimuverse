@@ -19,9 +19,9 @@
 
 ## Activación pendiente en servicios externos
 
-Validación local ejecutada: build de producción y typecheck correctos; 12 tests PostgreSQL/RLS, 7 tests Calendar, 5 unitarios y 8 de navegador (32 en total). Axe sin violaciones en acceso y dashboard en los temas revisados. Las pruebas SQL incluyen almacenamiento privado, notas de ánimo, cápsulas, restauración y recordatorios deduplicados.
+Validación local ejecutada: build de producción y typecheck correctos; 13 tests PostgreSQL/RLS, 7 tests Calendar, 10 unitarios y 10 de navegador (40 en total). Axe sin violaciones en acceso y dashboard en los temas revisados. Las pruebas SQL incluyen almacenamiento privado, notas de ánimo, cápsulas, restauración y recordatorios deduplicados.
 
-El token de administración ya está configurado. Se aplicaron las seis migraciones al proyecto remoto, se desplegó la función Calendar y se programaron sincronización/recordatorios cada 15 minutos. Antes del despliegue se guardó una instantánea cifrada del catálogo y datos públicos: el proyecto tenía cero tablas públicas y cero usuarios. La copia está fuera de Git y no incluye Auth ni objetos Storage.
+El token de administración ya está configurado. Se aplicaron las siete migraciones al proyecto remoto, se desplegó la función Calendar y se programaron sincronización/recordatorios cada 15 minutos. Antes del despliegue se guardó una instantánea cifrada del catálogo y datos públicos: el proyecto tenía cero tablas públicas y cero usuarios. La copia está fuera de Git y no incluye Auth ni objetos Storage.
 
 Cliente OAuth importado desde JSON y ambas redirecciones validadas. Google Auth ya está habilitado; las credenciales también están desplegadas para Calendar. Pendiente que las dos personas inicien sesión y autoricen sus conexiones en el navegador. Ver `getting-started.md`.
 
@@ -31,7 +31,7 @@ No se declara listo para producción ni validada la sincronización real hasta c
 
 - Correo y push desactivados. Spotify continúa por enlaces. El usuario amplió YouTube a conexión individual e importación/exportación y sincronización de playlists; esa integración aún está pendiente de implementar.
 - Papelera restaurable, sin purga automática activada; nada se elimina definitivamente sin esa configuración.
-- Calendar externo admite eventos simples y recurrencia anual. Otras reglas de recurrencia se rechazan con un mensaje, evitando importarlas incorrectamente.
+- Calendar admite recurrencia diaria, semanal, mensual y anual; conserva reglas personalizadas de Google y sus excepciones. La edición de una única ocurrencia desde la app no está disponible: las acciones indican claramente que afectan a la serie.
 - No se ha publicado el frontend en Vercel ni se han enviado commits al remoto.
 - Los tests de navegador usan datos de prueba y un transporte aislado; los tests de SQL usan las migraciones reales y RLS. No equivalen a un ensayo remoto con credenciales Google.
 
@@ -40,4 +40,9 @@ No se declara listo para producción ni validada la sincronización real hasta c
 
 Migración `202611130006_automatic_calendar.sql` desplegada: los cambios locales se encolan en servidor y pg_net llama a la función inmediatamente después del commit. La cola mantiene generaciones para no perder ediciones concurrentes; los imports desde Google no se vuelven a exportar. Las cuentas ya conectadas quedan activadas sin volver a autorizar. El cron de 15 minutos conserva la reconciliación y los reintentos.
 
-Se verificó el envío inmediato con la conexión real, sin crear eventos de prueba ni modificar títulos: se encoló un trabajo y se comprobó su procesamiento automático. Daily Quests queda separado. Las series semanales y excepciones de recurrencia siguen pendientes; la sincronización actual admite recurrencia anual.
+Se verificó el envío inmediato con la conexión real, sin crear eventos de prueba ni modificar títulos: se encoló un trabajo y se comprobó su procesamiento automático. Daily Quests queda separado. Las series semanales, fechas finales, series sin límite y excepciones importadas de Google están implementadas.
+
+
+## Series compartidas e invitados
+
+La migración 007 conserva reglas RFC5545 y zonas horarias. La interfaz expande únicamente el rango visible, por lo que Nunca no genera miles de filas. Ambas personas pueden ver los eventos; se quitó Solo yo del calendario. Google recibe a los dos correos autorizados como invitados con sendUpdates=all al crear o actualizar un evento; la aceptación depende de la configuración de cada cuenta. No se crean ni envían invitaciones sintéticas durante las pruebas.
