@@ -29,7 +29,7 @@ No se declara listo para producción ni validada la sincronización real hasta c
 
 ## Límites explícitos
 
-- Correo y push desactivados. Spotify continúa por enlaces. El usuario amplió YouTube a conexión individual e importación/exportación y sincronización de playlists; implementada con OAuth separado, una playlist común por espacio, importación desde el canal propietario, exportación de canciones compartidas, altas/bajas directas en YouTube y lectura automática cada minuto. Las invitaciones nativas por correo no están disponibles en la API; se activa colaboración por enlace en YouTube. Pendiente consentimiento real y registrar el callback OAuth.
+- Correo desactivado; push web activo (ver «Notificaciones push»). Spotify continúa por enlaces. El usuario amplió YouTube a conexión individual e importación/exportación y sincronización de playlists; implementada con OAuth separado, una playlist común por espacio, importación desde el canal propietario, exportación de canciones compartidas, altas/bajas directas en YouTube y lectura automática cada minuto. Las invitaciones nativas por correo no están disponibles en la API; se activa colaboración por enlace en YouTube. Pendiente consentimiento real y registrar el callback OAuth.
 - Papelera restaurable, sin purga automática activada; nada se elimina definitivamente sin esa configuración.
 - Calendar admite recurrencia diaria, semanal, mensual y anual; conserva reglas personalizadas de Google y sus excepciones. La edición de una única ocurrencia desde la app no está disponible: las acciones indican claramente que afectan a la serie.
 - No se ha publicado el frontend en Vercel ni se han enviado commits al remoto.
@@ -73,3 +73,22 @@ Migración 009: convierte a compartidos todos los registros y fotos existentes, 
 ## Banco de preguntas e ideas de citas
 
 Migraciones 010 a 012, aplicadas en Supabase el 13 de noviembre de 2026: 300 preguntas en 20 temas y tres niveles, con fuentes editoriales, más 150 ideas de citas compartidas y pendientes. Se conservaron las preguntas, respuestas y citas creadas por los usuarios. Universo permite buscar sin tildes y filtrar por tema, nivel y estado. En Citas se puede elegir una idea y agendarla con `schedule_date`, que crea o reutiliza un único evento compartido del calendario, o marcarla como vivida. Detalle y fuentes en [universe-content-framework.md](universe-content-framework.md). `npm run verify:deployment` comprueba `seeded_questions=300` y `seeded_dates=150`.
+
+## Notificaciones push
+
+Migración 013 y Edge Function `push`. Cada notificación de la app (`notifications`) también llega como aviso del sistema a los dispositivos de quien la recibe, con la app cerrada.
+
+- **Activación:** en Inicio, una tarjeta ofrece «Activar notificaciones». Con un toque aparece el permiso del navegador, que los navegadores solo muestran tras un gesto. «Ahora no» deja visible el estado «Notificaciones desactivadas · Activar». Una vez activas, Inicio muestra «Notificaciones activadas», que enlaza a Ajustes. Si el dispositivo ya tenía permiso (al volver a iniciar sesión o si el navegador rotó la suscripción), se vuelve a vincular sin preguntar.
+- **iPhone/iPad:** Apple solo permite push a la app instalada en el inicio (iOS 16.4 o posterior). En una pestaña de Safari la tarjeta guía «Compartir → Agregar a inicio». Android y escritorio funcionan sin instalar; en escritorio el navegador debe estar abierto, aunque sea en segundo plano.
+- **Permiso bloqueado:** la web no puede volver a pedirlo; la tarjeta explica cómo permitirlo en el navegador.
+- **Ajustes → Perfil:** activar o desactivar este dispositivo, enviar una prueba y ver o quitar los dispositivos de la cuenta.
+- **Seguridad:**
+  - `push_subscriptions` solo es visible para su dueño y el cliente no puede leer las claves.
+  - Guardar pasa por `save_push_subscription`, que exige membresía. Un navegador compartido pasa a quien inició sesión por última vez.
+  - Cerrar sesión borra la suscripción del dispositivo.
+  - El trigger `dispatch_push` llama a la función con el secreto del cron por `pg_net`; un fallo de envío nunca deshace la notificación de la app.
+  - La función cifra cada mensaje (aes128gcm) y lo firma con VAPID. Borra los dispositivos que el servicio push da por desaparecidos (404/410) y omite avisos ya leídos.
+- **Contenido del aviso:** el mismo título breve de la notificación interna y su ruta; al tocarlo se abre esa pantalla.
+- **Configuración:** `npm run deploy:all` genera una sola vez `VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY` en `backend/.env`, los sube como secretos, registra `push_function_url` y despliega `push`. No requiere Firebase.
+- **PWA:** `manifest.webmanifest`, íconos en `public/icons` y `sw.js`, que solo maneja push y no guarda páginas ni datos en caché. `vercel.json` sirve `sw.js` sin caché.
+- **Pendiente:** preferencias por tipo de aviso y horario de silencio, y probar en dispositivos reales (iPhone instalado, Android, Windows/macOS).

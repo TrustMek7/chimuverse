@@ -23,7 +23,9 @@ El código implementado se detalla en [estado de implementación](implementation
 - [x] Notificaciones persistentes, Realtime y recordatorios deduplicados.
 - [x] Desplegar función/scheduler.
 - [ ] Validar sincronización real con las dos cuentas tras configurar OAuth.
-- [ ] Correo y push: pendientes por decisión de producto; desactivados en la interfaz.
+- [x] Push web (PWA) en celular y escritorio, con estado en Inicio y dispositivos en Ajustes.
+- [ ] Correo: pendiente por decisión de producto.
+- [ ] Push: preferencias por tipo de aviso y horario de silencio.
 
 ## Recuerdos y expansión
 

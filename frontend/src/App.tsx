@@ -11,7 +11,7 @@ import { useAuth, useMembership, useSnapshot } from "./lib/store";
 import Shell from "./components/Shell";
 import Auth from "./pages/Auth";
 import { ErrorMessage, Loading, Button } from "./components/ui";
-import { supabase } from "./lib/supabase";
+import { signOut } from "./lib/push";
 const Home = lazy(() => import("./pages/Home"));
 const Quests = lazy(() => import("./pages/Quests"));
 const Calendar = lazy(() => import("./pages/Calendar"));
@@ -37,7 +37,7 @@ function Gate() {
         <Button onClick={() => void membership.refetch()}>Reintentar</Button>
         <Button
           variant="secondary"
-          onClick={() => void supabase.auth.signOut()}
+          onClick={() => void signOut()}
         >
           Cerrar sesión
         </Button>

@@ -9,10 +9,11 @@
     "functions:deploy": "supabase functions deploy",
     "deploy": "node scripts/deploy.mjs",
     "test:calendar": "deno test --config supabase/functions/deno.json --allow-env supabase/functions/calendar/index_test.ts",
-    "typecheck": "deno check --config supabase/functions/deno.json supabase/functions/calendar/index.ts supabase/functions/youtube/index.ts",
+    "typecheck": "deno check --config supabase/functions/deno.json supabase/functions/calendar/index.ts supabase/functions/youtube/index.ts supabase/functions/push/index.ts",
     "deploy:all": "node scripts/deploy.mjs --functions --schedule",
     "backup": "node scripts/preflight.mjs",
     "verify:deployment": "node scripts/verify-deployment.mjs",
+    "test:push": "deno test --config supabase/functions/deno.json --allow-env supabase/functions/push/index_test.ts",
     "test:youtube": "deno test --config supabase/functions/deno.json --allow-env supabase/functions/youtube/index_test.ts",
     "content:check": "node scripts/build-content-banks.mjs --check",
     "content:build": "node scripts/build-content-banks.mjs"

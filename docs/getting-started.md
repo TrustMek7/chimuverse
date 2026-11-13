@@ -79,7 +79,7 @@ Vercel: raíz `frontend`, build `npm run build`, salida `dist`. Configurar solo 
 - Ajustes → Datos exporta registros visibles en JSON y fotos en ZIP. No incluye datos privados de la pareja ni textos de cápsulas selladas.
 - Papelera restaura registros; la purga automática a 30 días está desactivada. Completar tareas, metas y títulos no elimina su historial.
 - `--schedule` configura pg_cron/pg_net cada 15 minutos, con secreto en Vault, para Calendar y recordatorios deduplicados de quests a 24/72 horas y eventos próximos.
-- Correo y push siguen desactivados, según el handoff. Spotify usa enlaces. YouTube cuenta con conexión OAuth y playlist común (ver la guía al final).
+- El correo sigue desactivado. El push web se activa desde Inicio en cada dispositivo (en iPhone, instalando la app en el inicio). Spotify usa enlaces. YouTube cuenta con conexión OAuth y playlist común (ver la guía al final).
 - Guardar exportaciones en almacenamiento personal cifrado. No subir backups al repositorio ni a artifacts de CI.
 
 Referencias oficiales: [migraciones](https://supabase.com/docs/guides/deployment/database-migrations), [Google Auth](https://supabase.com/docs/guides/auth/social-sign-in/auth-google), [scopes de Calendar](https://developers.google.com/workspace/calendar/api/auth), [sincronización incremental](https://developers.google.com/workspace/calendar/api/guides/sync).

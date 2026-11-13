@@ -1,5 +1,5 @@
 import { readFileSync, readdirSync, existsSync, appendFileSync } from "node:fs";
-import { randomBytes } from "node:crypto";
+import { randomBytes, generateKeyPairSync } from "node:crypto";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 const root = fileURLToPath(new URL("../", import.meta.url));
@@ -99,6 +99,24 @@ if (process.argv.includes("--functions")) {
       appendFileSync(root + ".env", `\n${key}=${value}\n`);
     }
   }
+  if (!env.VAPID_PUBLIC_KEY || !env.VAPID_PRIVATE_KEY) {
+    // Web Push identity (P-256), generated once and kept with the other server secrets.
+    const { publicKey, privateKey } = generateKeyPairSync("ec", {
+      namedCurve: "prime256v1",
+    });
+    const jwk = privateKey.export({ format: "jwk" });
+    const raw = Buffer.concat([
+      Buffer.from([4]),
+      Buffer.from(publicKey.export({ format: "jwk" }).x, "base64url"),
+      Buffer.from(publicKey.export({ format: "jwk" }).y, "base64url"),
+    ]);
+    env.VAPID_PUBLIC_KEY = raw.toString("base64url");
+    env.VAPID_PRIVATE_KEY = jwk.d;
+    appendFileSync(
+      root + ".env",
+      `\nVAPID_PUBLIC_KEY=${env.VAPID_PUBLIC_KEY}\nVAPID_PRIVATE_KEY=${env.VAPID_PRIVATE_KEY}\n`,
+    );
+  }
   const secrets = [
     { name: "APP_URL", value: app },
     ...[
@@ -108,6 +126,8 @@ if (process.argv.includes("--functions")) {
       "YOUTUBE_OAUTH_CLIENT_SECRET",
       "GOOGLE_TOKEN_ENCRYPTION_KEY",
       "CRON_SECRET",
+      "VAPID_PUBLIC_KEY",
+      "VAPID_PRIVATE_KEY",
     ]
       .filter((k) => env[k])
       .map((k) => ({ name: k, value: env[k] })),
@@ -125,11 +145,15 @@ if (process.argv.includes("--functions")) {
   await sql(
     `insert into private.integration_settings(name,value) values('calendar_function_url','${calendarUrl}') on conflict(name) do update set value=excluded.value`,
   );
+  const pushUrl = (env.SUPABASE_URL + "/functions/v1/push").replaceAll("'", "''");
+  await sql(
+    `insert into private.integration_settings(name,value) values('push_function_url','${pushUrl}') on conflict(name) do update set value=excluded.value`,
+  );
   const cmd =
     process.platform === "win32"
       ? cliCommand
       : root + "node_modules/.bin/supabase";
-  for (const functionName of ["calendar", "youtube"]) {
+  for (const functionName of ["calendar", "youtube", "push"]) {
     const result = spawnSync(
       cmd,
       [

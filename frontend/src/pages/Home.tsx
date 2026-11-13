@@ -13,6 +13,7 @@ import { useSpace } from "../lib/store";
 import { localDay, formatDate, nextOccurrence } from "../lib/utils";
 import { DualProgress, Avatar, Empty } from "../components/ui";
 import { PhotoImage } from "./Vault";
+import { PushStatus } from "../components/PushStatus";
 export function Constellation({
   tasks,
 }: {
@@ -130,6 +131,7 @@ export default function Home() {
             ? `${partner?.display_name.split(" ")[0] ?? "Tu pareja"} tiene un avance que espera tu visto bueno.`
             : "Un nuevo día para seguir construyendo nuestro pequeño universo."}
         </p>
+        <PushStatus />
       </header>
       <div className="dashboard-top">
         <section className="sky-panel">

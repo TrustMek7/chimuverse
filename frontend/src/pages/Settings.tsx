@@ -15,6 +15,8 @@ import {
 import { zipSync } from "fflate";
 import { useSpace, useAction } from "../lib/store";
 import { check, supabase } from "../lib/supabase";
+import { signOut } from "../lib/push";
+import { PushSettings } from "../components/PushStatus";
 import { download, localDay, formatDate } from "../lib/utils";
 import {
   Button,
@@ -224,6 +226,8 @@ export default function Settings() {
             </Button>
           </form>
           <hr />
+          <PushSettings />
+          <hr />
           <div className="row between wrap">
             <div>
               <h3>Notificaciones por correo</h3>
@@ -236,7 +240,7 @@ export default function Settings() {
           <hr />
           <Button
             variant="secondary"
-            onClick={() => void supabase.auth.signOut()}
+            onClick={() => void signOut()}
           >
             <LogOut size={18} />
             Cerrar sesión

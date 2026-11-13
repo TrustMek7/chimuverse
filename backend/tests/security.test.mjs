@@ -131,6 +131,7 @@ before(async () => {
     "202611130010_universe_bank.sql",
     "202611130011_date_ideas.sql",
     "202611130012_schedule_dates.sql",
+    "202611130013_web_push.sql",
   ]) {
     await db.exec(
       readFileSync(
@@ -1049,4 +1050,47 @@ test("foreign user cannot forge memberships or notifications", async () => {
       0,
     );
   });
+});
+
+test("push subscriptions belong to one member, move with the browser and never leak keys", async () => {
+  const ep = "https://push.example.test/send/device-1";
+  const keys = ["B".repeat(87), "a".repeat(22)];
+  await as(c, () =>
+    assert.rejects(
+      db.query("select public.save_push_subscription($1,$2,$3,'X')", [ep, ...keys]),
+      /Inicia sesión/,
+    ),
+  );
+  await as(a, () =>
+    db.query("select public.save_push_subscription($1,$2,$3,'Chrome · Windows')", [ep, ...keys]),
+  );
+  await as(a, () =>
+    db.query("select public.save_push_subscription($1,$2,$3,'Chrome · Windows')", [ep, ...keys]),
+  );
+  const mine = (await as(a, () => db.query("select id,label from public.push_subscriptions"))).rows;
+  assert.equal(mine.length, 1);
+  assert.equal((await as(b, () => db.query("select id from public.push_subscriptions"))).rows.length, 0);
+  await as(a, () => assert.rejects(db.query("select p256dh from public.push_subscriptions"), /permission denied/));
+  await as(a, () =>
+    assert.rejects(
+      db.query("insert into public.push_subscriptions(user_id,endpoint,p256dh,auth) values($1,$2,$3,$4)", [a, ep + "x", ...keys]),
+      /permission denied/,
+    ),
+  );
+  await as(a, () =>
+    assert.rejects(
+      db.query("select public.save_push_subscription('http://insecure.test/x',$1,$2,'X')", keys),
+      /check constraint/,
+    ),
+  );
+  // Same browser, other member signs in: the device now notifies only that member.
+  await as(b, () => db.query("select public.save_push_subscription($1,$2,$3,'Safari · iPhone')", [ep, ...keys]));
+  assert.equal((await as(a, () => db.query("select id from public.push_subscriptions"))).rows.length, 0);
+  await as(a, () => db.query("select public.remove_push_subscription($1)", [ep]));
+  assert.equal((await as(b, () => db.query("select id from public.push_subscriptions"))).rows.length, 1);
+  // Without pg_net/vault the trigger is a no-op and the in-app notification is kept.
+  await db.query("insert into public.notifications(recipient_id,kind,title) values($1,'test','Hola')", [b]);
+  assert.equal((await as(b, () => db.query("select id from public.notifications where kind='test'"))).rows.length, 1);
+  await as(b, () => db.query("select public.remove_push_subscription($1)", [ep]));
+  assert.equal((await db.query("select count(*)::int n from public.push_subscriptions")).rows[0].n, 0);
 });

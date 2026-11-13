@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { NavLink, Link, Outlet, useLocation } from "react-router-dom";
+import { NavLink, Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   House,
   ListChecks,
@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { useSpace, useAction, useRealtime } from "../lib/store";
 import { supabase, check } from "../lib/supabase";
+import { signOut } from "../lib/push";
 import { formatDate } from "../lib/utils";
 import { Avatar, Modal, Button, ErrorMessage } from "./ui";
 const nav = [
@@ -99,6 +100,17 @@ export default function Shell() {
     () => localStorage.getItem("chimu-theme") === "dark",
   );
   const [online, setOnline] = useState(navigator.onLine);
+  const navigate = useNavigate();
+  useEffect(() => {
+    // A notification click on an already-open window asks the app to open its route.
+    const sw = "serviceWorker" in navigator ? navigator.serviceWorker : null;
+    const onMessage = (e: MessageEvent) => {
+      const path = e.data?.type === "navigate" ? String(e.data.path ?? "") : "";
+      if (path.startsWith("/") && !path.startsWith("//")) navigate(path);
+    };
+    sw?.addEventListener("message", onMessage);
+    return () => sw?.removeEventListener("message", onMessage);
+  }, [navigate]);
   useEffect(() => {
     document.documentElement.dataset.theme = dark ? "dark" : "light";
     localStorage.setItem("chimu-theme", dark ? "dark" : "light");
@@ -245,7 +257,7 @@ export default function Shell() {
         </nav>
         <Button
           variant="secondary"
-          onClick={() => void supabase.auth.signOut()}
+          onClick={() => void signOut()}
         >
           <LogOut size={18} />
           Cerrar sesión

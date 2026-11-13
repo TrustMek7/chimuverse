@@ -763,3 +763,77 @@ test("quest creation, cross-verification and shared journal persistence use real
   ).toBeVisible();
   expect(rows.entries[0].visibility).toBe("shared");
 });
+test("dashboard offers one-tap notifications, shows their status and lists devices in settings", async ({
+  page,
+}, info) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await fixture(page);
+  if (info.project.name === "mobile") {
+    // iPhone in a Safari tab: push only works from the home-screen app, so guide the install.
+    await page.goto("/");
+    await expect(page.getByRole("heading", { name: "Agrega Chimuverse a tu inicio" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Activar notificaciones" })).toHaveCount(0);
+    return;
+  }
+  // Stand-in for the browser push service: permission prompt and subscription.
+  await page.addInitScript(() => {
+    // Browser permission and subscription survive reloads, as in a real browser.
+    const make = () => ({
+      endpoint: "https://push.example.test/device-1",
+      getKey: (name: string) => new Uint8Array(name === "auth" ? 16 : 65).fill(7).buffer,
+      unsubscribe: async () => (sessionStorage.removeItem("push-sub"), (sub = null), true),
+    });
+    let sub: any = sessionStorage.getItem("push-sub") ? make() : null;
+    Object.defineProperty(Notification, "permission", {
+      get: () => sessionStorage.getItem("push-permission") ?? "default",
+    });
+    Notification.requestPermission = async () => (sessionStorage.setItem("push-permission", "granted"), "granted");
+    const pushManager = {
+      getSubscription: async () => sub,
+      subscribe: async () => (sessionStorage.setItem("push-sub", "1"), (sub = make())),
+    };
+    const reg = { pushManager } as any;
+    navigator.serviceWorker.register = async () => reg;
+    navigator.serviceWorker.getRegistration = async () => reg;
+  });
+  const saved: any[] = [];
+  let tested = 0;
+  await page.route("**/rest/v1/rpc/save_push_subscription", async (route) => {
+    saved.push(route.request().postDataJSON());
+    await route.fulfill({ json: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee" });
+  });
+  await page.route("**/rest/v1/push_subscriptions*", (route) =>
+    route.fulfill({
+      json: saved.length
+        ? [{ id: "e1", label: saved.at(-1).p_label, created_at: new Date().toISOString(), last_seen_at: new Date().toISOString(), endpoint: saved.at(-1).p_endpoint }]
+        : [],
+    }),
+  );
+  await page.route("**/functions/v1/push", async (route) => {
+    const body = route.request().postDataJSON();
+    if (body.action === "test") tested++;
+    await route.fulfill({
+      json: body.action === "key" ? { publicKey: "B" + "A".repeat(86) } : { sent: 1, removed: 0, failed: 0 },
+    });
+  });
+  await page.goto("/");
+  await expect(page.getByRole("heading", { name: "¿Te avisamos cuando te toque?" })).toBeVisible();
+  // "Ahora no" keeps a visible status with a way back.
+  await page.getByRole("button", { name: "Ahora no" }).first().click();
+  await expect(page.getByText("Notificaciones desactivadas")).toBeVisible();
+  await page.getByRole("button", { name: "Activar", exact: true }).click();
+  await expect(page.getByRole("link", { name: /Notificaciones activadas/ })).toBeVisible();
+  expect(saved[0].p_endpoint).toBe("https://push.example.test/device-1");
+  expect(saved[0].p_p256dh.length).toBeGreaterThan(80);
+  const a11y = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]).analyze();
+  expect(a11y.violations).toEqual([]);
+  // A later visit re-links the device silently, without asking again.
+  await page.reload();
+  await expect(page.getByRole("link", { name: /Notificaciones activadas/ })).toBeVisible();
+  await page.getByRole("link", { name: /Notificaciones activadas/ }).click();
+  await expect(page.getByRole("heading", { name: "Notificaciones en tus dispositivos" })).toBeVisible();
+  await expect(page.getByText("Este dispositivo", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Enviar una prueba" }).click();
+  await expect(page.getByText("Prueba enviada.")).toBeVisible();
+  expect(tested).toBe(1);
+});

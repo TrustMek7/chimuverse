@@ -20,7 +20,7 @@
 ## Notificaciones
 - **Internas:** tabla `notifications` + Realtime; la persistencia es la fuente de verdad.
 - **Email:** pendiente de decidir entre Gmail API, Apps Script u otro método. SMTP directo desde Edge Functions no debe asumirse disponible.
-- **Push:** futuro, requiere service worker, permisos y manejo de suscripciones.
+- **Push:** Web Push estándar (VAPID) con service worker propio; ver «Notificaciones push» en implementation-status.md.
 - Configurar preferencias por persona, deduplicación, límites de frecuencia y logs de entrega.
 
 ## Variables y secretos
