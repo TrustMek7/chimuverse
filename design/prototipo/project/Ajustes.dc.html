@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Ajustes · Chimuverse</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./chimu.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&amp;family=Figtree:wght@400..800&amp;family=Fraunces:ital,opsz,wght@0,9..144,500..700;1,9..144,500..600&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="cv" style="min-height: 100%">
+<div class="app" style="min-height: 1160px">
+  <div style="flex: 1 1 240px; max-width: 272px; display: flex"><dc-import name="Sidebar" activo="ajustes" hint-size="272px,1160px"></dc-import></div>
+  <main class="main" style="position: relative">
+    <div class="top"><p class="t-sm muted grow">Ajustes</p><a class="btn btn-secondary btn-icon dot-badge" href="InicioDesktop.dc.html" aria-label="Notificaciones, 3 sin leer"><span class="i i-bell" aria-hidden="true"></span></a></div>
+    <div class="content col g24" style="max-width: 1100px">
+      <h1 class="t-h1">Ajustes</h1>
+      <div class="row g32 wrap" style="align-items: flex-start">
+        <nav aria-label="Secciones de ajustes" class="col g4" style="flex: 0 1 220px">
+          <sc-for list="{{secs}}" as="x" hint-placeholder-count="6"><button class="nav-a" aria-current="{{x.cur}}" onClick="{{x.pick}}" style="width: 100%"><span class="i {{x.icon}}" aria-hidden="true"></span>{{x.label}}</button></sc-for>
+          <hr class="divider" style="margin: 12px 0">
+          <a class="nav-a" href="Acceso.dc.html" style="color: var(--st-rejected)"><span class="i i-logout" aria-hidden="true"></span>Cerrar sesión</a>
+        </nav>
+
+        <div class="col g24" style="flex: 1 1 560px; min-width: 0">
+          <sc-if value="{{sPerfil}}" hint-placeholder-val="{{ false }}">
+            <section class="card col g20" style="padding: 28px">
+              <h2 class="t-h3">Perfil</h2>
+              <div class="row g16"><span class="av av-xl av-jl">JL</span><div class="col g4"><p class="t-h4">José Luis</p><p class="t-sm muted">Tu color: violeta. Glenny usa rosa.</p></div></div>
+              <div class="row g16 wrap"><div class="field" style="flex: 1 1 240px"><label class="label" for="p-n">Nombre visible</label><input id="p-n" class="input" value="José Luis"></div><div class="field" style="flex: 1 1 240px"><label class="label" for="p-z">Zona horaria</label><select id="p-z" class="select"><option>America/Lima (GMT−5)</option></select></div></div>
+              <button class="btn btn-primary" style="align-self: flex-start">Guardar cambios</button>
+            </section>
+          </sc-if>
+
+          <sc-if value="{{sApar}}" hint-placeholder-val="{{ false }}">
+            <section class="card col g20" style="padding: 28px">
+              <h2 class="t-h3">Apariencia</h2>
+              <fieldset class="field" style="border: 0; padding: 0; margin: 0"><legend class="label" style="margin-bottom: 8px">Tema</legend>
+                <div class="seg" role="group"><sc-for list="{{themes}}" as="t" hint-placeholder-count="3"><button aria-pressed="{{t.on}}" onClick="{{t.pick}}"><span class="i i-sm {{t.icon}}" aria-hidden="true"></span>{{t.label}}</button></sc-for></div>
+                <p class="help">«Sistema» sigue la configuración de tu dispositivo.</p>
+              </fieldset>
+              <label class="row g12" style="min-height: 44px"><input type="checkbox" style="width: 20px; height: 20px; accent-color: var(--primary)"><span class="col"><b class="t-sm">Reducir movimiento</b><span class="help">Desactiva animaciones, giros de la ruleta y transiciones.</span></span></label>
+            </section>
+          </sc-if>
+
+          <sc-if value="{{sPriv}}" hint-placeholder-val="{{ true }}">
+            <section class="card col g20" style="padding: 28px">
+              <div class="col g6"><h2 class="t-h3">Privacidad</h2><p class="t-sm muted">Todo empieza en «Solo yo». Compartir siempre es una decisión tuya.</p></div>
+              <sc-for list="{{privs}}" as="p" hint-placeholder-count="5">
+                <div class="row g16 between wrap" style="padding: 14px 0; border-top: 1px solid var(--line)">
+                  <div class="col g4 grow" style="min-width: 240px"><b class="t-sm">{{p.label}}</b><span class="help">{{p.help}}</span></div>
+                  <button role="switch" aria-checked="{{p.on}}" aria-label="{{p.label}}" onClick="{{p.toggle}}" class="row g8" style="min-height: 44px; font-weight: 650; font-size: 14px"><span style="width: 44px; height: 26px; border-radius: 999px; padding: 3px; display: flex; background: {{p.track}}; justify-content: {{p.justify}}; box-shadow: inset 0 0 0 1px var(--line-strong)"><span style="width: 20px; height: 20px; border-radius: 50%; background: var(--surface-raised); box-shadow: var(--sh-1)"></span></span>{{p.state}}</button>
+                </div>
+              </sc-for>
+            </section>
+          </sc-if>
+
+          <sc-if value="{{sNotif}}" hint-placeholder-val="{{ false }}">
+            <section class="card col g16" style="padding: 28px">
+              <h2 class="t-h3">Notificaciones</h2>
+              <div style="overflow-x: auto"><table style="width: 100%; border-collapse: collapse; font-size: 14px; min-width: 460px"><thead><tr style="text-align: left"><th class="t-eyebrow" style="padding: 10px 0">Aviso</th><th class="t-eyebrow" style="padding: 10px">Dentro de la app</th><th class="t-eyebrow" style="padding: 10px">Correo</th></tr></thead>
+                <tbody>
+                  <tr style="border-top: 1px solid var(--line)"><td style="padding: 12px 0">Reportes que debo verificar</td><td style="padding: 12px 10px">Siempre</td><td style="padding: 12px 10px"><span class="tag" style="height: 24px; font-size: 12px">Próximamente</span></td></tr>
+                  <tr style="border-top: 1px solid var(--line)"><td style="padding: 12px 0">Notas de Glenny</td><td style="padding: 12px 10px">Siempre</td><td style="padding: 12px 10px"><span class="tag" style="height: 24px; font-size: 12px">Próximamente</span></td></tr>
+                  <tr style="border-top: 1px solid var(--line)"><td style="padding: 12px 0">Recordatorios de eventos</td><td style="padding: 12px 10px">Siempre</td><td style="padding: 12px 10px"><span class="tag" style="height: 24px; font-size: 12px">Próximamente</span></td></tr>
+                  <tr style="border-top: 1px solid var(--line)"><td style="padding: 12px 0">Cápsulas que se abren</td><td style="padding: 12px 10px">Siempre</td><td style="padding: 12px 10px"><span class="tag" style="height: 24px; font-size: 12px">Próximamente</span></td></tr>
+                </tbody></table></div>
+              <p class="help">El envío por correo aún no está disponible; por eso no se puede activar.</p>
+            </section>
+          </sc-if>
+
+          <sc-if value="{{sInteg}}" hint-placeholder-val="{{ false }}">
+            <section class="card col g20" style="padding: 28px">
+              <div class="col g6"><h2 class="t-h3">Integraciones</h2><p class="t-sm muted">Cada persona conecta su propia cuenta. Lo que conectes aquí no conecta la de Glenny.</p></div>
+              <div class="panel col g16" style="padding: 20px">
+                <div class="row g12 wrap"><span class="i i-calendar i-lg" style="color: var(--primary)" aria-hidden="true"></span><div class="col grow"><b>Google Calendar</b><span class="t-sm muted">{{gDesc}}</span></div><span class="sync {{gClass}}"><span class="i i-sm {{gIcon}}" aria-hidden="true"></span>{{gLabel}}</span></div>
+                <ul class="col g6 t-sm muted">
+                  <li class="row g8"><span class="i i-check i-sm" style="color: var(--st-done)" aria-hidden="true"></span>Solo usa un calendario nuevo llamado «Chimuverse».</li>
+                  <li class="row g8"><span class="i i-check i-sm" style="color: var(--st-done)" aria-hidden="true"></span>Tus calendarios de trabajo y personales no se leen ni se comparten.</li>
+                  <li class="row g8"><span class="i i-check i-sm" style="color: var(--st-done)" aria-hidden="true"></span>Puedes desconectarlo cuando quieras; los eventos en Chimuverse se conservan.</li>
+                </ul>
+                <div class="row g8 wrap">
+                  <sc-if value="{{gOff}}" hint-placeholder-val="{{ true }}"><button class="btn btn-primary" onClick="{{gConnect}}">Conectar mi Google Calendar</button></sc-if>
+                  <sc-if value="{{gOn}}" hint-placeholder-val="{{ false }}"><button class="btn btn-secondary" onClick="{{gConnect}}"><span class="i i-refresh i-sm" aria-hidden="true"></span>Sincronizar ahora</button><button class="btn btn-ghost" onClick="{{gDisconnect}}" style="color: var(--st-rejected)">Desconectar</button></sc-if>
+                </div>
+              </div>
+              <div class="panel row g12 wrap" style="padding: 20px"><span class="i i-music i-lg" style="color: var(--ink-3)" aria-hidden="true"></span><div class="col grow"><b>Spotify y YouTube</b><span class="t-sm muted">Por ahora, solo guardas enlaces en Wishlist &amp; Soundtrack. No hay conexión con tu cuenta.</span></div><span class="tag">No disponible</span></div>
+            </section>
+          </sc-if>
+
+          <sc-if value="{{sDatos}}" hint-placeholder-val="{{ false }}">
+            <section class="card col g16" style="padding: 28px">
+              <h2 class="t-h3">Tus datos</h2>
+              <div class="row g8 wrap"><button class="btn btn-secondary"><span class="i i-download i-sm" aria-hidden="true"></span>Exportar mis datos (JSON)</button><button class="btn btn-secondary"><span class="i i-download i-sm" aria-hidden="true"></span>Descargar mis fotos (ZIP)</button></div>
+              <p class="help">La exportación incluye solo tu contenido y el compartido; nunca lo privado de Glenny.</p>
+              <a class="link t-sm" href="Vault.dc.html">Papelera (se vacía a los 30 días)</a>
+            </section>
+          </sc-if>
+        </div>
+      </div>
+    </div>
+    <sc-if value="{{hasToast}}" hint-placeholder-val="{{ false }}"><div class="toast" role="status"><span class="i i-check i-sm" aria-hidden="true"></span>{{toast}}</div></sc-if>
+  </main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1160}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { sec: 'priv', theme: 'system', g: 'off', p: { mood: false, cal: false, fin: false, devlog: false, vault: false }, toast: '' }; }
+  renderVals() {
+    const s = this.state;
+    const S = [['perfil', 'Perfil', 'i-user'], ['apar', 'Apariencia', 'i-palette'], ['priv', 'Privacidad', 'i-shield'], ['notif', 'Notificaciones', 'i-bell'], ['integ', 'Integraciones', 'i-link'], ['datos', 'Datos', 'i-download']];
+    const PR = [
+      ['devlog', 'Entradas nuevas del DevLog como compartidas', 'Si está apagado, cada entrada nueva empieza como «Solo yo».'],
+      ['vault', 'Fotos nuevas del Vault como compartidas', 'Si está apagado, las fotos que subas empiezan como «Solo yo».'],
+      ['mood', 'Compartir mi ánimo automáticamente', 'Si está apagado, compartes cada registro de ánimo por separado.'],
+      ['cal', 'Mostrar a Glenny cuándo estoy ocupado', 'Solo mostraría bloques «Ocupado», sin títulos. Requiere Google Calendar.'],
+      ['fin', 'Compartir los totales de mis finanzas personales', 'Glenny vería solo los totales del mes, nunca tus movimientos.']
+    ];
+    const g = s.g;
+    const toast = (t) => { this.setState({ toast: t }); clearTimeout(this.tt); this.tt = setTimeout(() => this.setState({ toast: '' }), 2800); };
+    return {
+      secs: S.map(x => ({ label: x[1], icon: x[2], cur: s.sec === x[0] ? 'page' : 'false', pick: () => this.setState({ sec: x[0] }) })),
+      sPerfil: s.sec === 'perfil', sApar: s.sec === 'apar', sPriv: s.sec === 'priv', sNotif: s.sec === 'notif', sInteg: s.sec === 'integ', sDatos: s.sec === 'datos',
+      themes: [['system', 'Sistema', 'i-sliders'], ['light', 'Claro', 'i-sun'], ['dark', 'Oscuro', 'i-moon']].map(t => ({ label: t[1], icon: t[2], on: s.theme === t[0] ? 'true' : 'false', pick: () => this.setState({ theme: t[0] }) })),
+      privs: PR.map(p => { const on = s.p[p[0]]; return { label: p[1], help: p[2], on: on ? 'true' : 'false', state: on ? 'Sí' : 'No', track: on ? 'var(--primary)' : 'var(--bg-sunk)', justify: on ? 'flex-end' : 'flex-start', toggle: () => this.setState({ p: Object.assign({}, s.p, { [p[0]]: !on }) }) }; }),
+      gOff: g === 'off', gOn: g !== 'off',
+      gClass: { off: 'sync-off', run: 'sync-run', ok: 'sync-ok' }[g], gIcon: { off: 'i-cloud-off', run: 'i-refresh spin', ok: 'i-cloud-ok' }[g],
+      gLabel: { off: 'No conectado', run: 'Sincronizando…', ok: 'Sincronizado' }[g],
+      gDesc: g === 'off' ? 'Entrar con Google no conecta tu calendario: es un permiso aparte.' : 'Conectado como j•••••@gmail.com · solo tú ves esta cuenta.',
+      gConnect: () => { this.setState({ g: 'run' }); setTimeout(() => this.setState({ g: 'ok' }), 1600); },
+      gDisconnect: () => { this.setState({ g: 'off' }); toast('Google Calendar desconectado'); },
+      toast: s.toast, hasToast: !!s.toast
+    };
+  }
+}
+</script>
+</body>
+</html>

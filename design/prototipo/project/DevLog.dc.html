@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>DevLog of Us · Chimuverse</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./chimu.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&amp;family=Figtree:wght@400..800&amp;family=Fraunces:ital,opsz,wght@0,9..144,500..700;1,9..144,500..600&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="cv" style="min-height: 100%">
+<div class="app" style="min-height: 1160px">
+  <div style="flex: 1 1 240px; max-width: 272px; display: flex"><dc-import name="Sidebar" activo="devlog" hint-size="272px,1160px"></dc-import></div>
+  <main class="main" style="position: relative">
+    <div class="top"><p class="t-sm muted grow">Recuerdos</p><a class="btn btn-secondary btn-icon dot-badge" href="InicioDesktop.dc.html" aria-label="Notificaciones, 3 sin leer"><span class="i i-bell" aria-hidden="true"></span></a><span class="av-pair"><span class="av av-jl">JL</span><span class="av av-gs">GS</span></span></div>
+    <div class="content col g24" style="max-width: 1240px">
+      <header class="row between wrap g16" style="align-items: flex-end">
+        <div class="col g6"><h1 class="t-h1">DevLog of Us</h1><p class="t-body muted">Lo que hicimos, lo que aprendimos y lo que acordamos.</p></div>
+        <button class="btn btn-primary" onClick="{{openNew}}"><span class="i i-pencil i-sm" aria-hidden="true"></span>Nueva entrada</button>
+      </header>
+      <div class="seg" role="group" aria-label="Sección" style="align-self: flex-start"><sc-for list="{{tabs}}" as="t" hint-placeholder-count="3"><button aria-pressed="{{t.on}}" onClick="{{t.pick}}"><span class="i i-sm {{t.icon}}" aria-hidden="true"></span>{{t.label}}</button></sc-for></div>
+
+      <sc-if value="{{tLog}}" hint-placeholder-val="{{ true }}">
+        <div class="row g32 wrap" style="align-items: flex-start">
+          <ol class="col g16" style="flex: 1.6 1 520px; min-width: 0">
+            <sc-for list="{{entries}}" as="e" hint-placeholder-count="4">
+              <li>
+                <button class="card col g12" onClick="{{e.open}}" style="width: 100%; padding: 22px 24px; text-align: left; box-shadow: {{e.ring}}">
+                  <span class="row g8 wrap"><span class="tag" style="font-family: ui-monospace, Consolas, monospace; font-size: 12px; height: 24px">{{e.type}}</span><span class="tag {{e.privCls}}" style="height: 24px; font-size: 12px"><span class="i {{e.privIcon}}" aria-hidden="true"></span>{{e.priv}}</span><span class="grow"></span><span class="t-xs subtle t-num">{{e.date}}</span></span>
+                  <span class="t-h3">{{e.title}}</span>
+                  <span class="t-body muted" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden">{{e.body}}</span>
+                  <span class="row g8 t-xs subtle"><span class="av av-sm {{e.av}}">{{e.ini}}</span>{{e.author}}</span>
+                </button>
+              </li>
+            </sc-for>
+          </ol>
+          <aside class="col g16" style="flex: 1 1 300px">
+            <section class="col g12" style="padding: 22px; border-radius: 20px; background: var(--accent-soft)" aria-labelledby="nt">
+              <p id="nt" class="t-eyebrow" style="color: var(--accent-ink)">Nota para ti · de Glenny</p>
+              <p class="t-hand" style="font-size: 26px; color: var(--ink)">«Te dejé un táper con arroz con leche en la segunda repisa. Suerte mañana con la exposición.»</p>
+              <p class="t-xs subtle">Hoy, 10:40</p>
+              <button class="btn btn-secondary btn-sm" onClick="{{openNote}}" style="align-self: flex-start"><span class="i i-message i-sm" aria-hidden="true"></span>Responder con otra nota</button>
+            </section>
+            <section class="card col g12" style="padding: 20px" aria-labelledby="ag">
+              <h2 id="ag" class="t-h4 row g8"><span class="i i-shield" style="color: var(--primary)" aria-hidden="true"></span>Acuerdos vigentes</h2>
+              <ul class="col g8 t-sm"><li class="row g8" style="align-items: flex-start"><span class="i i-check i-sm" style="color: var(--st-done); margin-top: 2px" aria-hidden="true"></span>Los domingos, sin celular en la mesa.</li><li class="row g8" style="align-items: flex-start"><span class="i i-check i-sm" style="color: var(--st-done); margin-top: 2px" aria-hidden="true"></span>Si hay una discusión, nos damos 20 minutos y luego hablamos.</li></ul>
+            </section>
+          </aside>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{tCaps}}" hint-placeholder-val="{{ false }}">
+        <ul style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px">
+          <li class="sky col g16" style="padding: 26px; min-height: 240px">
+            <div class="row between"><span class="i i-lock i-lg" aria-hidden="true"></span><span class="t-xs" style="color: var(--on-night-2)">Cerrada</span></div>
+            <p class="t-h3">Cápsula para nuestro 2.º aniversario</p>
+            <p class="t-sm muted">De José Luis para Glenny. El contenido está sellado hasta la fecha de apertura.</p>
+            <p class="row g8" style="margin-top: auto"><span class="i i-hourglass i-sm" aria-hidden="true"></span><b>Se abre el 20 dic 2026</b><span class="t-sm muted">· faltan 38 días</span></p>
+          </li>
+          <li class="sky col g16" style="padding: 26px; min-height: 240px">
+            <div class="row between"><span class="i i-lock i-lg" aria-hidden="true"></span><span class="t-xs" style="color: var(--on-night-2)">Cerrada</span></div>
+            <p class="t-h3">Título oculto</p>
+            <p class="t-sm muted">De Glenny. Ella decidió no mostrar el título.</p>
+            <p class="row g8" style="margin-top: auto"><span class="i i-hourglass i-sm" aria-hidden="true"></span><b>Se abre el 1 ene 2027</b></p>
+          </li>
+          <li class="card col g12" style="padding: 26px; min-height: 240px; background: var(--gold-soft); border-color: transparent">
+            <div class="row between"><span class="i i-sparkle i-lg" style="color: var(--gold-ink)" aria-hidden="true"></span><span class="chip st-done"><span class="i i-check" aria-hidden="true"></span>Abierta</span></div>
+            <p class="t-h3">Lo que esperamos de Cusco</p>
+            <p class="t-sm muted">Abierta el 16 oct 2026. Escrita por ambos el 1 de agosto.</p>
+            <button class="link t-sm" style="margin-top: auto; align-self: flex-start">Leer cápsula</button>
+          </li>
+        </ul>
+      </sc-if>
+
+      <sc-if value="{{tNotes}}" hint-placeholder-val="{{ false }}">
+        <div class="empty" style="max-width: 640px">
+          <svg width="72" height="36" viewBox="0 0 72 36" aria-hidden="true"><path d="M8 28 L36 10 L64 22" stroke="var(--line-strong)" stroke-dasharray="3 4" fill="none"></path><circle cx="8" cy="28" r="4" fill="none" stroke="var(--line-strong)"></circle><circle cx="36" cy="10" r="4" fill="none" stroke="var(--line-strong)"></circle><circle cx="64" cy="22" r="4" fill="none" stroke="var(--line-strong)"></circle></svg>
+          <p class="t-h4">Aún no le has escrito notas a Glenny</p>
+          <p class="t-sm muted">Las notas son cortas y siempre le llegan a ella. Ideal para un «buenos días» o un recordatorio cariñoso.</p>
+          <button class="btn btn-primary" onClick="{{openNote}}">Escribir la primera nota</button>
+        </div>
+      </sc-if>
+    </div>
+
+    <sc-if value="{{mEditor}}" hint-placeholder-val="{{ false }}">
+      <div class="scrim">
+        <form class="dialog" role="dialog" aria-modal="true" aria-labelledby="ed-t" onSubmit="{{save}}" novalidate style="width: min(720px, 100%)">
+          <div class="row between"><h2 id="ed-t" class="t-h3">{{edTitle}}</h2><button type="button" class="btn btn-ghost btn-icon" aria-label="Cerrar" onClick="{{close}}"><span class="i i-x" aria-hidden="true"></span></button></div>
+          <fieldset class="field" style="border: 0; padding: 0; margin: 0">
+            <legend class="label" style="margin-bottom: 6px">Tipo</legend>
+            <div class="row g8 wrap"><sc-for list="{{types}}" as="t" hint-placeholder-count="6"><button type="button" class="choice" aria-pressed="{{t.on}}" onClick="{{t.pick}}" style="min-height: 40px; border-radius: 999px; padding: 0 14px; font-size: 14px">{{t.label}}</button></sc-for></div>
+          </fieldset>
+          <div class="field">
+            <label class="label" for="ed-ti">Título</label>
+            <input id="ed-ti" class="input {{tInvalid}}" value="{{fT}}" onChange="{{setT}}" aria-invalid="{{tErr}}" aria-describedby="ed-te" placeholder="Ej.: Aprendimos a hacer pan">
+            <sc-if value="{{tErr}}" hint-placeholder-val="{{ false }}"><p id="ed-te" class="err"><span class="i i-alert i-sm" aria-hidden="true"></span>Añade un título.</p></sc-if>
+          </div>
+          <div class="field"><label class="label" for="ed-b">Entrada</label><textarea id="ed-b" class="textarea" style="min-height: 140px; max-width: 65ch" placeholder="Escribe con calma…"></textarea></div>
+          <sc-if value="{{isCapsule}}" hint-placeholder-val="{{ false }}">
+            <div class="field">
+              <label class="label" for="ed-c">Fecha de apertura</label>
+              <input id="ed-c" class="input {{cInvalid}}" type="date" value="{{fC}}" onChange="{{setC}}" aria-invalid="{{cErr}}" aria-describedby="ed-ce" style="max-width: 220px">
+              <sc-if value="{{cErr}}" hint-placeholder-val="{{ false }}"><p id="ed-ce" class="err"><span class="i i-alert i-sm" aria-hidden="true"></span>Elige una fecha futura.</p></sc-if>
+              <p class="help">Hasta esa fecha nadie, ni siquiera tú, podrá leer el contenido.</p>
+            </div>
+          </sc-if>
+          <sc-if value="{{showPrivacy}}" hint-placeholder-val="{{ true }}">
+            <fieldset class="field" style="border: 0; padding: 0; margin: 0">
+              <legend class="label" style="margin-bottom: 6px">¿Quién puede leerla?</legend>
+              <div class="seg seg-fill" style="max-width: 440px"><button type="button" aria-pressed="{{pMe}}" onClick="{{setMe}}"><span class="i i-lock i-sm" aria-hidden="true"></span>Solo yo</button><button type="button" aria-pressed="{{pUs}}" onClick="{{setUs}}"><span class="i i-users i-sm" aria-hidden="true"></span>Compartido</button></div>
+              <p class="help">{{pHelp}}</p>
+            </fieldset>
+          </sc-if>
+          <sc-if value="{{isNote}}" hint-placeholder-val="{{ false }}"><div class="banner banner-info"><span class="i i-users" aria-hidden="true"></span><span>Las notas siempre son para Glenny; ella recibirá un aviso.</span></div></sc-if>
+          <div class="row g8" style="justify-content: flex-end"><button type="button" class="btn btn-secondary" onClick="{{close}}">Cancelar</button><button type="submit" class="btn btn-primary">{{saveLabel}}</button></div>
+        </form>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{mDetail}}" hint-placeholder-val="{{ false }}">
+      <div class="scrim">
+        <article class="dialog" role="dialog" aria-modal="true" aria-labelledby="dt-t" style="width: min(680px, 100%)">
+          <div class="row between"><span class="row g8"><span class="tag" style="font-family: ui-monospace, Consolas, monospace; font-size: 12px; height: 24px">{{cur.type}}</span><span class="tag {{cur.privCls}}" style="height: 24px; font-size: 12px"><span class="i {{cur.privIcon}}" aria-hidden="true"></span>{{cur.priv}}</span></span><button class="btn btn-ghost btn-icon" aria-label="Cerrar" onClick="{{close}}"><span class="i i-x" aria-hidden="true"></span></button></div>
+          <h2 id="dt-t" class="t-h2">{{cur.title}}</h2>
+          <p class="row g8 t-sm subtle"><span class="av av-sm {{cur.av}}">{{cur.ini}}</span>{{cur.author}} · {{cur.date}}</p>
+          <p class="t-body" style="max-width: 65ch; line-height: 1.65">{{cur.body}}</p>
+          <div class="row g8"><button class="btn btn-secondary btn-sm"><span class="i i-pencil i-sm" aria-hidden="true"></span>Editar</button></div>
+        </article>
+      </div>
+    </sc-if>
+    <sc-if value="{{hasToast}}" hint-placeholder-val="{{ false }}"><div class="toast" role="status"><span class="i i-check i-sm" aria-hidden="true"></span>{{toast}}</div></sc-if>
+  </main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1160}}'>
+const E = [
+  { type: 'acordamos:', title: 'Los domingos, sin celular en la mesa', body: 'Después del almuerzo del domingo nos dimos cuenta de que pasamos media hora cada uno en su teléfono. Acordamos dejarlos en la repisa durante las comidas del domingo.', author: 'Glenny', ini: 'GS', av: 'av-gs', date: '2026-11-08', priv: 'us' },
+  { type: 'aprendimos:', title: 'El ají de gallina necesita paciencia', body: 'La crema se cortó la primera vez por subir el fuego. La segunda, a fuego lento, salió perfecta. Anotado para la próxima.', author: 'José Luis', ini: 'JL', av: 'av-jl', date: '2026-11-01', priv: 'us' },
+  { type: 'nos pasó:', title: 'Lo que sentí antes de la entrevista', body: 'Estaba más nervioso de lo que dije. Escribo esto para acordarme de que salió bien aunque no lo creía.', author: 'José Luis', ini: 'JL', av: 'av-jl', date: '2026-10-28', priv: 'me' },
+  { type: 'hicimos:', title: 'Primer día en Cusco', body: 'Llegamos temprano, tomamos mate de coca y caminamos por San Blas hasta que el soroche nos ganó.', author: 'Glenny', ini: 'GS', av: 'av-gs', date: '2026-10-16', priv: 'us' }
+];
+const TYPES = [['hicimos', 'Hicimos'], ['paso', 'Nos pasó'], ['aprendimos', 'Aprendimos'], ['acordamos', 'Acordamos'], ['nota', 'Nota para Glenny'], ['capsula', 'Cápsula del tiempo']];
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { tab: 'log', modal: null, cur: 0, type: 'hicimos', fT: '', fC: '', priv: 'me', tErr: false, cErr: false, toast: '' }; }
+  pv(p) { return p === 'me' ? { priv: 'Solo yo', privIcon: 'i-lock', privCls: 'priv-me' } : { priv: 'Compartido', privIcon: 'i-users', privCls: 'priv-us' }; }
+  renderVals() {
+    const s = this.state;
+    const entries = E.map((e, i) => Object.assign({}, e, this.pv(e.priv), { ring: e.type === 'acordamos:' ? '0 0 0 1.5px var(--primary)' : 'none', open: () => this.setState({ modal: 'detail', cur: i }) }));
+    const isNote = s.type === 'nota', isCapsule = s.type === 'capsula';
+    const open = (type) => () => this.setState({ modal: 'editor', type, fT: '', fC: '', priv: 'me', tErr: false, cErr: false });
+    return {
+      tabs: [['log', 'Diario', 'i-book'], ['caps', 'Cápsulas', 'i-hourglass'], ['notes', 'Mis notas a Glenny', 'i-message']].map(t => ({ label: t[1], icon: t[2], on: s.tab === t[0] ? 'true' : 'false', pick: () => this.setState({ tab: t[0] }) })),
+      tLog: s.tab === 'log', tCaps: s.tab === 'caps', tNotes: s.tab === 'notes',
+      entries, cur: entries[s.cur],
+      mEditor: s.modal === 'editor', mDetail: s.modal === 'detail',
+      openNew: open('hicimos'), openNote: open('nota'), close: () => this.setState({ modal: null }),
+      edTitle: isNote ? 'Nota para Glenny' : (isCapsule ? 'Nueva cápsula del tiempo' : 'Nueva entrada'),
+      types: TYPES.map(t => ({ label: t[1], on: s.type === t[0] ? 'true' : 'false', pick: () => this.setState({ type: t[0], cErr: false }) })),
+      isNote, isCapsule, showPrivacy: !isNote,
+      fT: s.fT, tErr: s.tErr, tInvalid: s.tErr ? 'is-invalid' : '', setT: e => this.setState({ fT: e.target.value, tErr: false }),
+      fC: s.fC, cErr: s.cErr, cInvalid: s.cErr ? 'is-invalid' : '', setC: e => this.setState({ fC: e.target.value, cErr: false }),
+      pMe: s.priv === 'me' ? 'true' : 'false', pUs: s.priv === 'us' ? 'true' : 'false',
+      setMe: () => this.setState({ priv: 'me' }), setUs: () => this.setState({ priv: 'us' }),
+      pHelp: s.priv === 'me' ? 'Privada por defecto: Glenny no sabrá que existe.' : (isCapsule ? 'Glenny podrá leerla a partir de la fecha de apertura.' : 'Glenny podrá leerla y comentarla.'),
+      saveLabel: isNote ? 'Enviar nota' : (isCapsule ? 'Sellar cápsula' : 'Guardar entrada'),
+      save: e => {
+        if (e && e.preventDefault) e.preventDefault();
+        const tErr = !s.fT.trim() && !isNote; const cErr = isCapsule && !(s.fC > '2026-11-12');
+        if (tErr || cErr) { this.setState({ tErr, cErr }); return; }
+        this.setState({ modal: null, toast: isNote ? 'Nota enviada a Glenny' : (isCapsule ? 'Cápsula sellada' : 'Entrada guardada') });
+        clearTimeout(this.tt); this.tt = setTimeout(() => this.setState({ toast: '' }), 3000);
+      },
+      toast: s.toast, hasToast: !!s.toast
+    };
+  }
+}
+</script>
+</body>
+</html>

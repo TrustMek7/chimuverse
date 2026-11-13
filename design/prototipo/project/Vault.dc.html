@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Memory Vault · Chimuverse</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./chimu.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&amp;family=Figtree:wght@400..800&amp;family=Fraunces:ital,opsz,wght@0,9..144,500..700;1,9..144,500..600&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="cv" style="min-height: 100%">
+<div class="app" style="min-height: 1160px">
+  <div style="flex: 1 1 240px; max-width: 272px; display: flex"><dc-import name="Sidebar" activo="vault" hint-size="272px,1160px"></dc-import></div>
+  <main class="main" style="position: relative">
+    <div class="top"><p class="t-sm muted grow">Recuerdos</p><a class="btn btn-secondary btn-icon dot-badge" href="InicioDesktop.dc.html" aria-label="Notificaciones, 3 sin leer"><span class="i i-bell" aria-hidden="true"></span></a><span class="av-pair"><span class="av av-jl">JL</span><span class="av av-gs">GS</span></span></div>
+    <div class="content col g24" style="max-width: 1240px">
+      <header class="row between wrap g16" style="align-items: flex-end">
+        <div class="col g6"><h1 class="t-h1">Memory Vault</h1><p class="t-body muted">Las fotos se ordenan por la fecha del recuerdo, no por la fecha de subida.</p></div>
+        <button class="btn btn-primary" onClick="{{openUpload}}"><span class="i i-upload i-sm" aria-hidden="true"></span>Subir fotos</button>
+      </header>
+      <div class="row between wrap g12">
+        <div class="seg" role="group" aria-label="Vista"><sc-for list="{{tabs}}" as="t" hint-placeholder-count="3"><button aria-pressed="{{t.on}}" onClick="{{t.pick}}"><span class="i i-sm {{t.icon}}" aria-hidden="true"></span>{{t.label}}</button></sc-for></div>
+        <div class="row g8 t-sm"><span class="subtle">Mostrar:</span><sc-for list="{{vis}}" as="v" hint-placeholder-count="3"><button class="choice" aria-pressed="{{v.on}}" onClick="{{v.pick}}" style="min-height: 40px; border-radius: 999px; padding: 0 14px; font-size: 14px">{{v.label}}</button></sc-for></div>
+      </div>
+
+      <sc-if value="{{tGrid}}" hint-placeholder-val="{{ true }}">
+        <div class="col g32">
+          <sc-for list="{{months}}" as="m" hint-placeholder-count="2">
+            <section class="col g20" aria-label="{{m.label}}">
+              <div class="row g12"><h2 class="t-h3">{{m.label}}</h2><span class="divider grow"></span><span class="t-sm subtle">{{m.count}}</span></div>
+              <ul style="display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 28px 24px">
+                <sc-for list="{{m.photos}}" as="p" hint-placeholder-count="4">
+                  <li class="col g8" style="align-items: center">
+                    <button class="pol" onClick="{{p.open}}" style="width: 100%; transform: rotate({{p.rot}}); text-align: left" aria-label="{{p.alt}}">
+                      <span class="pol-img {{p.ph}}" style="display: block"></span>
+                      <span class="pol-cap" style="display: block; font-size: 20px">{{p.cap}}</span>
+                    </button>
+                    <span class="tag {{p.privCls}}" style="height: 24px; font-size: 12px"><span class="i {{p.privIcon}}" aria-hidden="true"></span>{{p.priv}}</span>
+                  </li>
+                </sc-for>
+              </ul>
+            </section>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{tTrips}}" hint-placeholder-val="{{ false }}">
+        <ul style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 24px">
+          <sc-for list="{{trips}}" as="t" hint-placeholder-count="3">
+            <li class="card" style="overflow: hidden"><div class="{{t.ph}}" style="height: 160px" role="img" aria-label="Portada de ejemplo"></div><div class="col g6" style="padding: 18px 20px"><h3 class="t-h3">{{t.name}}</h3><p class="t-sm muted">{{t.dates}} · {{t.count}} fotos</p><span class="tag priv-us" style="align-self: flex-start; height: 24px; font-size: 12px"><span class="i i-users" aria-hidden="true"></span>Compartido</span></div></li>
+          </sc-for>
+        </ul>
+      </sc-if>
+
+      <sc-if value="{{tTimeline}}" hint-placeholder-val="{{ false }}">
+        <ol style="max-width: 760px">
+          <sc-for list="{{timeline}}" as="e" hint-placeholder-count="5">
+            <li class="tl-item" style="padding-bottom: 28px"><span class="tl-dot" style="background: var(--gold-soft); color: var(--gold-ink)"><span class="i i-sm {{e.icon}}" aria-hidden="true"></span></span><div class="col g4" style="padding-top: 4px"><p class="t-xs subtle" style="text-transform: uppercase; letter-spacing: .06em">{{e.date}}</p><p class="t-h4">{{e.t}}</p><p class="t-sm muted">{{e.d}}</p></div></li>
+          </sc-for>
+        </ol>
+      </sc-if>
+    </div>
+
+    <sc-if value="{{mDetail}}" hint-placeholder-val="{{ false }}">
+      <div class="scrim">
+        <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="d-t" style="width: min(860px, 100%); grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 28px">
+          <div class="pol" style="transform: rotate(-1deg); align-self: start"><span class="pol-img {{cur.ph}}" style="display: block" role="img" aria-label="{{cur.alt}}"></span><span class="pol-cap" style="display: block">{{cur.cap}}</span></div>
+          <div class="col g16">
+            <div class="row between"><span class="tag {{cur.privCls}}"><span class="i {{cur.privIcon}}" aria-hidden="true"></span>{{cur.priv}}</span><button class="btn btn-ghost btn-icon" aria-label="Cerrar" onClick="{{close}}"><span class="i i-x" aria-hidden="true"></span></button></div>
+            <h2 id="d-t" class="t-h2">{{cur.cap}}</h2>
+            <p class="t-body muted">{{cur.desc}}</p>
+            <dl class="col g8 t-sm" style="margin: 0">
+              <div class="row g8"><dt class="subtle" style="width: 140px">Fecha del recuerdo</dt><dd style="margin: 0; font-weight: 600">{{cur.date}}</dd></div>
+              <div class="row g8"><dt class="subtle" style="width: 140px">Subida</dt><dd style="margin: 0">{{cur.up}}</dd></div>
+              <div class="row g8"><dt class="subtle" style="width: 140px">Viaje</dt><dd style="margin: 0">{{cur.trip}}</dd></div>
+              <div class="row g8"><dt class="subtle" style="width: 140px">Personas</dt><dd class="row g6" style="margin: 0"><span class="av av-sm av-jl">JL</span><span class="av av-sm av-gs">GS</span>José Luis y Glenny</dd></div>
+            </dl>
+            <div class="row g8 wrap" style="margin-top: auto"><button class="btn btn-secondary"><span class="i i-pencil i-sm" aria-hidden="true"></span>Editar</button><button class="btn btn-ghost" style="color: var(--st-rejected)"><span class="i i-trash i-sm" aria-hidden="true"></span>Mover a la papelera</button></div>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{mUpload}}" hint-placeholder-val="{{ false }}">
+      <div class="scrim">
+        <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="u-t" style="width: min(620px, 100%)">
+          <div class="row between"><h2 id="u-t" class="t-h3">Subir fotos</h2><button class="btn btn-ghost btn-icon" aria-label="Cerrar" onClick="{{close}}"><span class="i i-x" aria-hidden="true"></span></button></div>
+          <div class="row g12" style="overflow-x: auto">
+            <div class="col g6" style="width: 104px; flex: none"><div class="ph-park" style="height: 104px; border-radius: 10px"></div><span class="t-xs st-done row g4" style="background: none"><span class="i i-check i-xs" aria-hidden="true"></span>Lista</span></div>
+            <div class="col g6" style="width: 104px; flex: none"><div class="ph-food" style="height: 104px; border-radius: 10px"></div><span class="t-xs row g4" style="color: var(--st-progress)"><span class="i i-refresh i-xs spin" aria-hidden="true"></span>Subiendo 62 %</span></div>
+            <div class="col g6" style="width: 104px; flex: none"><div class="ph-city" style="height: 104px; border-radius: 10px; opacity: .6"></div><button class="t-xs row g4" style="color: var(--st-rejected)"><span class="i i-alert i-xs" aria-hidden="true"></span>Falló · Reintentar</button></div>
+            <button class="col" style="width: 104px; height: 104px; flex: none; border: 1.5px dashed var(--line-strong); border-radius: 10px; align-items: center; justify-content: center; gap: 4px; color: var(--primary); font-weight: 650; font-size: 13px"><span class="i i-plus" aria-hidden="true"></span>Añadir</button>
+          </div>
+          <div class="row g12 wrap">
+            <div class="field" style="flex: 1 1 220px">
+              <label class="label" for="u-d">Fecha del recuerdo</label>
+              <input id="u-d" class="input {{dInvalid}}" type="date" value="{{uDate}}" onChange="{{setDate}}" aria-invalid="{{dErr}}" aria-describedby="u-dh">
+              <sc-if value="{{dErr}}" hint-placeholder-val="{{ false }}"><p class="err" id="u-dh"><span class="i i-alert i-sm" aria-hidden="true"></span>No encontramos la fecha en las fotos; elige cuándo fue.</p></sc-if>
+              <sc-if value="{{dOk}}" hint-placeholder-val="{{ true }}"><p class="help" id="u-dh">Cuándo pasó. Se detecta de la foto si es posible.</p></sc-if>
+            </div>
+            <div class="field" style="flex: 1 1 180px"><span class="label">Fecha de subida</span><p class="input" style="background: var(--bg-sunk); border-color: var(--line); display: flex; align-items: center; color: var(--ink-2)">Hoy, 12 nov 2026</p><p class="help">Automática, no se edita.</p></div>
+          </div>
+          <div class="field"><label class="label" for="u-v">Viaje o álbum <span class="opt">(opcional)</span></label><select id="u-v" class="select"><option>Sin viaje</option><option>Cusco · oct 2026</option><option>Mollendo · nov 2025</option><option>+ Crear viaje nuevo</option></select></div>
+          <div class="field"><label class="label" for="u-c">Descripción <span class="opt">(opcional)</span></label><input id="u-c" class="input" placeholder="Una frase para recordar el momento"></div>
+          <fieldset class="field" style="border: 0; padding: 0; margin: 0">
+            <legend class="label" style="margin-bottom: 6px">¿Quién puede verlas?</legend>
+            <div class="seg seg-fill"><button aria-pressed="{{pMe}}" onClick="{{setMe}}"><span class="i i-lock i-sm" aria-hidden="true"></span>Solo yo</button><button aria-pressed="{{pUs}}" onClick="{{setUs}}"><span class="i i-users i-sm" aria-hidden="true"></span>Compartido con Glenny</button></div>
+            <p class="help">{{pHelp}}</p>
+          </fieldset>
+          <div class="row g8" style="justify-content: flex-end"><button class="btn btn-secondary" onClick="{{close}}">Cancelar</button><button class="btn btn-primary" onClick="{{doUpload}}">Guardar 3 fotos</button></div>
+        </div>
+      </div>
+    </sc-if>
+    <sc-if value="{{hasToast}}" hint-placeholder-val="{{ false }}"><div class="toast" role="status"><span class="i i-check i-sm" aria-hidden="true"></span>{{toast}}</div></sc-if>
+  </main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1160}}'>
+const P = [
+  { m: 'Noviembre 2026', ph: 'ph-park', cap: 'Domingo de picnic', desc: 'Llevamos la manta azul y nos quedamos hasta que oscureció.', date: '8 nov 2026', up: '9 nov 2026', trip: 'Sin viaje', priv: 'us' },
+  { m: 'Noviembre 2026', ph: 'ph-food', cap: 'Primer ají de gallina', desc: 'Salió un poco picante, pero nos lo comimos todo.', date: '1 nov 2026', up: '1 nov 2026', trip: 'Sin viaje', priv: 'us' },
+  { m: 'Noviembre 2026', ph: 'ph-night', cap: 'Lluvia de estrellas', desc: 'Contamos once. Glenny dice que fueron doce.', date: '3 nov 2026', up: '5 nov 2026', trip: 'Sin viaje', priv: 'me' },
+  { m: 'Octubre 2026', ph: 'ph-mount', cap: 'Subiendo a Sacsayhuamán', desc: 'El día 2 del viaje. Altura, sol y mucho mate de coca.', date: '18 oct 2026', up: '25 oct 2026', trip: 'Cusco · oct 2026', priv: 'us' },
+  { m: 'Octubre 2026', ph: 'ph-city', cap: 'San Blas de noche', desc: 'Las calles de piedra iluminadas.', date: '17 oct 2026', up: '25 oct 2026', trip: 'Cusco · oct 2026', priv: 'us' },
+  { m: 'Octubre 2026', ph: 'ph-sea', cap: 'Último atardecer', desc: 'Antes de volver a Arequipa.', date: '20 oct 2026', up: '9 nov 2026', trip: 'Cusco · oct 2026', priv: 'me' }
+];
+const ROT = ['-2deg', '1.5deg', '-1deg', '2deg', '-1.5deg', '1deg'];
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { tab: 'grid', vis: 'all', modal: null, cur: 0, uDate: '', dErr: false, priv: 'me', toast: '' }; }
+  pv(p) { return p.priv === 'me' ? { priv: 'Solo yo', privIcon: 'i-lock', privCls: 'priv-me' } : { priv: 'Compartido', privIcon: 'i-users', privCls: 'priv-us' }; }
+  renderVals() {
+    const s = this.state;
+    const list = P.map((p, i) => Object.assign({}, p, this.pv(p), { i, rot: ROT[i], alt: 'Foto de ejemplo: ' + p.cap + ', ' + p.date, open: () => this.setState({ modal: 'detail', cur: i }) }))
+      .filter(p => s.vis === 'all' || p.priv === s.vis);
+    const months = ['Noviembre 2026', 'Octubre 2026'].map(m => { const ph = list.filter(p => p.m === m); return { label: m, photos: ph, count: ph.length + (ph.length === 1 ? ' foto' : ' fotos') }; }).filter(m => m.photos.length);
+    const c = Object.assign({}, P[s.cur], this.pv(P[s.cur]), { alt: 'Foto de ejemplo: ' + P[s.cur].cap });
+    return {
+      tabs: [['grid', 'Polaroids', 'i-image'], ['trips', 'Viajes', 'i-pin'], ['timeline', 'Línea de tiempo', 'i-clock']].map(t => ({ label: t[1], icon: t[2], on: s.tab === t[0] ? 'true' : 'false', pick: () => this.setState({ tab: t[0] }) })),
+      vis: [['all', 'Todas'], ['us', 'Compartidas'], ['me', 'Solo mías']].map(v => ({ label: v[1], on: s.vis === v[0] ? 'true' : 'false', pick: () => this.setState({ vis: v[0] }) })),
+      tGrid: s.tab === 'grid', tTrips: s.tab === 'trips', tTimeline: s.tab === 'timeline',
+      months,
+      trips: [ { name: 'Cusco', dates: '16–20 oct 2026', count: 48, ph: 'ph-mount' }, { name: 'Mollendo', dates: '10–13 nov 2025', count: 31, ph: 'ph-sea' }, { name: 'Lima por el aniversario', dates: '19–21 dic 2025', count: 22, ph: 'ph-city' } ],
+      timeline: [
+        { date: '8 nov 2026', t: 'Domingo de picnic', d: '4 fotos compartidas', icon: 'i-image' },
+        { date: '16–20 oct 2026', t: 'Viaje a Cusco', d: '48 fotos · 3 entradas del DevLog', icon: 'i-pin' },
+        { date: '12 sep 2026', t: 'Acordamos: los domingos sin celular', d: 'DevLog of Us · Acordamos', icon: 'i-book' },
+        { date: '20 dic 2025', t: 'Primer aniversario', d: 'Fecha especial · 22 fotos', icon: 'i-heart' },
+        { date: '10–13 nov 2025', t: 'Mollendo', d: '31 fotos', icon: 'i-pin' }
+      ],
+      mDetail: s.modal === 'detail', mUpload: s.modal === 'upload', cur: c,
+      close: () => this.setState({ modal: null }),
+      openUpload: () => this.setState({ modal: 'upload', uDate: '', dErr: false, priv: 'me' }),
+      uDate: s.uDate, dErr: s.dErr, dOk: !s.dErr, dInvalid: s.dErr ? 'is-invalid' : '',
+      setDate: e => this.setState({ uDate: e.target.value, dErr: false }),
+      pMe: s.priv === 'me' ? 'true' : 'false', pUs: s.priv === 'us' ? 'true' : 'false',
+      setMe: () => this.setState({ priv: 'me' }), setUs: () => this.setState({ priv: 'us' }),
+      pHelp: s.priv === 'me' ? 'Por defecto solo tú las ves. Puedes compartirlas ahora o después.' : 'Glenny las verá en el Vault y en la línea de tiempo.',
+      doUpload: () => {
+        if (!s.uDate) { this.setState({ dErr: true }); return; }
+        this.setState({ modal: null, toast: '3 fotos guardadas' }); clearTimeout(this.tt); this.tt = setTimeout(() => this.setState({ toast: '' }), 3000);
+      },
+      toast: s.toast, hasToast: !!s.toast
+    };
+  }
+}
+</script>
+</body>
+</html>

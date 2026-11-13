@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Our Finances · Chimuverse</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./chimu.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&amp;family=Figtree:wght@400..800&amp;family=Fraunces:ital,opsz,wght@0,9..144,500..700;1,9..144,500..600&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="cv" style="width: 390px; height: 844px">
+<div class="phone">
+  <header class="ph-top"><a class="btn btn-ghost btn-icon" href="Mas.dc.html" aria-label="Volver a Más" style="color: var(--ink); margin-left: -12px"><span class="i i-chev-l" aria-hidden="true"></span></a><h1 class="t-h2 grow">Our Finances</h1></header>
+  <div style="padding: 0 20px 8px"><div class="seg seg-fill" role="group" aria-label="Ámbito"><button aria-pressed="{{onUs}}" onClick="{{showUs}}"><span class="i i-users i-sm" aria-hidden="true"></span>Compartido</button><button aria-pressed="{{onMe}}" onClick="{{showMe}}"><span class="i i-lock i-sm" aria-hidden="true"></span>Personal</button></div></div>
+  <main class="ph-scroll col g16" style="padding-top: 12px">
+    <p class="help row g6" style="align-items: flex-start"><span class="i {{scopeIcon}} i-sm" style="margin-top: 1px" aria-hidden="true"></span>{{scopeHelp}}</p>
+    <section class="card col g12" style="padding: 18px" aria-label="Resumen de noviembre">
+      <p class="t-eyebrow">Noviembre · {{scope}}</p>
+      <div class="row g16"><div class="col grow"><span class="t-xs subtle">Ingresos</span><b class="t-h4 t-num">{{inc}}</b></div><div class="col grow"><span class="t-xs subtle">Gastos</span><b class="t-h4 t-num">{{out}}</b></div><div class="col grow"><span class="t-xs subtle">Ahorro</span><b class="t-h4 t-num" style="color: var(--st-done)">{{save}}</b></div></div>
+    </section>
+    <section class="col g12" aria-labelledby="pr">
+      <h2 id="pr" class="t-h4">Presupuestos</h2>
+      <sc-for list="{{budgets}}" as="b" hint-placeholder-count="3">
+        <div class="col g6"><div class="row between t-sm"><span>{{b.t}}</span><span class="t-num"><b>{{b.used}}</b> <span class="subtle">de {{b.total}}</span></span></div><div class="track" role="meter" aria-label="{{b.t}}" aria-valuenow="{{b.pct}}" aria-valuemin="0" aria-valuemax="100"><span class="fill-ver" style="width: {{b.w}}; background: {{b.color}}"></span></div><sc-if value="{{b.over}}" hint-placeholder-val="{{ false }}"><p class="err"><span class="i i-alert i-sm" aria-hidden="true"></span>Pasaste el presupuesto por {{b.overBy}}</p></sc-if></div>
+      </sc-for>
+    </section>
+    <section class="col g8" aria-labelledby="mv">
+      <div class="row between"><h2 id="mv" class="t-h4">Movimientos</h2><button class="btn btn-ghost btn-sm"><span class="i i-plus i-sm" aria-hidden="true"></span>Añadir</button></div>
+      <ul class="col">
+        <sc-for list="{{moves}}" as="m" hint-placeholder-count="4">
+          <li class="row g12" style="padding: 10px 0; border-bottom: 1px solid var(--line)"><span class="qstar" style="width: 32px; height: 32px; background: var(--bg-sunk); color: var(--ink-2)"><span class="i i-sm {{m.icon}}" aria-hidden="true"></span></span><span class="col grow"><span class="t-sm" style="font-weight: 600">{{m.t}}</span><span class="t-xs subtle">{{m.cat}} · {{m.kind}} · {{m.d}}</span></span><b class="t-sm t-num" style="color: {{m.color}}">{{m.amt}}</b></li>
+        </sc-for>
+      </ul>
+    </section>
+  </main>
+  <nav class="bnav" aria-label="Principal">
+    <a href="InicioMovil.dc.html"><span class="i i-home i-lg" aria-hidden="true"></span>Inicio</a>
+    <a href="QuestsMovil.dc.html"><span class="i i-quests i-lg" aria-hidden="true"></span>Día</a>
+    <a href="InicioMovil.dc.html"><span class="bn-plus"><span class="i i-plus" aria-hidden="true"></span></span>Crear</a>
+    <a href="Vault.dc.html"><span class="i i-image i-lg" aria-hidden="true"></span>Recuerdos</a>
+    <a href="Mas.dc.html" aria-current="page"><span class="i i-grid i-lg" aria-hidden="true"></span>Más</a>
+  </nav>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+const D = {
+  us: { scope: 'Compartido', inc: 'S/ 1 200,00', out: 'S/ 860,40', save: 'S/ 339,60', icon: 'i-users', help: 'Lo que pagan o ahorran juntos. Ambos lo ven.',
+    budgets: [['Mercado', 420, 500], ['Salidas', 265, 250], ['Fondo viaje a Japón', 150, 300]],
+    moves: [['Mercado San Camilo', 'Comida', 'Variable', '12 nov', -84.5, 'i-wallet'], ['Aporte al fondo Japón', 'Ahorro', 'Fijo', '10 nov', -150, 'i-target'], ['Cine', 'Salidas', 'Extra', '7 nov', -46, 'i-film'], ['Aporte mensual de ambos', 'Ingreso', 'Fijo', '1 nov', 1200, 'i-trend']] },
+  me: { scope: 'Personal', inc: 'S/ 2 350,00', out: 'S/ 1 412,90', save: 'S/ 937,10', icon: 'i-lock', help: 'Privado: Glenny no ve tus movimientos ni tus totales, salvo que lo actives en Ajustes.',
+    budgets: [['Transporte', 98, 160], ['Suscripciones', 54, 60]],
+    moves: [['Pasajes de la semana', 'Transporte', 'Variable', '11 nov', -24, 'i-wallet'], ['Aporte a gastos compartidos', 'Hogar', 'Fijo', '1 nov', -600, 'i-users'], ['Prácticas', 'Ingreso', 'Fijo', '1 nov', 2350, 'i-trend']] }
+};
+const f = n => 'S/ ' + Math.abs(n).toFixed(2).replace('.', ',');
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { sc: 'us' }; }
+  renderVals() {
+    const d = D[this.state.sc];
+    return {
+      onUs: this.state.sc === 'us' ? 'true' : 'false', onMe: this.state.sc === 'me' ? 'true' : 'false',
+      showUs: () => this.setState({ sc: 'us' }), showMe: () => this.setState({ sc: 'me' }),
+      scope: d.scope, inc: d.inc, out: d.out, save: d.save, scopeIcon: d.icon, scopeHelp: d.help,
+      budgets: d.budgets.map(b => { const pct = Math.min(100, Math.round(100 * b[1] / b[2])); const over = b[1] > b[2]; return { t: b[0], used: f(b[1]), total: f(b[2]), pct, w: pct + '%', over, overBy: f(b[1] - b[2]), color: over ? 'var(--st-rejected)' : 'var(--primary)' }; }),
+      moves: d.moves.map(m => ({ t: m[0], cat: m[1], kind: m[2], d: m[3], amt: (m[4] > 0 ? '+ ' : '− ') + f(m[4]), color: m[4] > 0 ? 'var(--st-done)' : 'var(--ink)', icon: m[5] }))
+    };
+  }
+}
+</script>
+</body>
+</html>

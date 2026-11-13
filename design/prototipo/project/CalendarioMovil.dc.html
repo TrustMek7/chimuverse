@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Our Calendar (móvil) · Chimuverse</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./chimu.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&amp;family=Figtree:wght@400..800&amp;family=Fraunces:ital,opsz,wght@0,9..144,500..700;1,9..144,500..600&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="cv" style="width: 390px; height: 844px">
+<div class="phone">
+  <header class="ph-top" style="padding-bottom: 0"><h1 class="t-h2 grow">Nuestro día</h1><a class="btn btn-ghost btn-icon dot-badge" href="Mas.dc.html" aria-label="Notificaciones, 3 sin leer" style="color: var(--ink-2)"><span class="i i-bell" aria-hidden="true"></span></a></header>
+  <div style="padding: 8px 20px 0">
+    <div class="seg seg-fill" role="group" aria-label="Sección">
+      <a href="QuestsMovil.dc.html" class="row" style="flex: 1; justify-content: center; min-height: 44px; font-weight: 650; font-size: 14px; color: var(--ink-2); border-radius: 999px">Daily Quests</a>
+      <button aria-pressed="true">Calendario</button>
+    </div>
+  </div>
+  <main class="ph-scroll col g16" style="padding-top: 14px">
+    <div class="row between">
+      <h2 class="t-h3">Noviembre</h2>
+      <span class="sync sync-ok"><span class="i i-sm i-cloud-ok" aria-hidden="true"></span>Google sincronizado</span>
+    </div>
+    <div class="row" role="group" aria-label="Semana del 9 al 15 de noviembre" style="justify-content: space-between">
+      <sc-for list="{{week}}" as="d" hint-placeholder-count="7">
+        <button aria-pressed="{{d.on}}" onClick="{{d.pick}}" class="col" style="align-items: center; gap: 2px; width: 44px; padding: 6px 0 8px; border-radius: 14px; background: {{d.bg}}; color: {{d.fg}}">
+          <span class="t-xs" style="opacity: .8">{{d.dow}}</span><span class="t-h4 t-num">{{d.n}}</span><span style="width: 5px; height: 5px; border-radius: 50%; background: {{d.dot}}"></span>
+        </button>
+      </sc-for>
+    </div>
+    <ol class="col g16">
+      <sc-for list="{{agenda}}" as="g" hint-placeholder-count="4">
+        <li class="col g8">
+          <p class="t-eyebrow">{{g.label}}</p>
+          <ul class="col g8">
+            <sc-for list="{{g.evs}}" as="e" hint-placeholder-count="1">
+              <li><a href="Calendario.dc.html" class="card row g12" style="padding: 12px 14px"><span class="ev {{e.cls}}" style="padding: 8px"><span class="i {{e.icon}}" style="width: 16px; height: 16px" aria-hidden="true"></span></span><span class="col grow"><b class="t-sm">{{e.t}}</b><span class="t-xs subtle">{{e.time}} · {{e.kind}}</span></span><span class="i i-chev-r i-sm subtle" aria-hidden="true"></span></a></li>
+            </sc-for>
+          </ul>
+        </li>
+      </sc-for>
+    </ol>
+    <p class="help row g6" style="align-items: flex-start"><span class="i i-lock i-sm" aria-hidden="true"></span>«Clase de inglés» es solo tuya: Glenny no la ve. Tus calendarios personales y de trabajo de Google no se importan.</p>
+    <a class="btn btn-primary" href="Calendario.dc.html" style="position: absolute; right: 20px; bottom: 96px; box-shadow: var(--sh-3)"><span class="i i-plus i-sm" aria-hidden="true"></span>Evento</a>
+  </main>
+  <nav class="bnav" aria-label="Principal">
+    <a href="InicioMovil.dc.html"><span class="i i-home i-lg" aria-hidden="true"></span>Inicio</a>
+    <a href="QuestsMovil.dc.html" aria-current="page"><span class="i i-quests i-lg" aria-hidden="true"></span>Día</a>
+    <a href="InicioMovil.dc.html"><span class="bn-plus"><span class="i i-plus" aria-hidden="true"></span></span>Crear</a>
+    <a href="Vault.dc.html"><span class="i i-image i-lg" aria-hidden="true"></span>Recuerdos</a>
+    <a href="Mas.dc.html"><span class="i i-grid i-lg" aria-hidden="true"></span>Más</a>
+  </nav>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+const K = { us: ['ev-us', 'i-users', 'Compartido'], love: ['ev-love', 'i-heart-fill', 'Fecha especial'], rem: ['ev-rem', 'i-bell', 'Recordatorio'], me: ['ev-me', 'i-lock', 'Solo yo'] };
+const DAYS = { 12: [['Clase de inglés', 'me', '18:00'], ['Llamar a la abuela', 'rem', '20:00']], 14: [['Cena con tus papás', 'us', '19:30']], 15: [['Ordenar fotos de Cusco', 'us', '16:00']], 20: [['Cumplemes', 'love', 'Todo el día']], 21: [['Cine: estreno de la saga', 'us', '21:10']] };
+const LBL = { 12: 'Hoy · jueves 12', 13: 'Viernes 13', 14: 'Sábado 14', 15: 'Domingo 15', 20: 'Viernes 20', 21: 'Sábado 21' };
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { sel: 12 }; }
+  renderVals() {
+    const s = this.state;
+    const dows = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+    const week = [9, 10, 11, 12, 13, 14, 15].map((n, i) => {
+      const on = n === s.sel;
+      return { n, dow: dows[i], on: on ? 'true' : 'false', bg: on ? 'var(--primary)' : 'transparent', fg: on ? 'var(--on-primary)' : 'var(--ink)', dot: DAYS[n] ? (on ? 'var(--on-primary)' : 'var(--primary)') : 'transparent', pick: () => this.setState({ sel: n }) };
+    });
+    const agenda = Object.keys(DAYS).map(Number).filter(n => n >= s.sel).map(n => ({ label: LBL[n], evs: DAYS[n].map(e => ({ t: e[0], cls: K[e[1]][0], icon: K[e[1]][1], kind: K[e[1]][2], time: e[2] })) }));
+    return { week, agenda };
+  }
+}
+</script>
+</body>
+</html>

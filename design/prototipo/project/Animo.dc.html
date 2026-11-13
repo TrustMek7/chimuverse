@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Mood Tracker · Chimuverse</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./chimu.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&amp;family=Figtree:wght@400..800&amp;family=Fraunces:ital,opsz,wght@0,9..144,500..700;1,9..144,500..600&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="cv" style="width: 390px; height: 844px">
+<div class="phone">
+  <header class="ph-top"><a class="btn btn-ghost btn-icon" href="Mas.dc.html" aria-label="Volver a Más" style="color: var(--ink); margin-left: -12px"><span class="i i-chev-l" aria-hidden="true"></span></a><h1 class="t-h2 grow">Mood Tracker</h1></header>
+  <main class="ph-scroll col g20">
+    <section class="card col g16" style="padding: 18px" aria-labelledby="hoy">
+      <div class="row between"><h2 id="hoy" class="t-h3">¿Cómo te sientes hoy?</h2><span class="tag priv-me" style="height: 24px; font-size: 12px"><span class="i i-lock" aria-hidden="true"></span>Solo yo</span></div>
+      <div role="radiogroup" aria-labelledby="hoy" style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px">
+        <sc-for list="{{moods}}" as="m" hint-placeholder-count="5">
+          <button role="radio" aria-checked="{{m.on}}" onClick="{{m.pick}}" class="col" style="align-items: center; gap: 6px; padding: 10px 2px; border-radius: 14px; border: 1px solid {{m.border}}; background: {{m.bg}}; min-height: 72px">
+            <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><circle cx="14" cy="14" r="12" fill="{{m.fill}}"></circle><path d="{{m.mouth}}" stroke="#241B35" stroke-width="1.8" fill="none" stroke-linecap="round"></path><circle cx="10" cy="11.5" r="1.4" fill="#241B35"></circle><circle cx="18" cy="11.5" r="1.4" fill="#241B35"></circle></svg>
+            <span class="t-xs">{{m.label}}</span>
+          </button>
+        </sc-for>
+      </div>
+      <div class="field"><label class="label" for="mn">Nota <span class="opt">(opcional, solo para ti)</span></label><textarea id="mn" class="textarea" style="min-height: 72px; font-size: 16px" placeholder="¿Algo que quieras recordar de hoy?"></textarea></div>
+      <button class="btn btn-primary" onClick="{{save}}" disabled="{{noMood}}">Guardar</button>
+      <sc-if value="{{saved}}" hint-placeholder-val="{{ false }}">
+        <div class="banner banner-info"><span class="i i-lock" aria-hidden="true"></span><div class="col g8 grow"><span>Guardado solo para ti. ¿Quieres que Glenny sepa cómo te sientes hoy?</span><sc-if value="{{notShared}}" hint-placeholder-val="{{ true }}"><button class="btn btn-secondary btn-sm" onClick="{{share}}" style="align-self: flex-start"><span class="i i-users i-sm" aria-hidden="true"></span>Compartir con Glenny</button></sc-if><sc-if value="{{shared}}" hint-placeholder-val="{{ false }}"><span class="row g6 t-sm" style="font-weight: 700; color: var(--primary-ink)"><span class="i i-check i-sm" aria-hidden="true"></span>Compartido (solo el estado, no la nota)</span></sc-if></div></div>
+      </sc-if>
+    </section>
+    <section class="col g12" aria-labelledby="ult">
+      <h2 id="ult" class="t-h4">Últimos 14 días</h2>
+      <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px" role="list">
+        <sc-for list="{{history}}" as="h" hint-placeholder-count="14"><div role="listitem" aria-label="{{h.aria}}" class="col" style="align-items: center; gap: 4px; padding: 6px 0; border-radius: 10px; background: {{h.bg}}"><span class="t-xs subtle t-num">{{h.d}}</span><span class="t-h4 t-num" style="font-size: 15px">{{h.v}}</span></div></sc-for>
+      </div>
+      <p class="help">Escala del 1 (difícil) al 5 (genial). «–» = sin registro.</p>
+    </section>
+    <section class="panel row g12" style="padding: 14px 16px"><span class="av av-gs">GS</span><p class="t-sm grow">Glenny compartió que hoy se siente <b>Bien</b>.</p></section>
+  </main>
+  <nav class="bnav" aria-label="Principal">
+    <a href="InicioMovil.dc.html"><span class="i i-home i-lg" aria-hidden="true"></span>Inicio</a>
+    <a href="QuestsMovil.dc.html"><span class="i i-quests i-lg" aria-hidden="true"></span>Día</a>
+    <a href="InicioMovil.dc.html"><span class="bn-plus"><span class="i i-plus" aria-hidden="true"></span></span>Crear</a>
+    <a href="Vault.dc.html"><span class="i i-image i-lg" aria-hidden="true"></span>Recuerdos</a>
+    <a href="Mas.dc.html" aria-current="page"><span class="i i-grid i-lg" aria-hidden="true"></span>Más</a>
+  </nav>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+const M = [[5, 'Genial', '#F6D58A', 'M8.5 16 Q14 22 19.5 16'], [4, 'Bien', '#CFE6C9', 'M9 16.5 Q14 20 19 16.5'], [3, 'Normal', '#E3DCEF', 'M9.5 17.5 L18.5 17.5'], [2, 'Bajo', '#CFDDF0', 'M9.5 19 Q14 16 18.5 19'], [1, 'Difícil', '#F4CFCB', 'M9 20 Q14 15 19 20']];
+const H = [4, 3, 0, 5, 4, 2, 3, 4, 4, 0, 3, 5, 4, 0];
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { sel: null, saved: false, shared: false }; }
+  renderVals() {
+    const s = this.state;
+    return {
+      moods: M.map(m => { const on = s.sel === m[0]; return { label: m[1], fill: m[2], mouth: m[3], on: on ? 'true' : 'false', border: on ? 'var(--primary)' : 'var(--line)', bg: on ? 'var(--primary-soft)' : 'transparent', pick: () => this.setState({ sel: m[0], saved: false, shared: false }) }; }),
+      noMood: s.sel === null, saved: s.saved, shared: s.shared, notShared: !s.shared,
+      save: () => this.setState({ saved: true }), share: () => this.setState({ shared: true }),
+      history: H.map((v, i) => ({ d: 30 + i <= 31 ? 30 + i : i - 1, v: v || '–', bg: v ? (M.find(m => m[0] === v)[2]) : 'var(--bg-sunk)', aria: (v ? M.find(m => m[0] === v)[1] : 'Sin registro') })).map((h, i) => Object.assign(h, { d: ['30', '31', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'][i] }))
+    };
+  }
+}
+</script>
+</body>
+</html>

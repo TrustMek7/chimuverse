@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Our Calendar · Chimuverse</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./chimu.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&amp;family=Figtree:wght@400..800&amp;family=Fraunces:ital,opsz,wght@0,9..144,500..700;1,9..144,500..600&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="cv" style="min-height: 100%">
+<div class="app" style="min-height: 1160px">
+  <div style="flex: 1 1 240px; max-width: 272px; display: flex"><dc-import name="Sidebar" activo="calendario" hint-size="272px,1160px"></dc-import></div>
+  <main class="main" style="position: relative">
+    <div class="top"><p class="t-sm muted grow">Nuestro día</p><a class="btn btn-secondary btn-icon dot-badge" href="InicioDesktop.dc.html" aria-label="Notificaciones, 3 sin leer"><span class="i i-bell" aria-hidden="true"></span></a><span class="av-pair"><span class="av av-jl">JL</span><span class="av av-gs">GS</span></span></div>
+    <div class="content col g20" style="max-width: 1240px">
+      <header class="row between wrap g16" style="align-items: flex-end">
+        <div class="col g6"><h1 class="t-h1">Our Calendar</h1><p class="t-body muted">Planes compartidos, fechas especiales y recordatorios.</p></div>
+        <button class="btn btn-primary" onClick="{{openNew}}"><span class="i i-plus i-sm" aria-hidden="true"></span>Nuevo evento</button>
+      </header>
+
+      <section aria-label="Conexión con Google Calendar" class="card row g16 wrap" style="padding: 14px 18px">
+        <span class="row g8 t-sm"><span class="av av-sm av-jl">JL</span><b>Tu Google Calendar</b></span>
+        <span class="sync {{syncClass}}" role="status"><span class="i i-sm {{syncIcon}}" aria-hidden="true"></span>{{syncLabel}}</span>
+        <span class="row g8 t-sm" style="margin-left: 8px"><span class="av av-sm av-gs">GS</span>Glenny<span class="sync sync-ok"><span class="i i-sm i-cloud-ok" aria-hidden="true"></span>Conectado</span></span>
+        <span class="grow"></span>
+        <a class="link t-sm" href="Ajustes.dc.html">Administrar en Ajustes</a>
+      </section>
+
+      <sc-if value="{{sOff}}" hint-placeholder-val="{{ false }}">
+        <div class="banner banner-info"><span class="i i-info" aria-hidden="true"></span><div class="col g8 grow"><span><b>Tu Google Calendar no está conectado.</b> Entrar con Google no lo conecta. Si lo conectas, Chimuverse crea un calendario propio llamado «Chimuverse» y solo sincroniza ese. Tus calendarios de trabajo o personales nunca se comparten.</span><button class="btn btn-secondary btn-sm" onClick="{{connect}}" style="align-self: flex-start">Conectar mi Google Calendar</button></div></div>
+      </sc-if>
+      <sc-if value="{{sErr}}" hint-placeholder-val="{{ false }}">
+        <div class="banner banner-err" role="alert"><span class="i i-alert" aria-hidden="true"></span><div class="col g8 grow"><span><b>No pudimos sincronizar con tu Google Calendar.</b> Los cambios se guardaron en Chimuverse y se enviarán cuando se recupere la conexión. Último intento: hace 4 min.</span><button class="btn btn-secondary btn-sm" onClick="{{retry}}" style="align-self: flex-start"><span class="i i-refresh i-sm" aria-hidden="true"></span>Reintentar</button></div></div>
+      </sc-if>
+      <sc-if value="{{sConf}}" hint-placeholder-val="{{ false }}">
+        <div class="banner banner-warn"><span class="i i-swap" aria-hidden="true"></span><div class="row g12 wrap grow" style="align-items: center"><span class="grow"><b>1 evento cambió en dos lugares.</b> «Cena con tus papás» tiene una hora distinta en tu Google Calendar.</span><button class="btn btn-secondary btn-sm" onClick="{{openConflict}}">Revisar conflicto</button></div></div>
+      </sc-if>
+
+      <div class="row between wrap g12">
+        <div class="row g8">
+          <button class="btn btn-secondary btn-sm">Hoy</button>
+          <button class="btn btn-ghost btn-icon btn-sm" aria-label="Mes anterior"><span class="i i-chev-l" aria-hidden="true"></span></button>
+          <button class="btn btn-ghost btn-icon btn-sm" aria-label="Mes siguiente"><span class="i i-chev-r" aria-hidden="true"></span></button>
+          <h2 class="t-h3" style="margin-left: 4px">Noviembre 2026</h2>
+        </div>
+        <div class="row g16 wrap">
+          <div class="row g12 wrap t-xs" aria-label="Leyenda">
+            <span class="ev ev-us"><span class="i i-users" aria-hidden="true"></span>Compartido</span>
+            <span class="ev ev-love"><span class="i i-heart-fill" aria-hidden="true"></span>Fecha especial</span>
+            <span class="ev ev-rem"><span class="i i-bell" aria-hidden="true"></span>Recordatorio</span>
+            <span class="ev ev-me"><span class="i i-lock" aria-hidden="true"></span>Solo yo</span>
+          </div>
+          <div class="seg" role="group" aria-label="Vista"><button aria-pressed="{{vMonth}}" onClick="{{showMonth}}">Mes</button><button aria-pressed="{{vAgenda}}" onClick="{{showAgenda}}">Agenda</button></div>
+        </div>
+      </div>
+
+      <sc-if value="{{isMonth}}" hint-placeholder-val="{{ true }}">
+        <div class="cal" role="grid" aria-label="Noviembre 2026">
+          <sc-for list="{{dows}}" as="d" hint-placeholder-count="7"><div class="cal-h" role="columnheader">{{d}}</div></sc-for>
+          <sc-for list="{{days}}" as="d" hint-placeholder-count="35">
+            <div class="cal-d {{d.cls}}" role="gridcell" aria-label="{{d.aria}}">
+              <span class="cal-n">{{d.n}}</span>
+              <sc-for list="{{d.evs}}" as="e" hint-placeholder-count="1"><button class="ev {{e.cls}}" onClick="{{e.open}}" title="{{e.t}}"><span class="i {{e.icon}}" aria-hidden="true"></span>{{e.short}}</button></sc-for>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+      <sc-if value="{{isAgenda}}" hint-placeholder-val="{{ false }}">
+        <ol class="col g16" style="max-width: 760px">
+          <sc-for list="{{agenda}}" as="g" hint-placeholder-count="5">
+            <li class="row g20" style="align-items: flex-start"><div class="col" style="width: 72px; flex: none"><span class="t-xs subtle" style="text-transform: uppercase">{{g.dow}}</span><span class="t-h2 t-num">{{g.n}}</span></div>
+              <ul class="col g8 grow"><sc-for list="{{g.evs}}" as="e" hint-placeholder-count="1"><li><button class="card row g12" onClick="{{e.open}}" style="width: 100%; padding: 14px 16px; text-align: left"><span class="ev {{e.cls}}" style="padding: 6px"><span class="i {{e.icon}}" aria-hidden="true"></span></span><span class="col grow"><b>{{e.t}}</b><span class="t-sm muted">{{e.time}} · {{e.kind}}</span></span><span class="i i-chev-r i-sm subtle" aria-hidden="true"></span></button></li></sc-for></ul></li>
+          </sc-for>
+        </ol>
+      </sc-if>
+    </div>
+
+    <sc-if value="{{mEvent}}" hint-placeholder-val="{{ false }}">
+      <div class="scrim">
+        <form class="dialog" role="dialog" aria-modal="true" aria-labelledby="ev-t" onSubmit="{{save}}" novalidate>
+          <div class="row between"><h2 id="ev-t" class="t-h3">{{dlgTitle}}</h2><button type="button" class="btn btn-ghost btn-icon" aria-label="Cerrar" onClick="{{close}}"><span class="i i-x" aria-hidden="true"></span></button></div>
+          <div class="field">
+            <label class="label" for="e-t">Título</label>
+            <input id="e-t" class="input {{tInvalid}}" value="{{fT}}" onChange="{{setT}}" aria-invalid="{{tErr}}" aria-describedby="e-te" placeholder="Ej.: Picnic en el parque">
+            <sc-if value="{{tErr}}" hint-placeholder-val="{{ false }}"><p id="e-te" class="err"><span class="i i-alert i-sm" aria-hidden="true"></span>Ponle un nombre al evento.</p></sc-if>
+          </div>
+          <div class="row g12 wrap">
+            <div class="field" style="flex: 1 1 160px"><label class="label" for="e-d">Fecha</label><input id="e-d" class="input" type="date" value="2026-11-14"></div>
+            <div class="field" style="flex: 1 1 110px"><label class="label" for="e-s">Inicio</label><input id="e-s" class="input" type="time" value="{{fS}}" onChange="{{setS}}"></div>
+            <div class="field" style="flex: 1 1 110px"><label class="label" for="e-e">Fin</label><input id="e-e" class="input {{hInvalid}}" type="time" value="{{fE}}" onChange="{{setE}}" aria-invalid="{{hErr}}" aria-describedby="e-he"></div>
+          </div>
+          <sc-if value="{{hErr}}" hint-placeholder-val="{{ false }}"><p id="e-he" class="err"><span class="i i-alert i-sm" aria-hidden="true"></span>La hora de fin debe ser posterior al inicio.</p></sc-if>
+          <p class="help">Hora de Lima (GMT−5).</p>
+          <fieldset class="field" style="border: 0; padding: 0; margin: 0">
+            <legend class="label" style="margin-bottom: 6px">Tipo y visibilidad</legend>
+            <div class="row g8 wrap"><sc-for list="{{kinds}}" as="k" hint-placeholder-count="4"><button type="button" class="choice" aria-pressed="{{k.on}}" onClick="{{k.pick}}"><span class="i i-sm {{k.icon}}" aria-hidden="true"></span>{{k.label}}</button></sc-for></div>
+            <p class="help">{{kindHelp}}</p>
+          </fieldset>
+          <label class="row g12" style="min-height: 44px; cursor: pointer"><input type="checkbox" checked="{{gcal}}" onChange="{{toggleG}}" disabled="{{gDisabled}}" style="width: 20px; height: 20px; accent-color: var(--primary)"><span class="col"><span class="t-sm" style="font-weight: 600">Añadir también a mi Google Calendar</span><span class="help">{{gHelp}}</span></span></label>
+          <div class="row g8 wrap" style="justify-content: flex-end"><sc-if value="{{isEdit}}" hint-placeholder-val="{{ false }}"><button type="button" class="btn btn-ghost" style="color: var(--st-rejected); margin-right: auto"><span class="i i-trash i-sm" aria-hidden="true"></span>Eliminar</button></sc-if><button type="button" class="btn btn-secondary" onClick="{{close}}">Cancelar</button><button type="submit" class="btn btn-primary">Guardar</button></div>
+        </form>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{mConflict}}" hint-placeholder-val="{{ false }}">
+      <div class="scrim">
+        <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="cf-t" style="width: min(680px, 100%)">
+          <div class="row between"><h2 id="cf-t" class="t-h3">Resolver conflicto</h2><button class="btn btn-ghost btn-icon" aria-label="Cerrar" onClick="{{close}}"><span class="i i-x" aria-hidden="true"></span></button></div>
+          <p class="t-sm muted">«Cena con tus papás» se editó en Chimuverse y en tu Google Calendar. Solo cambia lo resaltado.</p>
+          <div class="row g12 wrap" style="align-items: stretch">
+            <div class="panel col g8" style="flex: 1 1 260px; padding: 18px"><p class="t-eyebrow">En Chimuverse</p><p class="t-sm">Sábado 14 nov</p><p class="t-sm" style="background: var(--st-review-soft); padding: 2px 6px; border-radius: 6px; align-self: flex-start"><b>19:30 – 22:00</b></p><p class="t-xs subtle">Editado por Glenny · hoy 10:12</p></div>
+            <div class="panel col g8" style="flex: 1 1 260px; padding: 18px"><p class="t-eyebrow">En tu Google Calendar</p><p class="t-sm">Sábado 14 nov</p><p class="t-sm" style="background: var(--st-review-soft); padding: 2px 6px; border-radius: 6px; align-self: flex-start"><b>20:00 – 22:30</b></p><p class="t-xs subtle">Editado en Google · hoy 11:40</p></div>
+          </div>
+          <div class="row g8 wrap" style="justify-content: flex-end"><button class="btn btn-ghost" onClick="{{close}}">Decidir después</button><button class="btn btn-secondary" onClick="{{resolve}}">Usar la de Google</button><button class="btn btn-primary" onClick="{{resolve}}">Mantener Chimuverse</button></div>
+        </div>
+      </div>
+    </sc-if>
+    <sc-if value="{{hasToast}}" hint-placeholder-val="{{ false }}"><div class="toast" role="status"><span class="i i-check i-sm" aria-hidden="true"></span>{{toast}}</div></sc-if>
+  </main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"sincronizacion":{"editor":"enum","options":["desconectado","sincronizando","sincronizado","error","conflicto"],"default":"conflicto"},"$preview":{"width":1440,"height":1160}}'>
+const EV = {
+  3: [['Renovar el DNI', 'rem', '09:00', 'DNI']],
+  7: [['Cumpleaños de la abuela Rosa', 'love', 'Todo el día', 'Cumple abuela']],
+  12: [['Llamar a la abuela', 'rem', '20:00', 'Llamar abuela'], ['Clase de inglés', 'me', '18:00', 'Inglés']],
+  14: [['Cena con tus papás', 'us', '19:30', 'Cena papás']],
+  15: [['Ordenar fotos de Cusco', 'us', '16:00', 'Fotos Cusco']],
+  20: [['Cumplemes', 'love', 'Todo el día', 'Cumplemes']],
+  21: [['Cine: estreno de la saga', 'us', '21:10', 'Cine']],
+  27: [['Feria del libro', 'us', '17:00', 'Feria libro']],
+  28: [['Pagar el internet', 'rem', '10:00', 'Internet']]
+};
+const K = { us: ['ev-us', 'i-users', 'Compartido'], love: ['ev-love', 'i-heart-fill', 'Fecha especial'], rem: ['ev-rem', 'i-bell', 'Recordatorio'], me: ['ev-me', 'i-lock', 'Solo yo'] };
+const SYNC = { desconectado: ['sync-off', 'i-cloud-off', 'No conectado'], sincronizando: ['sync-run', 'i-refresh', 'Sincronizando…'], sincronizado: ['sync-ok', 'i-cloud-ok', 'Sincronizado hace 3 min'], error: ['sync-err', 'i-alert', 'Error de sincronización'], conflicto: ['sync-conf', 'i-swap', '1 conflicto'] };
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { sync: null, view: 'month', modal: null, fT: '', fS: '19:00', fE: '21:00', kind: 'me', gcal: false, tErr: false, hErr: false, edit: false, toast: '' }; }
+  toastMsg(t) { this.setState({ toast: t }); clearTimeout(this.tt); this.tt = setTimeout(() => this.setState({ toast: '' }), 3000); }
+  renderVals() {
+    const s = this.state;
+    const sync = s.sync || this.props.sincronizacion || 'conflicto';
+    const sy = SYNC[sync];
+    const connected = sync !== 'desconectado';
+    const open = (e) => () => this.setState({ modal: 'event', edit: true, fT: e[0], kind: e[1], fS: /\d/.test(e[2]) ? e[2] : '00:00', fE: '22:00', tErr: false, hErr: false, gcal: connected && e[1] !== 'me' });
+    const mk = (e) => ({ t: e[0], short: e[3], cls: K[e[1]][0], icon: K[e[1]][1], kind: K[e[1]][2], time: e[2], open: open(e) });
+    const days = [];
+    const pre = [26, 27, 28, 29, 30, 31];
+    pre.forEach(n => days.push({ n, cls: 'out', evs: [], aria: n + ' de octubre' }));
+    for (let n = 1; n <= 30; n++) days.push({ n, cls: n === 12 ? 'today' : '', evs: (EV[n] || []).map(mk), aria: n + ' de noviembre' + (n === 12 ? ', hoy' : '') + ((EV[n] || []).length ? ', ' + EV[n].length + ' evento(s)' : '') });
+    for (let n = 1; n <= 6; n++) days.push({ n, cls: 'out', evs: [], aria: n + ' de diciembre' });
+    const DOW = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
+    const agenda = Object.keys(EV).map(Number).filter(n => n >= 12).map(n => ({ n, dow: DOW[n % 7], evs: EV[n].map(mk) }));
+    const kinds = [['me', 'Solo yo', 'i-lock'], ['us', 'Compartido', 'i-users'], ['love', 'Fecha especial', 'i-heart-fill'], ['rem', 'Recordatorio', 'i-bell']];
+    const help = { me: 'Solo tú lo ves. Glenny no sabe que existe.', us: 'Glenny lo verá y recibirá un aviso.', love: 'Compartido y se repite cada año.', rem: 'Recordatorio solo para ti, salvo que lo compartas.' };
+    return {
+      syncClass: sy[0], syncIcon: sync === 'sincronizando' ? 'i-refresh spin' : sy[1], syncLabel: sy[2],
+      sOff: sync === 'desconectado', sErr: sync === 'error', sConf: sync === 'conflicto',
+      connect: () => { this.setState({ sync: 'sincronizando' }); setTimeout(() => this.setState({ sync: 'sincronizado' }), 1800); },
+      retry: () => { this.setState({ sync: 'sincronizando' }); setTimeout(() => this.setState({ sync: 'sincronizado' }), 1500); },
+      openConflict: () => this.setState({ modal: 'conflict' }),
+      resolve: () => { this.setState({ modal: null, sync: 'sincronizado' }); this.toastMsg('Conflicto resuelto'); },
+      vMonth: s.view === 'month' ? 'true' : 'false', vAgenda: s.view === 'agenda' ? 'true' : 'false',
+      isMonth: s.view === 'month', isAgenda: s.view === 'agenda',
+      showMonth: () => this.setState({ view: 'month' }), showAgenda: () => this.setState({ view: 'agenda' }),
+      dows: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'], days, agenda,
+      mEvent: s.modal === 'event', mConflict: s.modal === 'conflict', isEdit: s.edit,
+      dlgTitle: s.edit ? 'Editar evento' : 'Nuevo evento',
+      openNew: () => this.setState({ modal: 'event', edit: false, fT: '', fS: '19:00', fE: '21:00', kind: 'me', gcal: false, tErr: false, hErr: false }),
+      close: () => this.setState({ modal: null }),
+      fT: s.fT, fS: s.fS, fE: s.fE, tErr: s.tErr, hErr: s.hErr, tInvalid: s.tErr ? 'is-invalid' : '', hInvalid: s.hErr ? 'is-invalid' : '',
+      setT: e => this.setState({ fT: e.target.value, tErr: false }), setS: e => this.setState({ fS: e.target.value, hErr: false }), setE: e => this.setState({ fE: e.target.value, hErr: false }),
+      kinds: kinds.map(k => ({ label: k[1], icon: k[2], on: s.kind === k[0] ? 'true' : 'false', pick: () => this.setState({ kind: k[0] }) })),
+      kindHelp: help[s.kind],
+      gcal: s.gcal, gDisabled: !connected, toggleG: () => this.setState({ gcal: !s.gcal }),
+      gHelp: connected ? 'Se copia solo a tu calendario «Chimuverse». Desactivado por defecto.' : 'Conecta tu Google Calendar en Ajustes para usar esta opción.',
+      save: e => {
+        if (e && e.preventDefault) e.preventDefault();
+        const tErr = !s.fT.trim(); const hErr = s.fE <= s.fS;
+        if (tErr || hErr) { this.setState({ tErr, hErr }); return; }
+        this.setState({ modal: null }); this.toastMsg(s.edit ? 'Cambios guardados' : 'Evento creado');
+      },
+      toast: s.toast, hasToast: !!s.toast
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Wishlist &amp; Soundtrack · Chimuverse</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./chimu.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&amp;family=Figtree:wght@400..800&amp;family=Fraunces:ital,opsz,wght@0,9..144,500..700;1,9..144,500..600&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="cv" style="width: 390px; height: 844px">
+<div class="phone">
+  <header class="ph-top"><a class="btn btn-ghost btn-icon" href="Mas.dc.html" aria-label="Volver a Más" style="color: var(--ink); margin-left: -12px"><span class="i i-chev-l" aria-hidden="true"></span></a><h1 class="t-h3 grow">Wishlist &amp; Soundtrack</h1></header>
+  <div style="padding: 0 20px 8px"><div class="seg seg-fill" role="group" aria-label="Sección"><button aria-pressed="{{onW}}" onClick="{{showW}}"><span class="i i-gift i-sm" aria-hidden="true"></span>Deseos</button><button aria-pressed="{{onS}}" onClick="{{showS}}"><span class="i i-music i-sm" aria-hidden="true"></span>Soundtrack</button></div></div>
+  <main class="ph-scroll col g16" style="padding-top: 12px">
+    <sc-if value="{{isW}}" hint-placeholder-val="{{ true }}">
+      <div class="col g12">
+        <div class="row g8 wrap"><span class="tag">Todos</span><span class="tag">Deseos</span><span class="tag">Necesidades</span><span class="tag">Ideas de regalo</span></div>
+        <ul class="col g8">
+          <li class="card col g8" style="padding: 14px"><div class="row g8"><span class="chip st-review">Prioridad alta</span><span class="tag priv-us" style="height: 24px; font-size: 12px"><span class="i i-users" aria-hidden="true"></span>Compartido</span></div><b>Audífonos con cancelación de ruido</b><span class="t-sm muted">Deseo de José Luis · S/ 350 aprox.</span><a class="link t-sm row g4" href="#">Ver enlace<span class="i i-ext i-xs" aria-hidden="true"></span></a></li>
+          <li class="card col g8" style="padding: 14px"><div class="row g8"><span class="chip st-pending">Necesidad</span><span class="tag priv-us" style="height: 24px; font-size: 12px"><span class="i i-users" aria-hidden="true"></span>Compartido</span></div><b>Sartén antiadherente grande</b><span class="t-sm muted">Para la casa · S/ 120</span></li>
+          <li class="card col g8" style="padding: 14px; border-style: dashed"><div class="row g8"><span class="chip" style="background: var(--accent-soft); color: var(--accent-ink)"><span class="i i-gift" aria-hidden="true"></span>Idea de regalo</span><span class="tag priv-me" style="height: 24px; font-size: 12px"><span class="i i-lock" aria-hidden="true"></span>Solo yo</span></div><b>Libro de fotografía de Martín Chambi</b><span class="t-sm muted">Para el aniversario de Glenny. Ella no puede ver esta idea.</span></li>
+        </ul>
+      </div>
+    </sc-if>
+    <sc-if value="{{isS}}" hint-placeholder-val="{{ false }}">
+      <div class="col g12">
+        <section class="sky col g8" style="padding: 18px"><p class="t-eyebrow" style="color: var(--on-night-2)">Playlist compartida</p><h2 class="t-h3">Canciones del viaje a Cusco</h2><p class="t-sm muted">14 canciones · editada por ambos</p></section>
+        <ul class="col">
+          <sc-for list="{{tracks}}" as="t" hint-placeholder-count="4">
+            <li class="row g12" style="padding: 12px 0; border-bottom: 1px solid var(--line)"><span class="t-sm subtle t-num" style="width: 20px">{{t.n}}</span><span class="col grow" style="min-width: 0"><b class="t-sm">{{t.t}}</b><span class="t-xs subtle">{{t.a}} · añadida por {{t.by}}</span></span><a class="btn btn-ghost btn-icon btn-sm" href="#" aria-label="Abrir «{{t.t}}» en {{t.src}}" style="min-width: 44px; min-height: 44px"><span class="i i-ext i-sm" aria-hidden="true"></span></a></li>
+          </sc-for>
+        </ul>
+        <p class="help row g6" style="align-items: flex-start"><span class="i i-info i-sm" style="margin-top: 1px" aria-hidden="true"></span>Por ahora son enlaces a Spotify o YouTube; no hay reproducción ni conexión con sus cuentas. Puedes exportar la lista a CSV o JSON.</p>
+        <button class="btn btn-secondary"><span class="i i-download i-sm" aria-hidden="true"></span>Exportar CSV</button>
+      </div>
+    </sc-if>
+  </main>
+  <nav class="bnav" aria-label="Principal">
+    <a href="InicioMovil.dc.html"><span class="i i-home i-lg" aria-hidden="true"></span>Inicio</a>
+    <a href="QuestsMovil.dc.html"><span class="i i-quests i-lg" aria-hidden="true"></span>Día</a>
+    <a href="InicioMovil.dc.html"><span class="bn-plus"><span class="i i-plus" aria-hidden="true"></span></span>Crear</a>
+    <a href="Vault.dc.html"><span class="i i-image i-lg" aria-hidden="true"></span>Recuerdos</a>
+    <a href="Mas.dc.html" aria-current="page"><span class="i i-grid i-lg" aria-hidden="true"></span>Más</a>
+  </nav>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { tab: 'w' }; }
+  renderVals() {
+    const w = this.state.tab === 'w';
+    return { onW: w ? 'true' : 'false', onS: w ? 'false' : 'true', isW: w, isS: !w,
+      showW: () => this.setState({ tab: 'w' }), showS: () => this.setState({ tab: 's' }),
+      tracks: [['Canción para el camino', 'Banda de ejemplo', 'Glenny', 'Spotify'], ['Altura', 'Dúo andino (ejemplo)', 'José Luis', 'YouTube'], ['Lluvia en San Blas', 'Artista de ejemplo', 'Glenny', 'Spotify'], ['Volver a casa', 'Grupo de ejemplo', 'José Luis', 'Spotify']].map((t, i) => ({ n: i + 1, t: t[0], a: t[1], by: t[2], src: t[3] })) };
+  }
+}
+</script>
+</body>
+</html>

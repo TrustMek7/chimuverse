@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Goals &amp; Dreams · Chimuverse</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./chimu.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&amp;family=Figtree:wght@400..800&amp;family=Fraunces:ital,opsz,wght@0,9..144,500..700;1,9..144,500..600&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="cv" style="width: 390px; height: 844px">
+<div class="phone">
+  <header class="ph-top"><a class="btn btn-ghost btn-icon" href="Mas.dc.html" aria-label="Volver a Más" style="color: var(--ink); margin-left: -12px"><span class="i i-chev-l" aria-hidden="true"></span></a><h1 class="t-h2 grow">Goals &amp; Dreams</h1></header>
+  <div style="padding: 0 20px 8px"><div class="seg seg-fill" role="group" aria-label="Metas de"><sc-for list="{{tabs}}" as="t" hint-placeholder-count="3"><button aria-pressed="{{t.on}}" onClick="{{t.pick}}">{{t.label}}</button></sc-for></div></div>
+  <main class="ph-scroll col g16" style="padding-top: 12px">
+    <sc-for list="{{goals}}" as="g" hint-placeholder-count="2">
+      <article class="card col g12" style="padding: 18px">
+        <div class="row g8 wrap"><span class="tag {{g.privCls}}" style="height: 24px; font-size: 12px"><span class="i {{g.privIcon}}" aria-hidden="true"></span>{{g.priv}}</span><span class="t-xs subtle grow" style="text-align: right">Meta: {{g.due}}</span></div>
+        <h2 class="t-h3">{{g.t}}</h2>
+        <div class="row g8"><div class="track grow" role="meter" aria-label="Progreso" aria-valuenow="{{g.pct}}" aria-valuemin="0" aria-valuemax="100"><span class="fill-ver" style="width: {{g.w}}; background: var(--primary)"></span></div><b class="t-sm t-num">{{g.pct}} %</b></div>
+        <ol class="col g4">
+          <sc-for list="{{g.ms}}" as="m" hint-placeholder-count="3">
+            <li><button role="checkbox" aria-checked="{{m.on}}" onClick="{{m.toggle}}" class="row g12" style="min-height: 44px; width: 100%; text-align: left"><span style="width: 22px; height: 22px; border-radius: 7px; display: grid; place-items: center; flex: none; border: 1.5px solid {{m.border}}; background: {{m.bg}}; color: var(--on-primary)"><sc-if value="{{m.done}}" hint-placeholder-val="{{ false }}"><span class="i i-check i-xs" aria-hidden="true"></span></sc-if></span><span class="t-sm" style="text-decoration: {{m.deco}}; color: {{m.color}}">{{m.t}}</span></button></li>
+          </sc-for>
+        </ol>
+      </article>
+    </sc-for>
+    <button class="btn btn-secondary"><span class="i i-plus i-sm" aria-hidden="true"></span>Nueva meta</button>
+  </main>
+  <nav class="bnav" aria-label="Principal">
+    <a href="InicioMovil.dc.html"><span class="i i-home i-lg" aria-hidden="true"></span>Inicio</a>
+    <a href="QuestsMovil.dc.html"><span class="i i-quests i-lg" aria-hidden="true"></span>Día</a>
+    <a href="InicioMovil.dc.html"><span class="bn-plus"><span class="i i-plus" aria-hidden="true"></span></span>Crear</a>
+    <a href="Vault.dc.html"><span class="i i-image i-lg" aria-hidden="true"></span>Recuerdos</a>
+    <a href="Mas.dc.html" aria-current="page"><span class="i i-grid i-lg" aria-hidden="true"></span>Más</a>
+  </nav>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+const G = {
+  us: [ { t: 'Viajar a Japón', due: 'dic 2028', priv: 'us', ms: [['Sacar pasaportes', true], ['Ahorrar S/ 4 000', false], ['Elegir fechas', false], ['Comprar pasajes', false]] },
+        { t: 'Adoptar un gato', due: 'jun 2027', priv: 'us', ms: [['Preguntar en el edificio', true], ['Comprar arenero y rascador', true], ['Visitar el albergue', false]] } ],
+  me: [ { t: 'Terminar la tesis', due: 'jul 2027', priv: 'me', ms: [['Aprobar el plan', true], ['Capítulo 1', true], ['Capítulo 2', false], ['Sustentación', false]] },
+        { t: 'Correr 10 km', due: 'abr 2027', priv: 'us', ms: [['5 km sin parar', true], ['8 km', false], ['10 km', false]] } ],
+  gs: [ { t: 'Certificación de inglés', due: 'mar 2027', priv: 'us', ms: [['Inscribirse', true], ['Simulacro', false], ['Examen', false]] } ]
+};
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { tab: 'us', done: {} }; }
+  renderVals() {
+    const s = this.state;
+    const goals = G[s.tab].map((g, gi) => {
+      const ms = g.ms.map((m, mi) => { const k = s.tab + gi + '-' + mi; const d = k in s.done ? s.done[k] : m[1];
+        return { t: m[0], done: d, on: d ? 'true' : 'false', border: d ? 'var(--primary)' : 'var(--line-strong)', bg: d ? 'var(--primary)' : 'transparent', deco: d ? 'line-through' : 'none', color: d ? 'var(--ink-3)' : 'var(--ink)', toggle: () => this.setState({ done: Object.assign({}, s.done, { [k]: !d }) }) }; });
+      const pct = Math.round(100 * ms.filter(m => m.done).length / ms.length);
+      return { t: g.t, due: g.due, ms, pct, w: pct + '%', priv: g.priv === 'me' ? 'Solo yo' : 'Compartida', privIcon: g.priv === 'me' ? 'i-lock' : 'i-users', privCls: g.priv === 'me' ? 'priv-me' : 'priv-us' };
+    });
+    return { goals, tabs: [['us', 'Juntos'], ['me', 'Mías'], ['gs', 'De Glenny']].map(t => ({ label: t[1], on: s.tab === t[0] ? 'true' : 'false', pick: () => this.setState({ tab: t[0] }) })) };
+  }
+}
+</script>
+</body>
+</html>

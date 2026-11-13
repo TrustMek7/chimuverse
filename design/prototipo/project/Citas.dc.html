@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Date Planner · Chimuverse</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./chimu.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&amp;family=Figtree:wght@400..800&amp;family=Fraunces:ital,opsz,wght@0,9..144,500..700;1,9..144,500..600&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="cv" style="width: 390px; height: 844px">
+<div class="phone">
+  <header class="ph-top"><a class="btn btn-ghost btn-icon" href="Mas.dc.html" aria-label="Volver a Más" style="color: var(--ink); margin-left: -12px"><span class="i i-chev-l" aria-hidden="true"></span></a><h1 class="t-h2 grow">Date Planner</h1></header>
+  <main class="ph-scroll col g16">
+    <div class="row g8" role="group" aria-label="Filtrar ideas" style="overflow-x: auto; margin: 0 -20px; padding: 0 20px 2px">
+      <sc-for list="{{filters}}" as="f" hint-placeholder-count="5"><button class="choice" aria-pressed="{{f.on}}" onClick="{{f.pick}}" style="flex: none; border-radius: 999px; min-height: 40px; padding: 0 14px; font-size: 14px">{{f.label}}</button></sc-for>
+    </div>
+    <section class="sky col g16" style="padding: 20px; align-items: center; text-align: center" aria-labelledby="rl">
+      <h2 id="rl" class="t-h4" style="align-self: flex-start">¿No se deciden? Que decidan las estrellas</h2>
+      <svg width="180" height="180" viewBox="-100 -100 200 200" aria-hidden="true" style="transform: rotate({{rot}}); transition: transform 1.2s cubic-bezier(.2,.8,.2,1)">
+        <circle r="92" fill="none" stroke="#CFC3E6" stroke-width="1" stroke-dasharray="2 5"></circle>
+        <g stroke="#CFC3E6" stroke-width="1" opacity=".5"><path d="M0 0 L0 -86"></path><path d="M0 0 L74 -43"></path><path d="M0 0 L74 43"></path><path d="M0 0 L0 86"></path><path d="M0 0 L-74 43"></path><path d="M0 0 L-74 -43"></path></g>
+        <g fill="#FFCB66"><circle cx="0" cy="-86" r="6"></circle><circle cx="74" cy="-43" r="4"></circle><circle cx="74" cy="43" r="5"></circle><circle cx="0" cy="86" r="4"></circle><circle cx="-74" cy="43" r="6"></circle><circle cx="-74" cy="-43" r="4"></circle></g>
+        <circle r="10" fill="#FF8DB5"></circle>
+      </svg>
+      <p class="t-h3" aria-live="polite">{{result}}</p>
+      <div class="row g8" style="align-self: stretch"><button class="btn btn-night grow" onClick="{{spin}}"><span class="i i-shuffle i-sm" aria-hidden="true"></span>Girar</button><sc-if value="{{hasResult}}" hint-placeholder-val="{{ false }}"><a class="btn grow" href="CalendarioMovil.dc.html" style="background: transparent; color: var(--on-night); border-color: rgba(255,255,255,.4)">Programar</a></sc-if></div>
+    </section>
+    <div class="row between"><h2 class="t-h4">Ideas ({{count}})</h2><button class="btn btn-ghost btn-sm"><span class="i i-plus i-sm" aria-hidden="true"></span>Añadir idea</button></div>
+    <ul class="col g8">
+      <sc-for list="{{ideas}}" as="d" hint-placeholder-count="4">
+        <li class="card row g12" style="padding: 14px"><span class="qstar" style="background: var(--accent-soft); color: var(--accent-ink)"><span class="i {{d.icon}}" aria-hidden="true"></span></span><span class="col grow"><b class="t-sm">{{d.t}}</b><span class="t-xs subtle">{{d.cat}} · {{d.cost}}</span></span><sc-if value="{{d.done}}" hint-placeholder-val="{{ false }}"><span class="chip st-done"><span class="i i-check" aria-hidden="true"></span>Hecha</span></sc-if></li>
+      </sc-for>
+    </ul>
+  </main>
+  <nav class="bnav" aria-label="Principal">
+    <a href="InicioMovil.dc.html"><span class="i i-home i-lg" aria-hidden="true"></span>Inicio</a>
+    <a href="QuestsMovil.dc.html"><span class="i i-quests i-lg" aria-hidden="true"></span>Día</a>
+    <a href="InicioMovil.dc.html"><span class="bn-plus"><span class="i i-plus" aria-hidden="true"></span></span>Crear</a>
+    <a href="Vault.dc.html"><span class="i i-image i-lg" aria-hidden="true"></span>Recuerdos</a>
+    <a href="Mas.dc.html" aria-current="page"><span class="i i-grid i-lg" aria-hidden="true"></span>Más</a>
+  </nav>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+const IDEAS = [
+  ['Noche de pizza casera y película', 'casa', 'En casa', 'S/ 40', 'i-home', false],
+  ['Picnic en el mirador de Yanahuara', 'fuera', 'Aire libre', 'S/ 30', 'i-sun', true],
+  ['Probar el ramen nuevo del centro', 'comida', 'Comida', 'S/ 90', 'i-heart', false],
+  ['Clase de cerámica para dos', 'fuera', 'Salida', 'S/ 120', 'i-sparkle', false],
+  ['Ver estrellas desde Chiguata', 'fuera', 'Aire libre', 'S/ 50', 'i-moon', false],
+  ['Maratón de juegos de mesa', 'casa', 'En casa', 'Gratis', 'i-dice', true]
+];
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { f: 'all', res: null, turns: 0 }; }
+  renderVals() {
+    const s = this.state;
+    const F = [['all', 'Todas'], ['casa', 'En casa'], ['fuera', 'Salir'], ['comida', 'Comida'], ['cheap', 'Hasta S/ 50']];
+    const list = IDEAS.filter(i => s.f === 'all' || i[1] === s.f || (s.f === 'cheap' && (i[3] === 'Gratis' || parseInt(i[3].slice(3)) <= 50)));
+    return {
+      filters: F.map(x => ({ label: x[1], on: s.f === x[0] ? 'true' : 'false', pick: () => this.setState({ f: x[0], res: null }) })),
+      ideas: list.map(i => ({ t: i[0], cat: i[2], cost: i[3], icon: i[4], done: i[5] })), count: list.length,
+      rot: (s.turns * 420) + 'deg',
+      result: s.res || 'Gira para elegir una idea',
+      hasResult: !!s.res,
+      spin: () => { const pick = list[Math.floor(Math.random() * list.length)]; this.setState({ turns: s.turns + 1, res: null }); setTimeout(() => this.setState({ res: pick ? pick[0] : 'No hay ideas con este filtro' }), 1200); }
+    };
+  }
+}
+</script>
+</body>
+</html>

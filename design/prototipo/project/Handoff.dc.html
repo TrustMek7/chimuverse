@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Handoff · Chimuverse</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./chimu.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&amp;family=Figtree:wght@400..800&amp;family=Fraunces:ital,opsz,wght@0,9..144,500..700;1,9..144,500..600&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="cv" style="min-height: 100%; padding: 56px 16px 96px">
+<div class="col" style="max-width: 1180px; margin: 0 auto; gap: 48px">
+  <header class="col g8"><p class="t-eyebrow">Para quien implementa · React + TS + Vite + Tailwind + Supabase</p><h1 class="t-display">Handoff</h1><p class="t-body muted" style="max-width: 72ch">La versión completa está en el repo: <code>design/handoff/HANDOFF.md</code> y <code>design/handoff/tokens.css</code> (Tailwind v4, <code>@theme</code>). Los valores exactos de cada componente están en <code>design/prototipo/project/chimu.css</code>.</p></header>
+
+  <section class="row g24 wrap" style="align-items: stretch">
+    <div class="card col g12" style="flex: 1 1 340px; padding: 24px"><h2 class="t-h3">Medidas</h2><ul class="col g8 t-sm">
+      <li><b>Lienzos:</b> 1440 escritorio · 390 móvil · probado desde 360</li>
+      <li><b>Sidebar:</b> 272 px (lg+) · rail 72 px (md) · barra inferior &lt; md</li>
+      <li><b>Contenido:</b> máx. 1240 · gutter 40 / 24 / 16</li>
+      <li><b>Táctil:</b> mínimo 44×44; ítems de la barra inferior a 54 px de alto</li>
+      <li><b>Inputs:</b> 44 de alto, radio 12, 16 px en móvil</li>
+      <li><b>Diálogo:</b> 540 px (680–860 en detalle), radio 24, padding 28</li>
+    </ul></div>
+    <div class="card col g12" style="flex: 1 1 340px; padding: 24px"><h2 class="t-h3">Interacción</h2><ul class="col g8 t-sm">
+      <li><b>Foco:</b> anillo de 3 px <code>--focus</code>, offset 2</li>
+      <li><b>Duraciones:</b> 120 / 200 / 320 ms, ease-out</li>
+      <li><b>Reduce-motion:</b> sin giros, ruleta directa, polaroids sin rotar</li>
+      <li><b>Escritorio:</b> diálogos centrados · <b>Móvil:</b> hojas inferiores y detalle a pantalla completa con acciones fijas abajo</li>
+      <li><b>Toast:</b> 3 s, <code>role="status"</code></li>
+    </ul></div>
+    <div class="card col g12" style="flex: 1 1 340px; padding: 24px"><h2 class="t-h3">Reglas que dependen del backend</h2><ul class="col g8 t-sm">
+      <li>Nadie verifica su propio reporte (la UI oculta el botón y el RPC lo impide)</li>
+      <li>Lo privado no se envía al cliente (RLS)</li>
+      <li>Cápsula sellada hasta <code>unlock_at</code>, también para su autor</li>
+      <li>Rechazar no cambia el % verificado</li>
+      <li>Completar no borra: el historial es inmutable</li>
+    </ul></div>
+  </section>
+
+  <section class="col g16">
+    <h2 class="t-h2">Supuestos de privacidad (valor más privado)</h2>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px">
+      <sc-for list="{{assume}}" as="a" hint-placeholder-count="8"><div class="panel row g12" style="padding: 14px 16px; align-items: flex-start"><span class="i i-lock i-sm" style="color: var(--primary); margin-top: 2px" aria-hidden="true"></span><span class="t-sm">{{a}}</span></div></sc-for>
+    </div>
+  </section>
+
+  <section class="col g16">
+    <h2 class="t-h2">Pendiente y simulado</h2>
+    <div class="banner banner-warn"><span class="i i-alert" aria-hidden="true"></span><span><b>La integración con Google Calendar está simulada.</b> Los cinco estados de sincronización y el conflicto son solo visuales. Spotify/YouTube son enlaces; el correo no está disponible.</span></div>
+    <ul class="col g8 t-sm" style="padding-left: 4px">
+      <sc-for list="{{pending}}" as="p" hint-placeholder-count="6"><li class="row g8" style="align-items: flex-start"><span class="i i-st-pending i-sm subtle" style="margin-top: 2px" aria-hidden="true"></span>{{p}}</li></sc-for>
+    </ul>
+  </section>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":2300}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      assume: ['Fotos nuevas del Vault: Solo yo', 'Entradas del DevLog: Solo yo', 'Ánimo: Solo yo; se comparte cada registro y solo el estado', 'Eventos nuevos: Solo yo; free/busy apagado', 'Finanzas personales: privadas, sin totales', 'Ideas de regalo: pueden quedar ocultas a la pareja', 'Respuesta de la pareja oculta hasta responder', 'Google Calendar: solo el calendario «Chimuverse», conexión individual y aparte del login'],
+      pending: ['Rail de tablet (md), onboarding, 404 y banner de sin conexión', 'Detalle de viaje, editor de gustos y preguntas propias', 'Estado «Lo hablamos» tras 2 o más rechazos', 'Revisar en oscuro las pantallas que no son Inicio ni Wrapped', 'Auditoría con axe en ambos temas', 'Producto: quién verifica las compartidas, retención y almacenamiento']
+    };
+  }
+}
+</script>
+</body>
+</html>

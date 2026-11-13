@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Sistema de diseño · Chimuverse</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./chimu.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&amp;family=Figtree:wght@400..800&amp;family=Fraunces:ital,opsz,wght@0,9..144,500..700;1,9..144,500..600&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="cv" style="min-height: 100%; padding: 56px 16px 96px">
+<div class="col" style="max-width: 1280px; margin: 0 auto; gap: 64px">
+  <header class="col g8"><p class="t-eyebrow">Chimuverse · Sistema v1</p><h1 class="t-display">Sistema de diseño</h1><p class="t-body muted" style="max-width: 70ch">Tokens semánticos en variables CSS (claro y oscuro) que se mapean 1:1 a Tailwind. La hoja <code>chimu.css</code> del prototipo es la referencia exacta de valores y estados.</p></header>
+
+  <section class="col g20">
+    <h2 class="t-h2">Color · claro / oscuro</h2>
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px">
+      <sc-for list="{{colors}}" as="c" hint-placeholder-count="12">
+        <div class="card col" style="overflow: hidden"><div class="row" style="height: 56px"><span style="flex: 1; background: {{c.l}}; box-shadow: inset 0 0 0 1px rgba(0,0,0,.06)"></span><span style="flex: 1; background: {{c.d}}"></span></div><div class="col g4" style="padding: 10px 12px"><b class="t-sm">{{c.n}}</b><span class="t-xs subtle t-num" style="font-family: ui-monospace, Consolas, monospace">{{c.l}} · {{c.d}}</span><span class="t-xs muted" style="font-weight: 500">{{c.u}}</span></div></div>
+      </sc-for>
+    </div>
+    <p class="help">Contrastes verificados sobre --bg: ink 13.9:1, ink-2 7.3:1, ink-3 5.1:1, primary 6.3:1 (blanco sobre primary 6.7:1), accent-ink 6.0:1, st-review 5.6:1, st-done 5.1:1, st-rejected 5.4:1. El rosa --accent (#FF7BA8) es solo de relleno; para texto se usa --accent-ink.</p>
+  </section>
+
+  <section class="col g20">
+    <h2 class="t-h2">Tipografía</h2>
+    <div class="col g12">
+      <sc-for list="{{types}}" as="t" hint-placeholder-count="8">
+        <div class="row g24 wrap" style="padding: 10px 0; border-bottom: 1px solid var(--line); align-items: baseline"><span class="t-xs subtle" style="width: 220px; font-family: ui-monospace, Consolas, monospace">{{t.token}}</span><span class="{{t.cls}}">{{t.sample}}</span></div>
+      </sc-for>
+    </div>
+    <p class="help">Fraunces (títulos, opsz automático), Figtree (UI y contenido) y Caveat (solo pies de polaroid y notas a mano, siempre ≥ 20 px). Fallbacks: Georgia / system-ui / cursive. En producción se autoalojan con @fontsource.</p>
+  </section>
+
+  <section class="row g32 wrap">
+    <div class="col g12" style="flex: 1 1 360px"><h2 class="t-h3">Espaciado (base 4)</h2>
+      <sc-for list="{{spaces}}" as="s" hint-placeholder-count="8"><div class="row g12"><span class="t-xs subtle t-num" style="width: 64px">{{s.n}}</span><span style="height: 12px; width: {{s.w}}; background: var(--primary-soft); box-shadow: inset 0 0 0 1px var(--primary)"></span></div></sc-for>
+    </div>
+    <div class="col g12" style="flex: 1 1 360px"><h2 class="t-h3">Radios y sombras</h2>
+      <div class="row g16 wrap"><sc-for list="{{radii}}" as="r" hint-placeholder-count="5"><div class="col g6" style="align-items: center"><span style="width: 64px; height: 64px; background: var(--surface); border: 1px solid var(--line-strong); border-radius: {{r.v}}"></span><span class="t-xs subtle">{{r.n}}</span></div></sc-for></div>
+      <div class="row g16 wrap" style="margin-top: 12px"><span class="card" style="padding: 16px; box-shadow: var(--sh-1)">sh-1</span><span class="card" style="padding: 16px; box-shadow: var(--sh-2)">sh-2</span><span class="card" style="padding: 16px; box-shadow: var(--sh-3)">sh-3</span><span class="pol" style="padding: 16px">sh-pol</span></div>
+    </div>
+  </section>
+
+  <section class="col g20">
+    <h2 class="t-h2">Iconografía</h2>
+    <p class="t-sm muted">Trazo de 1.8 px sobre caja de 24, extremos redondeados (compatible con lucide-react). Se pintan con currentColor. Los estados de quest tienen glifos con forma propia.</p>
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 8px">
+      <sc-for list="{{icons}}" as="ic" hint-placeholder-count="24"><div class="col g6" style="align-items: center; padding: 14px 4px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line)"><span class="i i-lg {{ic.c}}" aria-hidden="true"></span><span class="t-xs subtle">{{ic.n}}</span></div></sc-for>
+    </div>
+  </section>
+
+  <section class="col g24">
+    <h2 class="t-h2">Componentes y estados</h2>
+    <div class="col g12"><h3 class="t-h4">Button · primary / secondary / ghost / ok / danger · sm (36, solo puntero fino) · md (44)</h3>
+      <div class="row g12 wrap"><button class="btn btn-primary">Primario</button><button class="btn btn-primary" style="background: var(--primary-hover)">Hover</button><button class="btn btn-primary" style="outline: 3px solid var(--focus); outline-offset: 2px">Foco</button><button class="btn btn-primary" disabled>Deshabilitado</button><button class="btn btn-primary" aria-busy="true"><span class="i i-refresh i-sm spin" aria-hidden="true"></span>Guardando…</button></div>
+      <div class="row g12 wrap"><button class="btn btn-secondary">Secundario</button><button class="btn btn-ghost">Fantasma</button><button class="btn btn-ok"><span class="i i-check i-sm" aria-hidden="true"></span>Aprobar</button><button class="btn btn-danger">Rechazar</button><button class="btn btn-secondary btn-icon" aria-label="Ejemplo de botón de icono"><span class="i i-bell" aria-hidden="true"></span></button><button class="btn btn-secondary btn-sm">Pequeño</button></div>
+    </div>
+    <div class="col g12"><h3 class="t-h4">StatusPill · icono + texto + color</h3>
+      <div class="row g8 wrap"><span class="chip st-pending"><span class="i i-st-pending" aria-hidden="true"></span>Pendiente</span><span class="chip st-progress"><span class="i i-st-progress" aria-hidden="true"></span>En progreso</span><span class="chip st-review"><span class="i i-st-review" aria-hidden="true"></span>Te toca verificar</span><span class="chip st-review"><span class="i i-st-review" aria-hidden="true"></span>Esperando a Glenny</span><span class="chip st-rejected"><span class="i i-st-rejected" aria-hidden="true"></span>Rechazada</span><span class="chip st-done"><span class="i i-st-done" aria-hidden="true"></span>Completada</span></div>
+    </div>
+    <div class="row g32 wrap">
+      <div class="col g12" style="flex: 1 1 360px"><h3 class="t-h4">DualProgress</h3>
+        <div class="panel col g12" style="padding: 18px"><div class="col g6"><div class="row between"><span class="legend"><span class="sw sw-rep"></span>Reportado</span><b class="t-num">100 %</b></div><div class="track"><span class="fill-rep" style="width: 100%"></span></div></div><div class="col g6"><div class="row between"><span class="legend"><span class="sw sw-ver"></span>Verificado</span><b class="t-num">0 %</b></div><div class="track"><span class="fill-ver" style="width: 0%"></span></div></div><p class="help">100 % reportado puede seguir pendiente de verificación.</p></div>
+        <div class="row g8"><span class="track grow" style="height: 6px"><span class="fill-rep" style="width: 70%"></span><span class="fill-ver" style="width: 30%"></span></span><span class="t-xs subtle t-num">Rep. 70 % · Ver. 30 %</span></div>
+        <p class="help">Variante compacta para listas: verificado (sólido) encima de reportado (rayado).</p>
+      </div>
+      <div class="col g12" style="flex: 1 1 360px"><h3 class="t-h4">VisibilityPill / VisibilityPicker</h3>
+        <div class="row g8 wrap"><span class="tag priv-me"><span class="i i-lock" aria-hidden="true"></span>Solo yo</span><span class="tag priv-us"><span class="i i-users" aria-hidden="true"></span>Compartido</span><span class="tag"><span class="i i-hourglass" aria-hidden="true"></span>Cápsula · 20 dic 2026</span></div>
+        <div class="seg seg-fill" style="max-width: 420px"><button aria-pressed="true"><span class="i i-lock i-sm" aria-hidden="true"></span>Solo yo</button><button aria-pressed="false"><span class="i i-users i-sm" aria-hidden="true"></span>Compartido</button></div>
+        <h3 class="t-h4" style="margin-top: 8px">SyncStatus</h3>
+        <div class="row g8 wrap"><span class="sync sync-off"><span class="i i-sm i-cloud-off" aria-hidden="true"></span>No conectado</span><span class="sync sync-run"><span class="i i-sm i-refresh" aria-hidden="true"></span>Sincronizando…</span><span class="sync sync-ok"><span class="i i-sm i-cloud-ok" aria-hidden="true"></span>Sincronizado</span><span class="sync sync-err"><span class="i i-sm i-alert" aria-hidden="true"></span>Error</span><span class="sync sync-conf"><span class="i i-sm i-swap" aria-hidden="true"></span>Conflicto</span></div>
+      </div>
+    </div>
+    <div class="row g32 wrap">
+      <div class="col g12" style="flex: 1 1 360px"><h3 class="t-h4">TextField · normal / error / deshabilitado</h3>
+        <div class="field"><label class="label" for="s1">Título</label><input id="s1" class="input" placeholder="Ej.: Regar las plantas"></div>
+        <div class="field"><label class="label" for="s2">Título</label><input id="s2" class="input is-invalid" value="Ok" aria-invalid="true" aria-describedby="s2e"><p id="s2e" class="err"><span class="i i-alert i-sm" aria-hidden="true"></span>El título necesita entre 3 y 80 caracteres.</p></div>
+        <div class="field"><label class="label" for="s3">Fecha de subida</label><input id="s3" class="input" value="12 nov 2026" disabled style="background: var(--bg-sunk)"></div>
+      </div>
+      <div class="col g12" style="flex: 1 1 360px"><h3 class="t-h4">Banners, vacío y carga</h3>
+        <div class="banner banner-info"><span class="i i-info" aria-hidden="true"></span><span>Información neutral o de privacidad.</span></div>
+        <div class="banner banner-warn"><span class="i i-st-review" aria-hidden="true"></span><span>Pendiente de verificación o conflicto.</span></div>
+        <div class="banner banner-err"><span class="i i-alert" aria-hidden="true"></span><span>Error con acción de reintento.</span></div>
+        <div class="banner banner-ok"><span class="i i-st-done" aria-hidden="true"></span><span>Completado.</span></div>
+        <div class="row g12" aria-busy="true" aria-label="Cargando"><span class="sk" style="width: 36px; height: 36px; border-radius: 50%"></span><span class="col g6 grow"><span class="sk" style="height: 14px; width: 70%"></span><span class="sk" style="height: 10px; width: 40%"></span></span></div>
+      </div>
+    </div>
+    <div class="row g32 wrap" style="align-items: flex-start">
+      <div class="empty" style="flex: 1 1 320px"><svg width="72" height="36" viewBox="0 0 72 36" aria-hidden="true"><path d="M8 28 L36 10 L64 22" stroke="var(--line-strong)" stroke-dasharray="3 4" fill="none"></path><circle cx="8" cy="28" r="4" fill="none" stroke="var(--line-strong)"></circle><circle cx="36" cy="10" r="4" fill="none" stroke="var(--line-strong)"></circle><circle cx="64" cy="22" r="4" fill="none" stroke="var(--line-strong)"></circle></svg><p class="t-h4">EmptyState</p><p class="t-sm muted">Constelación sin encender + frase cálida + una acción.</p><button class="btn btn-primary btn-sm">Acción principal</button></div>
+      <div class="col g12" style="flex: 1 1 320px; align-items: flex-start"><h3 class="t-h4">Avatares (iniciales, sin fotos)</h3><div class="row g12"><span class="av av-lg av-jl">JL</span><span class="av av-lg av-gs">GS</span><span class="av-pair"><span class="av av-jl">JL</span><span class="av av-gs">GS</span></span></div><h3 class="t-h4">Polaroid</h3><div class="pol" style="width: 180px; transform: rotate(-2deg)"><span class="pol-img ph-sea" style="display: block"></span><span class="pol-cap" style="display: block">Pie a mano</span></div></div>
+    </div>
+  </section>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":2300}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const C = [['bg', '#FFF8F1', '#120E1E', 'Fondo de la app'], ['bg-sunk', '#F8EDE2', '#0B0814', 'Zonas hundidas, sidebar'], ['surface', '#FFFFFF', '#1C1630', 'Tarjetas, diálogos'], ['line', '#EEE2D6', '#33294A', 'Separadores (decorativo)'], ['line-strong', '#958AA3', '#7E719A', 'Bordes de inputs (≥ 3:1)'], ['ink', '#241B35', '#F6F1FF', 'Texto principal'], ['ink-2', '#554A6A', '#CEC4E2', 'Texto secundario'], ['ink-3', '#6A5F7E', '#A99DC2', 'Metadatos (mín. AA)'], ['primary', '#6B45D8', '#B49BFF', 'Acción, foco, José Luis'], ['primary-soft', '#EFE9FF', '#2C2250', 'Selección'], ['accent-ink', '#B8255E', '#FFB3CD', 'Glenny, fechas especiales'], ['accent', '#FF7BA8', '#FF8DB5', 'Relleno rosa (no texto)'], ['gold', '#F5B83D', '#FFCB66', 'Estrellas, completado'], ['coral', '#FF8A5B', '#FF9C73', 'Nuestro día · energía'], ['teal', '#22B8A5', '#4FD8C4', 'Experiencias'], ['sky', '#4C9BFF', '#7DB6FF', 'Entretenimiento'], ['grad-2', '#C2389A', '#FF7BC4', 'Final del degradado de CTA'], ['night', '#1E1638', '#0C0913', 'Cielo (hero, acceso)'], ['st-progress', '#1F5BB0', '#8DB9EE', 'En progreso, sincronizando'], ['st-review', '#9A5800', '#F0B65C', 'Reportado, por verificar'], ['st-done', '#1E7F55', '#80D2A7', 'Verificado, sincronizado'], ['st-rejected', '#C0392B', '#F29389', 'Rechazado, error']];
+    const T = [['display · 48/52 Fraunces 600', 't-display', 'Nuestro día'], ['h1 · 36/41', 't-h1', 'Daily Quests'], ['h2 · 28/34', 't-h2', 'La constelación de hoy'], ['h3 · 22/29', 't-h3', 'Te toca'], ['h4 · 18/25 Figtree 700', 't-h4', 'Historial de reportes'], ['body · 16/24 Figtree 400', 't-body', 'Glenny reportó 70 % en «Terminar el informe».'], ['sm · 14/20', 't-sm', 'Hace 25 min · Daily Quests'], ['xs · 12/16 600', 't-xs', 'Rep. 70 % · Ver. 30 %'], ['eyebrow · 12 700 +0.09em', 't-eyebrow', 'Próximo evento'], ['hand · 22 Caveat 600', 't-hand', 'Atardecer en Mollendo']];
+    const I = ['home', 'quests', 'calendar', 'orbit', 'image', 'book', 'heart', 'target', 'film', 'smile', 'wallet', 'gift', 'music', 'sparkle', 'bell', 'lock', 'users', 'check', 'x', 'alert', 'refresh', 'cloud-off', 'cloud-ok', 'swap', 'hourglass', 'shuffle', 'upload', 'pencil', 'st-pending', 'st-progress', 'st-review', 'st-rejected', 'st-done'];
+    return {
+      colors: C.map(c => ({ n: '--' + c[0], l: c[1], d: c[2], u: c[3] })),
+      types: T.map(t => ({ token: t[0], cls: t[1], sample: t[2] })),
+      spaces: [4, 8, 12, 16, 20, 24, 32, 40, 56, 72].map(n => ({ n: n + ' px', w: n * 2 + 'px' })),
+      radii: [['sm 8', '8px'], ['md 12', '12px'], ['lg 20', '20px'], ['xl 28', '28px'], ['pill', '999px']].map(r => ({ n: r[0], v: r[1] })),
+      icons: I.map(n => ({ n, c: 'i-' + n }))
+    };
+  }
+}
+</script>
+</body>
+</html>

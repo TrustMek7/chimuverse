@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Our Wrapped · Chimuverse</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./chimu.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&amp;family=Figtree:wght@400..800&amp;family=Fraunces:ital,opsz,wght@0,9..144,500..700;1,9..144,500..600&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="cv dark" style="width: 390px; height: 844px">
+<div class="phone sky" style="border-radius: 0">
+  <header class="ph-top"><a class="btn btn-ghost btn-icon" href="Mas.dc.html" aria-label="Cerrar Wrapped" style="color: var(--on-night); margin-left: -12px"><span class="i i-x" aria-hidden="true"></span></a><span class="t-sm grow" style="color: var(--on-night-2)">Our Wrapped 2026</span><span class="t-xs t-num" style="color: var(--on-night-2)">{{pos}} / 5</span></header>
+  <div class="row g4" style="padding: 0 20px" aria-hidden="true"><sc-for list="{{bars}}" as="b" hint-placeholder-count="5"><span style="flex: 1; height: 3px; border-radius: 3px; background: {{b.bg}}"></span></sc-for></div>
+  <main class="col" style="flex: 1; padding: 32px 24px; gap: 20px; justify-content: center" aria-live="polite">
+    <p class="t-eyebrow" style="color: #FFCB66">{{s.eyebrow}}</p>
+    <p class="t-display t-num" style="font-size: 88px; line-height: 1">{{s.big}}</p>
+    <h1 class="t-h2">{{s.title}}</h1>
+    <p class="t-body" style="color: var(--on-night-2)">{{s.body}}</p>
+    <sc-if value="{{s.isPhoto}}" hint-placeholder-val="{{ false }}"><div class="pol" style="width: 200px; transform: rotate(-3deg)"><span class="pol-img ph-mount" style="display: block" role="img" aria-label="Foto de ejemplo"></span><span class="pol-cap" style="display: block">Cusco, octubre</span></div></sc-if>
+  </main>
+  <div class="row g8" style="padding: 0 20px 28px">
+    <button class="btn grow" onClick="{{prev}}" disabled="{{isFirst}}" style="background: transparent; color: var(--on-night); border-color: rgba(255,255,255,.35)"><span class="i i-chev-l i-sm" aria-hidden="true"></span>Anterior</button>
+    <button class="btn btn-night grow" onClick="{{next}}">{{nextLabel}}<span class="i i-chev-r i-sm" aria-hidden="true"></span></button>
+  </div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+const S = [
+  { eyebrow: 'Su año en estrellas', big: '312', title: 'quests verificadas', body: 'Cada una confirmada por la otra persona. Su mejor mes fue agosto, con 41.' },
+  { eyebrow: 'Recuerdos', big: '486', title: 'fotos compartidas', body: 'El viaje a Cusco se llevó 48. El día con más fotos: 18 de octubre.', isPhoto: true },
+  { eyebrow: 'Experiencias', big: '23', title: 'citas juntos', body: 'La ruleta eligió 7. La favorita: ver estrellas desde Chiguata.' },
+  { eyebrow: 'Lo que vieron', big: '9', title: 'series y películas terminadas', body: 'La que más los hizo llorar: Coco. La más debatida: Dark.' },
+  { eyebrow: 'Lo que acordaron', big: '5', title: 'acuerdos en el DevLog', body: '«Los domingos, sin celular en la mesa» sigue vigente desde septiembre.' }
+];
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { i: 0 }; }
+  renderVals() {
+    const i = this.state.i;
+    return { s: Object.assign({ isPhoto: false }, S[i]), pos: i + 1, isFirst: i === 0,
+      bars: S.map((_, k) => ({ bg: k <= i ? '#FFCB66' : 'rgba(255,255,255,.2)' })),
+      nextLabel: i === S.length - 1 ? 'Volver a empezar' : 'Siguiente',
+      prev: () => this.setState({ i: Math.max(0, i - 1) }), next: () => this.setState({ i: (i + 1) % S.length }) };
+  }
+}
+</script>
+</body>
+</html>

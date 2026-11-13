@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Watchlist · Chimuverse</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./chimu.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&amp;family=Figtree:wght@400..800&amp;family=Fraunces:ital,opsz,wght@0,9..144,500..700;1,9..144,500..600&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="cv" style="width: 390px; height: 844px">
+<div class="phone">
+  <header class="ph-top"><a class="btn btn-ghost btn-icon" href="Mas.dc.html" aria-label="Volver a Más" style="color: var(--ink); margin-left: -12px"><span class="i i-chev-l" aria-hidden="true"></span></a><h1 class="t-h2 grow">Watchlist</h1><button class="btn btn-ghost btn-icon" aria-label="Elegir al azar entre pendientes" style="color: var(--primary)"><span class="i i-shuffle" aria-hidden="true"></span></button></header>
+  <div style="padding: 0 20px 8px"><div class="seg seg-fill" role="group" aria-label="Estado"><sc-for list="{{tabs}}" as="t" hint-placeholder-count="3"><button aria-pressed="{{t.on}}" onClick="{{t.pick}}">{{t.label}} <span class="t-xs subtle t-num">{{t.n}}</span></button></sc-for></div></div>
+  <main class="ph-scroll col g12" style="padding-top: 12px">
+    <ul class="col g8">
+      <sc-for list="{{items}}" as="w" hint-placeholder-count="4">
+        <li class="card row g12" style="padding: 12px">
+          <span class="{{w.ph}}" style="width: 52px; height: 72px; border-radius: 8px; flex: none" role="img" aria-label="Portada de ejemplo"></span>
+          <span class="col g4 grow" style="min-width: 0"><b class="t-sm">{{w.t}}</b><span class="row g6 t-xs subtle"><span class="i i-xs {{w.icon}}" aria-hidden="true"></span>{{w.kind}} · {{w.meta}}</span></span>
+          <sc-if value="{{w.canAdvance}}" hint-placeholder-val="{{ true }}"><button class="btn btn-secondary btn-sm" onClick="{{w.advance}}" style="min-height: 44px">{{w.next}}</button></sc-if>
+          <sc-if value="{{w.isDone}}" hint-placeholder-val="{{ false }}"><span class="chip st-done"><span class="i i-check" aria-hidden="true"></span>{{w.when}}</span></sc-if>
+        </li>
+      </sc-for>
+    </ul>
+    <sc-if value="{{isDoneTab}}" hint-placeholder-val="{{ false }}"><p class="help row g6"><span class="i i-info i-sm" aria-hidden="true"></span>Lo completado sale de pendientes pero se guarda aquí, con su fecha.</p></sc-if>
+    <sc-if value="{{hasToast}}" hint-placeholder-val="{{ false }}"><div class="toast" role="status" style="bottom: 100px"><span class="i i-check i-sm" aria-hidden="true"></span>{{toast}}</div></sc-if>
+  </main>
+  <nav class="bnav" aria-label="Principal">
+    <a href="InicioMovil.dc.html"><span class="i i-home i-lg" aria-hidden="true"></span>Inicio</a>
+    <a href="QuestsMovil.dc.html"><span class="i i-quests i-lg" aria-hidden="true"></span>Día</a>
+    <a href="InicioMovil.dc.html"><span class="bn-plus"><span class="i i-plus" aria-hidden="true"></span></span>Crear</a>
+    <a href="Vault.dc.html"><span class="i i-image i-lg" aria-hidden="true"></span>Recuerdos</a>
+    <a href="Mas.dc.html" aria-current="page"><span class="i i-grid i-lg" aria-hidden="true"></span>Más</a>
+  </nav>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+const K = { serie: ['Serie', 'i-tv'], peli: ['Película', 'i-film'], juego: ['Videojuego', 'i-game'] };
+const SEED = [
+  { id: 1, t: 'La casa de papel (rewatch)', k: 'serie', st: 'doing', meta: 'T2 · E5', ph: 'ph-city' },
+  { id: 2, t: 'It Takes Two', k: 'juego', st: 'doing', meta: 'Capítulo 4', ph: 'ph-park' },
+  { id: 3, t: 'Interestelar', k: 'peli', st: 'todo', meta: 'Propuesta por Glenny', ph: 'ph-night' },
+  { id: 4, t: 'Dark', k: 'serie', st: 'todo', meta: '3 temporadas', ph: 'ph-mount' },
+  { id: 5, t: 'Stardew Valley', k: 'juego', st: 'todo', meta: 'Cooperativo', ph: 'ph-park' },
+  { id: 6, t: 'Coco', k: 'peli', st: 'done', meta: 'La vimos llorando', when: '2 nov', ph: 'ph-sea' },
+  { id: 7, t: 'Arcane', k: 'serie', st: 'done', meta: '2 temporadas', when: '20 oct', ph: 'ph-city' }
+];
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { items: SEED, tab: 'todo', toast: '' }; }
+  renderVals() {
+    const s = this.state;
+    const T = [['todo', 'Pendientes'], ['doing', 'Viendo'], ['done', 'Completados']];
+    const items = s.items.filter(i => i.st === s.tab).map(i => Object.assign({}, i, { kind: K[i.k][0], icon: K[i.k][1], isDone: i.st === 'done', canAdvance: i.st !== 'done', next: i.st === 'todo' ? 'Empezar' : 'Terminar',
+      advance: () => { const st = i.st === 'todo' ? 'doing' : 'done'; this.setState({ items: s.items.map(x => x.id === i.id ? Object.assign({}, x, { st, when: 'hoy' }) : x), toast: st === 'done' ? '«' + i.t + '» pasó a Completados' : '«' + i.t + '» pasó a Viendo' }); clearTimeout(this.tt); this.tt = setTimeout(() => this.setState({ toast: '' }), 2800); } }));
+    return { items, isDoneTab: s.tab === 'done', toast: s.toast, hasToast: !!s.toast,
+      tabs: T.map(t => ({ label: t[1], n: s.items.filter(i => i.st === t[0]).length, on: s.tab === t[0] ? 'true' : 'false', pick: () => this.setState({ tab: t[0] }) })) };
+  }
+}
+</script>
+</body>
+</html>
