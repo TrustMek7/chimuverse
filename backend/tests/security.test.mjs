@@ -1302,7 +1302,18 @@ test("both members edit and trash finances; fixed movements create each date onc
   await assert.rejects(() => as(a, () => db.query("select public.save_recurring(null,$1)", [JSON.stringify({ title: "Sueldo", amount: 0, direction: "income", frequency: "monthly", start_on: today })])), /importe/);
   await assert.rejects(() => as(c, () => db.query("select public.save_recurring(null,$1)", [JSON.stringify({ title: "x", amount: 1, direction: "income", frequency: "monthly", start_on: today })])), /Sin acceso/);
   await assert.rejects(() => as(a, () => db.query("insert into public.finance_recurring(space_id,title,amount,direction,frequency,start_on,next_on) values($1,'x',1,'income','monthly',now(),now())", [sid])), /permission denied/);
+  // Every field can be edited: fixing past movements is opt-in, and a new day/frequency
+  // continues after the last registered movement without duplicating it.
+  await as(b, () => db.query("select public.save_recurring($1,$2)", [rule, JSON.stringify({ title: "Alquiler depa", amount: 1000, category: "Hogar", direction: "expense", apply_past: true })]));
+  assert.ok((await made()).every((m) => m.a === 1000));
+  const last = (await made()).at(-1).d;
+  const newStart = new Date(start); newStart.setUTCDate(newStart.getUTCDate() + 4);
+  await as(a, () => db.query("select public.save_recurring($1,$2)", [rule, JSON.stringify({ title: "Alquiler depa", amount: 1000, category: "Hogar", frequency: "monthly", start_on: newStart.toISOString().slice(0, 10) })]));
+  const anchored = (await db.query("select next_on::text n,start_on::text s from public.finance_recurring where id=$1", [rule])).rows[0];
+  assert.equal(anchored.s, newStart.toISOString().slice(0, 10));
+  assert.ok(anchored.n > last);
+  assert.equal(new Set((await made()).map((m) => m.d)).size, (await made()).length);
   await as(b, () => db.query("select public.delete_recurring($1)", [rule]));
-  assert.equal((await made()).length, 4);
+  assert.ok((await made()).length >= 4);
   await assert.rejects(() => as(a, () => db.query("select public.generate_recurring()")), /permission denied/);
 });

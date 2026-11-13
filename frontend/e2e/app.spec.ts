@@ -1173,7 +1173,12 @@ test("finances are shared, filtered by month, measured against the budget, and f
       const id = crypto.randomUUID();
       rows.finance_recurring.push({ id, space_id: sid, created_by: a, title: d.title, amount: d.amount, direction: d.direction, category: d.category, frequency: d.frequency, start_on: d.start_on, end_on: null, next_on: "2999-01-01", active: true, deleted_at: null });
       rows.entries.push(entry(crypto.randomUUID(), "transaction", d.title, d.amount, d.start_on, { direction: d.direction, recurring_id: id }));
-    } else Object.assign(rows.finance_recurring.find((r) => r.id === body.p_id), { active: d.active });
+    } else {
+      const r = rows.finance_recurring.find((r) => r.id === body.p_id);
+      Object.assign(r, { active: d.active, title: d.title, amount: d.amount, frequency: d.frequency ?? r.frequency });
+      if (d.apply_past)
+        rows.entries.filter((e) => e.details.recurring_id === r.id).forEach((e) => Object.assign(e, { title: d.title, amount: d.amount }));
+    }
     await route.fulfill({ json: null });
   });
   await page.goto("/creciendo/finanzas");
@@ -1198,9 +1203,18 @@ test("finances are shared, filtered by month, measured against the budget, and f
   expect(saved[0].p_data).toMatchObject({ title: "Internet", amount: 120, direction: "expense", frequency: "monthly", start_on: `${month}-02` });
   await expect(page.getByRole("heading", { name: "Internet" })).toBeVisible();
   await expect(page.getByText("Fijo · se registró solo")).toBeVisible();
-  await page.getByRole("button", { name: "Pausar Internet" }).click();
+  await page.getByRole("button", { name: "Pausar el fijo Internet" }).click();
   await expect(page.getByText(/en pausa/)).toBeVisible();
   expect(saved[1]).toMatchObject({ p_data: { active: false } });
+  // Every field of a fixed movement is editable, optionally fixing the ones already registered.
+  await page.getByRole("button", { name: "Editar el fijo Internet" }).click();
+  await dialog.getByLabel("Importe (S/)").fill("135");
+  await dialog.getByLabel("Se repite").selectOption("biweekly");
+  await dialog.getByLabel(/Corregir también el movimiento ya registrado/).check();
+  await dialog.getByRole("button", { name: "Guardar cambios" }).click();
+  await expect(dialog).toHaveCount(0);
+  expect(saved[2]).toMatchObject({ p_data: { amount: 135, frequency: "biweekly", apply_past: true, active: false } });
+  await expect(page.getByText(/cada dos semanas/)).toBeVisible();
   const page2 = await new AxeBuilder({ page }).include(".finance-fixed").analyze();
   expect(page2.violations).toEqual([]);
 });

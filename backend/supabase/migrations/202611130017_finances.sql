@@ -88,11 +88,12 @@ begin
 end $$;
 create function public.generate_recurring() returns int language sql security definer set search_path='' as $$select private.generate_recurring(null)$$;
 
--- Create a rule (it fills in every date from its start up to today) or edit one.
--- After creation only the title, amount, category, end date and pause can change; to change
--- the frequency, the type or the first date, create a new rule.
+-- Create a rule (it fills in every date from its start up to today) or edit any of its fields.
+-- Edits apply from the next movement on; with apply_past the registered movements also take the
+-- new name, amount, type and category (their dates never change).
 create function public.save_recurring(p_id uuid,p_data jsonb) returns uuid language plpgsql security definer set search_path='' as $$
-declare r public.finance_recurring;sid uuid;rid uuid;today date;
+declare r public.finance_recurring;sid uuid;rid uuid;today date;last_on date;
+ v_direction text;v_frequency text;v_start date;
  v_title text:=trim(coalesce(p_data->>'title',''));v_amount numeric:=(p_data->>'amount')::numeric;
  v_category text:=trim(coalesce(p_data->>'category',''));v_end date:=nullif(p_data->>'end_on','')::date;
  v_active boolean:=coalesce((p_data->>'active')::boolean,true);
@@ -112,14 +113,33 @@ begin
  else
   select * into r from public.finance_recurring where id=p_id and space_id=sid and deleted_at is null for update;
   if r.id is null then raise exception 'Movimiento fijo no disponible';end if;
-  if v_end is not null and v_end<r.start_on then raise exception 'El final no puede ser antes de la primera fecha';end if;
+  v_direction:=coalesce(p_data->>'direction',r.direction);
+  v_frequency:=coalesce(p_data->>'frequency',r.frequency);
+  v_start:=coalesce((p_data->>'start_on')::date,r.start_on);
+  if v_direction not in ('income','expense','saving') then raise exception 'Elige si es ingreso, gasto o ahorro';end if;
+  if v_frequency not in ('weekly','biweekly','monthly','yearly') then raise exception 'Elige cada cuánto se repite';end if;
+  if v_start<private.space_today(sid)-366 then raise exception 'La primera fecha puede ser como mucho de hace un año';end if;
+  if v_end is not null and v_end<v_start then raise exception 'El final no puede ser antes de la primera fecha';end if;
+  -- A new frequency or first date re-anchors the schedule after the last movement it registered,
+  -- so nothing registered is duplicated; those keep their dates (fix them one by one if needed).
+  if v_frequency<>r.frequency or v_start<>r.start_on then
+   select max(occurred_on) into last_on from public.entries where details->>'recurring_id'=r.id::text and deleted_at is null;
+   r.start_on:=v_start;r.frequency:=v_frequency;r.generated:=0;r.next_on:=v_start;
+   while last_on is not null and r.next_on<=last_on loop r.generated:=r.generated+1;r.next_on:=private.recurring_date(r.start_on,r.frequency,r.generated);end loop;
+  end if;
+  -- Optionally fix the movements already registered (name, amount, type, category; never dates).
+  if coalesce((p_data->>'apply_past')::boolean,false) then
+   update public.entries set title=v_title,amount=v_amount,
+    details=details||jsonb_build_object('direction',v_direction,'category',v_category,'edited_by',auth.uid())
+   where details->>'recurring_id'=r.id::text and kind='transaction' and space_id=sid;
+  end if;
   -- Resuming skips the dates missed while paused instead of filling them in.
   if v_active and not r.active then
    today:=private.space_today(sid);
    while r.next_on<today loop r.generated:=r.generated+1;r.next_on:=private.recurring_date(r.start_on,r.frequency,r.generated);end loop;
   end if;
   update public.finance_recurring set title=v_title,amount=v_amount,category=v_category,end_on=v_end,active=v_active,
-   generated=r.generated,next_on=r.next_on,updated_at=now() where id=r.id;
+   direction=v_direction,frequency=r.frequency,start_on=r.start_on,generated=r.generated,next_on=r.next_on,updated_at=now() where id=r.id;
   rid:=r.id;
  end if;
  perform private.generate_recurring(rid);

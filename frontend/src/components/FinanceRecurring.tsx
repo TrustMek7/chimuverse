@@ -34,6 +34,7 @@ export function FinanceRecurring() {
   const today = localDay(new Date(), me.timezone);
   const [editing, setEditing] = useState<Rule | null>(null);
   const [open, setOpen] = useState(false);
+  const [applyPast, setApplyPast] = useState(false);
   const blank: Draft = {
     title: "",
     amount: "",
@@ -68,12 +69,19 @@ export function FinanceRecurring() {
           }
         : blank,
     );
+    setApplyPast(false);
     action.setError("");
     setOpen(true);
   }
+  const registered = (r: Rule | null) =>
+    r
+      ? data!.entries.filter(
+          (e) => !e.deleted_at && e.details.recurring_id === r.id,
+        ).length
+      : 0;
   const save = (
     rule: Rule | null,
-    patch: Partial<Draft> & { active?: boolean },
+    patch: Partial<Draft> & { active?: boolean; apply_past?: boolean },
   ) =>
     action.run(
       async () =>
@@ -133,7 +141,7 @@ export function FinanceRecurring() {
               <div className="row gap-sm">
                 <button
                   className="icon-button"
-                  aria-label={`Editar ${r.title}`}
+                  aria-label={`Editar el fijo ${r.title}`}
                   onClick={() => openForm(r)}
                 >
                   <Pencil size={16} />
@@ -141,7 +149,7 @@ export function FinanceRecurring() {
                 {!ended(r) && (
                   <button
                     className="icon-button"
-                    aria-label={`${r.active ? "Pausar" : "Reanudar"} ${r.title}`}
+                    aria-label={`${r.active ? "Pausar" : "Reanudar"} el fijo ${r.title}`}
                     disabled={action.busy}
                     onClick={() => {
                       void action.run(async () =>
@@ -165,7 +173,7 @@ export function FinanceRecurring() {
                 )}
                 <button
                   className="icon-button"
-                  aria-label={`Quitar ${r.title}`}
+                  aria-label={`Quitar el fijo ${r.title}`}
                   disabled={action.busy}
                   onClick={() =>
                     void action.run(async () =>
@@ -196,7 +204,10 @@ export function FinanceRecurring() {
           className="form"
           onSubmit={(e) => {
             e.preventDefault();
-            void save(editing, editing ? { active: editing.active } : {});
+            void save(
+              editing,
+              editing ? { active: editing.active, apply_past: applyPast } : {},
+            );
           }}
         >
           <label className="field">
@@ -224,7 +235,6 @@ export function FinanceRecurring() {
             Tipo
             <select
               value={draft.direction}
-              disabled={!!editing}
               onChange={(e) =>
                 set("direction", e.target.value as Rule["direction"])
               }
@@ -249,7 +259,6 @@ export function FinanceRecurring() {
             Se repite
             <select
               value={draft.frequency}
-              disabled={!!editing}
               onChange={(e) =>
                 set("frequency", e.target.value as Rule["frequency"])
               }
@@ -266,7 +275,6 @@ export function FinanceRecurring() {
             <input
               required
               type="date"
-              disabled={!!editing}
               value={draft.start_on}
               onChange={(e) => set("start_on", e.target.value)}
             />
@@ -280,9 +288,23 @@ export function FinanceRecurring() {
               onChange={(e) => set("end_on", e.target.value)}
             />
           </label>
+          {editing && registered(editing) > 0 && (
+            <label className="check-field">
+              <input
+                type="checkbox"
+                checked={applyPast}
+                onChange={(e) => setApplyPast(e.target.checked)}
+              />
+              Corregir también{" "}
+              {registered(editing) === 1
+                ? "el movimiento ya registrado"
+                : `los ${registered(editing)} movimientos ya registrados`}{" "}
+              (nombre, importe, tipo y categoría; sus fechas no cambian)
+            </label>
+          )}
           <p className="small muted">
             {editing
-              ? "Los cambios se aplican desde el próximo movimiento; los ya registrados no cambian (puedes editarlos uno por uno). Para cambiar el tipo, la frecuencia o la primera fecha, crea uno nuevo."
+              ? "Sin marcar esa opción, los cambios valen desde el próximo movimiento. Si cambias la frecuencia o la primera fecha, sigue después del último registrado, sin repetirlo."
               : draft.start_on < today
                 ? "Como la primera fecha ya pasó, se registrarán también los movimientos desde esa fecha hasta hoy."
                 : "Se registrará solo en cada fecha."}

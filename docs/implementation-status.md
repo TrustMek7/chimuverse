@@ -138,6 +138,9 @@ Migración 017 (`save_recurring`, `delete_recurring`, `generate_recurring`, tabl
   - Cada uno se registra solo en su fecha. Lo hace el proceso programado cada 15 minutos y también se hace al guardar, una sola vez por fecha.
   - Si la primera fecha ya pasó (hasta un año atrás), se registran también las fechas entre esa y hoy.
   - Los fijos mensuales respetan el fin de mes: uno del día 31 cae el 28 en febrero y vuelve al 31 en marzo.
-- **Editar un fijo:** cambia el nombre, el importe, la categoría y el final solo desde el próximo movimiento. Los ya registrados se corrigen uno por uno. El tipo, la frecuencia y la primera fecha no se cambian: para eso se crea uno nuevo.
+- **Editar un fijo:** se puede cambiar todo: nombre, importe, tipo, categoría, frecuencia, primera fecha y final.
+  - Los cambios valen desde el próximo movimiento.
+  - Con «Corregir también los ya registrados», los movimientos ya creados toman el nuevo nombre, importe, tipo y categoría. Sus fechas no cambian.
+  - Si cambia la frecuencia o la primera fecha, el calendario sigue después del último movimiento registrado, sin repetirlo.
 - **Pausar, reanudar y quitar:** al reanudar se saltan las fechas de la pausa. Quitar un fijo detiene los próximos movimientos y conserva los registrados.
 - **Mes:** todo se ve por mes (selector «Mes»). Las cifras son ingresos, gastos, ahorro y disponible (ingresos − gastos − ahorro). Antes el ahorro no se restaba. Si hay presupuesto, una barra muestra lo gastado y cuánto queda o cuánto se pasaron.
