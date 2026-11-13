@@ -1,4 +1,5 @@
 import * as exifr from "exifr";
+import { check, supabase } from "./supabase";
 export async function preparePhoto(file: File) {
   if (file.size > 25 * 1024 * 1024) throw new Error("La foto supera 25 MB.");
   if (
@@ -53,5 +54,62 @@ export async function preparePhoto(file: File) {
     return { full: await convert(2560), thumb: await convert(480), captured };
   } finally {
     bitmap.close();
+  }
+}
+
+/**
+ * Compresses and uploads one photo to the shared vault, returning its id.
+ * `fallbackDate` is used when the file carries no EXIF date; `preferDate` wins over EXIF.
+ */
+export async function uploadPhoto(opts: {
+  file: File;
+  spaceId: string;
+  title: string;
+  fallbackDate?: Date;
+  preferDate?: Date;
+  tripId?: string | null;
+}) {
+  const id = crypto.randomUUID();
+  const base = `${opts.spaceId}/${id}`;
+  const image = await preparePhoto(opts.file);
+  const date = opts.preferDate ?? image.captured ?? opts.fallbackDate;
+  if (!date || !Number.isFinite(date.getTime()))
+    throw new Error("Esta foto no tiene fecha EXIF. Indica la fecha del recuerdo.");
+  const bucket = supabase.storage.from("photos");
+  let created = false;
+  try {
+    check(await bucket.upload(`${base}/full.webp`, image.full.blob, { contentType: "image/webp", upsert: false }));
+    created = true;
+    check(await bucket.upload(`${base}/thumb.webp`, image.thumb.blob, { contentType: "image/webp", upsert: false }));
+    check(
+      await supabase.from("photos").insert({
+        id,
+        space_id: opts.spaceId,
+        title: opts.title.slice(0, 160),
+        storage_path: `${base}/full.webp`,
+        thumb_path: `${base}/thumb.webp`,
+        captured_at: date.toISOString(),
+        captured_at_source: !opts.preferDate && image.captured ? "exif" : "manual",
+        visibility: "shared",
+        trip_id: opts.tripId ?? null,
+        size_bytes: image.full.blob.size + image.thumb.blob.size,
+        width: image.full.width,
+        height: image.full.height,
+      }),
+    );
+    return id;
+  } catch (e) {
+    if (created) await bucket.remove([`${base}/full.webp`, `${base}/thumb.webp`]);
+    throw e;
+  }
+}
+
+/** The photo's EXIF capture date, if any; used to suggest when a date was lived. */
+export async function readCaptureDate(file: File) {
+  try {
+    const meta = await exifr.parse(file, ["DateTimeOriginal"]);
+    return meta?.DateTimeOriginal instanceof Date ? meta.DateTimeOriginal : undefined;
+  } catch {
+    return undefined;
   }
 }

@@ -103,3 +103,16 @@ Migración 014 y Edge Function `mail`. Es el respaldo del push: un correo por av
 - **Contenido:** el título breve de la notificación y un botón «Abrir en Chimuverse» (`APP_URL` + ruta interna). Cabeceras codificadas (sin inyección de cabeceras) y HTML escapado.
 - **Interfaz:** Ajustes → Conexiones → «Gmail para avisos por correo» (conectar, reconectar, desconectar, estado propio y de la pareja). Ajustes → Perfil resume si el respaldo por correo está activo.
 - **Configuración en Google:** ver «Conectar Gmail para avisos por correo» en getting-started.md.
+
+## Citas vividas: fecha, foto Polaroid y nota
+
+Migración 015 (`complete_date`). «Ya la vivimos» abre un paso donde cualquiera de los dos registra la cita, aunque la idea la haya creado el otro:
+- **Fecha en que la vivieron:** puede ser anterior, para las citas de antes de Chimuverse; no se aceptan fechas futuras. Si la foto trae fecha EXIF y no se eligió otra, se sugiere esa.
+- **Foto opcional:** se sube comprimida y sin ubicación al **Álbum de recuerdos** (Memory Vault), con el título de la cita y la fecha vivida. En el álbum, la foto muestra «De nuestra cita» y la nota.
+- **Nota opcional:** hasta 1000 caracteres, escrita en el reverso de la polaroid. Al tocar la polaroid de la cita, se voltea.
+
+Las citas vividas sin foto muestran un aviso y tienen el filtro «Sin foto». «Añadir foto» o «Editar recuerdo» permiten cambiar la fecha, la nota o la foto en cualquier momento. Si quien cambia o quita la foto es quien la subió, la anterior va a la papelera (recuperable).
+
+La primera vez que se marca una cita como vivida, la pareja recibe un aviso (push o correo). Editar el recuerdo después no genera avisos.
+
+Al editar una entrada se conservan sus `details` guardados, para que el editor general no borre la foto ni la nota de la cita.

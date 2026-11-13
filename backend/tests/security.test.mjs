@@ -133,6 +133,7 @@ before(async () => {
     "202611130012_schedule_dates.sql",
     "202611130013_web_push.sql",
     "202611130014_gmail_notifications.sql",
+    "202611130015_lived_dates.sql",
   ]) {
     await db.exec(
       readFileSync(
@@ -1137,4 +1138,43 @@ test("email fallback goes from the partner's Gmail, only without push, once, and
   await as(a, () => assert.rejects(db.query("select * from private.gmail_connections"), /permission denied/));
   await db.query("select public.gmail_service('disconnect',$1)", [a]);
   await db.query("delete from public.notifications where kind='mail_test'");
+});
+
+test("either member records a lived date with a past day, an optional photo and a note; the partner is told once", async () => {
+  const [idea] = (await as(a, () => db.query("select id,owner_id from public.entries where kind='date' and status='pending' and deleted_at is null order by id limit 1"))).rows;
+  const photo = "88888888-8888-4888-8888-888888888888";
+  await as(b, () =>
+    db.query(
+      "insert into public.photos(id,space_id,title,storage_path,thumb_path,captured_at,captured_at_source,size_bytes,width,height) values($1,$2,'Cita',$3,$4,'2026-02-14T12:00:00Z','manual',100,10,10)",
+      [photo, sid, sid + "/" + photo + "/full.webp", sid + "/" + photo + "/thumb.webp"],
+    ),
+  );
+  const live = (uid, day, note, pid = null) =>
+    as(uid, () => db.query("select public.complete_date($1,$2,$3,$4)", [idea.id, day, note, pid]));
+  // B lives an idea created by A, on a day before Chimuverse existed.
+  await live(b, "2026-02-14", "  Nos perdimos y fue lo mejor  ", photo);
+  let row = (await as(a, () => db.query("select status,occurred_on::text d,details,owner_id from public.entries where id=$1", [idea.id]))).rows[0];
+  assert.equal(row.status, "done");
+  assert.equal(row.d, "2026-02-14");
+  assert.equal(row.owner_id, idea.owner_id);
+  assert.equal(row.details.memory_note, "Nos perdimos y fue lo mejor");
+  assert.equal(row.details.photo_id, photo);
+  assert.equal(row.details.lived_by, b);
+  const told = async () =>
+    (await db.query("select recipient_id from public.notifications where kind='date_lived' and dedupe_key like $1", ["date-lived:" + idea.id + "%"])).rows;
+  assert.deepEqual((await told()).map((r) => r.recipient_id), [a]);
+  // Editing the memory (removing the photo, new note) keeps the idea's data and does not notify again.
+  await live(a, "2026-02-15", "", null);
+  row = (await db.query("select occurred_on::text d,details from public.entries where id=$1", [idea.id])).rows[0];
+  assert.equal(row.d, "2026-02-15");
+  assert.equal(row.details.photo_id, undefined);
+  assert.equal(row.details.memory_note, undefined);
+  assert.ok(row.details.category);
+  assert.equal((await told()).length, 1);
+  // Future days, long notes, foreign photos and outsiders are rejected.
+  await assert.rejects(() => live(a, "2999-01-01", ""), /fecha/);
+  await assert.rejects(() => live(a, "2026-02-15", "x".repeat(1001)), /1000/);
+  await assert.rejects(() => live(a, "2026-02-15", "", "12345678-1234-4234-8234-123456789abc"), /Foto/);
+  await assert.rejects(() => live(c, "2026-02-15", ""), /disponible/);
+  await assert.rejects(() => as(a, () => db.query("select public.complete_date($1,'2026-02-15','',null)", [sid])), /disponible/);
 });

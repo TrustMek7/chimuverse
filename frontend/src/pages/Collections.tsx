@@ -1,4 +1,9 @@
 import { ScheduleDate } from "../components/ScheduleDate";
+import {
+  DateMemoryModal,
+  DatePolaroid,
+  datePhoto,
+} from "../components/DateMemory";
 import { YouTubePlaylist } from "../components/YouTubePlaylist";
 import { useState } from "react";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
@@ -16,6 +21,7 @@ import {
   BookOpen,
   Clapperboard,
   Gift,
+  Camera,
   Smile,
   Wallet,
   Download,
@@ -194,6 +200,7 @@ export default function Collections() {
   const [dateLimit, setDateLimit] = useState(24);
   const [roulette, setRoulette] = useState<Entry | null>(null);
   const [scheduled, setScheduled] = useState<Entry | null>(null);
+  const [living, setLiving] = useState<Entry | null>(null);
   const action = useAction();
   const [selectedKind, setSelectedKind] = useState<EntryKind>(cfg.kind);
   const kind =
@@ -210,12 +217,24 @@ export default function Collections() {
         (!pathname.includes("capsulas") || e.visibility === "capsule") &&
         (filter !== "Pendientes" || e.status !== "done") &&
         (filter !== "Historial" || e.status === "done") &&
+        (filter !== "Sin foto" ||
+          (e.status === "done" && !datePhoto(e, data!.photos))) &&
         (kind !== "date" ||
           dateCategory === "Todas" ||
           String(e.details.category || "Sin categoría") === dateCategory) &&
         e.title.toLocaleLowerCase().includes(search.toLocaleLowerCase()),
     )
     .sort((a, b) => b.occurred_on.localeCompare(a.occurred_on));
+  const livedWithoutPhoto =
+    kind === "date"
+      ? data!.entries.filter(
+          (e) =>
+            e.kind === "date" &&
+            !e.deleted_at &&
+            e.status === "done" &&
+            !datePhoto(e, data!.photos),
+        ).length
+      : 0;
   const allTransactions = data!.entries.filter(
     (e) => !e.deleted_at && e.kind === "transaction",
   );
@@ -296,6 +315,7 @@ export default function Collections() {
                 : null,
               progress: kind === "goal" ? draft.progress : 0,
               details: {
+                ...(editing?.details ?? {}),
                 category: draft.category,
                 link: draft.link,
                 artist: draft.artist,
@@ -456,11 +476,27 @@ export default function Collections() {
           </div>
         </section>
       )}
+      {livedWithoutPhoto > 0 && filter !== "Sin foto" && (
+        <div className="banner date-photo-reminder" role="status">
+          <Camera size={20} aria-hidden />
+          <span>
+            {livedWithoutPhoto === 1
+              ? "Una cita que ya vivieron todavía no tiene foto."
+              : `${livedWithoutPhoto} citas que ya vivieron todavía no tienen foto.`}{" "}
+            Cuando la encuentren, súbanla para completar su polaroid.
+          </span>
+          <Button variant="secondary" onClick={() => setFilter("Sin foto")}>
+            Ver citas sin foto
+          </Button>
+        </div>
+      )}
       <div className="toolbar">
         <div className="segments">
-          {(kind === "watch" || kind === "date"
-            ? ["Todas", "Pendientes", "Historial"]
-            : ["Todas"]
+          {(kind === "date"
+            ? ["Todas", "Pendientes", "Historial", "Sin foto"]
+            : kind === "watch"
+              ? ["Todas", "Pendientes", "Historial"]
+              : ["Todas"]
           ).map((f) => (
             <button
               key={f}
@@ -601,6 +637,12 @@ export default function Collections() {
                         />
                       </div>
                     )}
+                  {kind === "date" && e.status === "done" && (
+                    <DatePolaroid
+                      entry={e}
+                      photo={datePhoto(e, data!.photos)}
+                    />
+                  )}
                   <h2>{e.title}</h2>
                   {kind === "date" && e.details.duration_minutes && (
                     <p className="small muted">
@@ -743,14 +785,18 @@ export default function Collections() {
                       </div>
                     )}
                   </div>
-                  {e.owner_id === me.id &&
+                  {(e.owner_id === me.id || kind === "date") &&
                     ["watch", "date", "wish"].includes(kind) &&
                     e.status !== "done" && (
                       <div className="row gap-sm">
                         <Button
                           variant="secondary"
                           busy={action.busy}
-                          onClick={() => setStatus(e, "done")}
+                          onClick={() =>
+                            kind === "date"
+                              ? setLiving(e)
+                              : setStatus(e, "done")
+                          }
                         >
                           <Check size={16} />
                           {kind === "wish"
@@ -772,14 +818,30 @@ export default function Collections() {
                     )}
                   {kind === "date" && (
                     <div className="row gap wrap">
-                      <Button
-                        variant="secondary"
-                        onClick={() => setScheduled(e)}
-                      >
-                        {e.calendar_event_id
-                          ? "Cambiar horario de la cita"
-                          : "Agendar cita"}
-                      </Button>
+                      {e.status === "done" ? (
+                        <Button
+                          variant="secondary"
+                          onClick={() => setLiving(e)}
+                        >
+                          {datePhoto(e, data!.photos) ? (
+                            <Pencil size={16} aria-hidden />
+                          ) : (
+                            <Camera size={16} aria-hidden />
+                          )}
+                          {datePhoto(e, data!.photos)
+                            ? "Editar recuerdo"
+                            : "Añadir foto"}
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="secondary"
+                          onClick={() => setScheduled(e)}
+                        >
+                          {e.calendar_event_id
+                            ? "Cambiar horario de la cita"
+                            : "Agendar cita"}
+                        </Button>
+                      )}
                       {e.calendar_event_id && (
                         <Link
                           className="text-link"
@@ -1071,6 +1133,7 @@ export default function Collections() {
           </Button>
         </form>
       </Modal>
+      <DateMemoryModal entry={living} onClose={() => setLiving(null)} />
       {scheduled && (
         <ScheduleDate
           key={scheduled.id}

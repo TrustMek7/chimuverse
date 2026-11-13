@@ -4,9 +4,9 @@ import { Link, useSearchParams, useLocation } from "react-router-dom";
 import { Plus, Images, Upload, Trash2, Download, Lock } from "lucide-react";
 import { useSpace, useAction } from "../lib/store";
 import { supabase, check } from "../lib/supabase";
-import { preparePhoto } from "../lib/images";
+import { uploadPhoto } from "../lib/images";
 import { formatDate, download } from "../lib/utils";
-import type { Photo, Visibility } from "../lib/types";
+import type { Photo } from "../lib/types";
 import {
   Button,
   PageHeading,
@@ -53,7 +53,6 @@ export default function Vault() {
   const [open, setOpen] = useState(params.has("crear"));
   const [title, setTitle] = useState("");
   const [captured, setCaptured] = useState("");
-  const visibility: Visibility = "shared";
   const [trip, setTrip] = useState(params.get("viaje") ?? "");
   const [items, setItems] = useState<UploadItem[]>([]);
   const [selected, setSelected] = useState<Photo | null>(null);
@@ -71,57 +70,16 @@ export default function Vault() {
     const item = items[index];
     if (item.state === "done") return;
     update(index, { state: "uploading", error: undefined });
-    const id = crypto.randomUUID();
-    const base = `${spaceId}/${id}`;
-    let created = false;
     try {
-      const image = await preparePhoto(item.file);
-      const date =
-        image.captured ??
-        (captured ? new Date(captured + "T12:00:00") : undefined);
-      if (!date || !Number.isFinite(date.getTime()))
-        throw new Error(
-          "Esta foto no tiene fecha EXIF. Indica la fecha del recuerdo.",
-        );
-      check(
-        await supabase.storage
-          .from("photos")
-          .upload(`${base}/full.webp`, image.full.blob, {
-            contentType: "image/webp",
-            upsert: false,
-          }),
-      );
-      created = true;
-      check(
-        await supabase.storage
-          .from("photos")
-          .upload(`${base}/thumb.webp`, image.thumb.blob, {
-            contentType: "image/webp",
-            upsert: false,
-          }),
-      );
-      check(
-        await supabase.from("photos").insert({
-          id,
-          space_id: spaceId,
-          title: title.trim() || item.file.name.replace(/\.[^.]+$/, ""),
-          storage_path: `${base}/full.webp`,
-          thumb_path: `${base}/thumb.webp`,
-          captured_at: date.toISOString(),
-          captured_at_source: image.captured ? "exif" : "manual",
-          visibility,
-          trip_id: trip || null,
-          size_bytes: image.full.blob.size + image.thumb.blob.size,
-          width: image.full.width,
-          height: image.full.height,
-        }),
-      );
+      await uploadPhoto({
+        file: item.file,
+        spaceId,
+        title: title.trim() || item.file.name.replace(/\.[^.]+$/, ""),
+        fallbackDate: captured ? new Date(captured + "T12:00:00") : undefined,
+        tripId: trip || null,
+      });
       update(index, { state: "done" });
     } catch (e) {
-      if (created)
-        await supabase.storage
-          .from("photos")
-          .remove([`${base}/full.webp`, `${base}/thumb.webp`]);
       update(index, {
         state: "error",
         error: e instanceof Error ? e.message : "No se pudo subir.",
@@ -334,6 +292,27 @@ export default function Vault() {
             </div>
             <VisibilityPill value={selected.visibility} />
             <p>Fecha del recuerdo: {formatDate(selected.captured_at)}</p>
+            {(() => {
+              const lived = data!.entries.find(
+                (e) =>
+                  e.kind === "date" &&
+                  !e.deleted_at &&
+                  e.details.photo_id === selected.id,
+              );
+              return (
+                lived && (
+                  <div className="vault-date-note">
+                    <small className="eyebrow">De nuestra cita</small>
+                    <Link to="/experiencias/citas">{lived.title}</Link>
+                    {lived.details.memory_note && (
+                      <p className="hand-note">
+                        {String(lived.details.memory_note)}
+                      </p>
+                    )}
+                  </div>
+                )
+              );
+            })()}
             <small className="muted">
               Guardado el {formatDate(selected.uploaded_at)}
             </small>

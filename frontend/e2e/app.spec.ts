@@ -886,3 +886,114 @@ test("Gmail connection is send-only, explains the email fallback and reports the
   await page.goto("/ajustes");
   await expect(page.getByText("Conecta Gmail en Conexiones")).toBeVisible();
 });
+
+test("either partner marks a date as lived with a past day, an optional polaroid photo and a note on its back", async ({
+  page,
+}) => {
+  const rows = await fixture(page);
+  const date = (id: string, title: string, status = "pending") => ({
+    id,
+    owner_id: b,
+    space_id: sid,
+    kind: "date",
+    title,
+    details: { category: "Naturaleza" },
+    visibility: "shared",
+    status,
+    occurred_on: "2026-11-13",
+    created_at: new Date().toISOString(),
+    deleted_at: null,
+    entry_bodies: null,
+  });
+  rows.entries.push(
+    date("d2222222-2222-4222-8222-222222222222", "Nuestro picnic"),
+    date("d3333333-3333-4333-8333-333333333333", "Cine en casa", "done"),
+  );
+  const calls: any[] = [];
+  await page.route("**/rest/v1/rpc/complete_date", async (route) => {
+    const body = route.request().postDataJSON();
+    calls.push(body);
+    const e = rows.entries.find((e) => e.id === body.p_entry_id);
+    Object.assign(e, {
+      status: "done",
+      occurred_on: body.p_lived_on,
+      details: { ...e.details, memory_note: body.p_note || undefined, photo_id: body.p_photo_id ?? undefined },
+    });
+    await route.fulfill({ json: null });
+  });
+  await page.route("**/rest/v1/photos*", async (route) => {
+    if (route.request().method() !== "POST") return route.fallback();
+    rows.photos.push({ ...route.request().postDataJSON(), uploaded_by: a, deleted_at: null, uploaded_at: new Date().toISOString() });
+    await route.fulfill({ status: 201, json: null });
+  });
+  await page.route("**/storage/v1/object/**", (route) =>
+    route.fulfill({ json: { Key: "ok", signedURL: "/storage/v1/object/sign/photos/x" } }),
+  );
+  await page.goto("/experiencias/citas");
+  // A lived date without photo is flagged so it can be completed later.
+  await expect(page.getByRole("status").filter({ hasText: "Una cita que ya vivieron todavía no tiene foto." })).toBeVisible();
+  await page.getByRole("button", { name: "Ver citas sin foto" }).click();
+  await expect(page.getByRole("heading", { name: "Cine en casa" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Nuestro picnic" })).toHaveCount(0);
+  await page.getByRole("button", { name: "Todas", exact: true }).click();
+  // The partner's idea can be marked as lived by either of us, on a past day.
+  await page.getByRole("button", { name: "Ya la vivimos" }).click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog.getByRole("heading", { name: "¡La vivimos!" })).toBeVisible();
+  await dialog.getByLabel("¿Cuándo la vivieron?").fill("2026-02-14");
+  const png = Buffer.from(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+    "base64",
+  );
+  await dialog.locator('input[type="file"]').setInputFiles({ name: "picnic.png", mimeType: "image/png", buffer: png });
+  await expect(dialog.getByRole("img", { name: "Foto elegida para la cita" })).toBeVisible();
+  await dialog.getByLabel("Lo que queremos recordar (va detrás de la polaroid)").fill("Nos llovió y fue perfecto");
+  const axe = await new AxeBuilder({ page }).include(".dialog").analyze();
+  expect(axe.violations).toEqual([]);
+  await dialog.getByRole("button", { name: "Guardar el recuerdo" }).click();
+  await expect(dialog).toHaveCount(0);
+  expect(calls[0]).toMatchObject({ p_lived_on: "2026-02-14", p_note: "Nos llovió y fue perfecto" });
+  expect(calls[0].p_photo_id).toBe(rows.photos[0].id);
+  expect(rows.photos[0]).toMatchObject({ title: "Nuestro picnic", captured_at_source: "manual", visibility: "shared" });
+  // The polaroid flips to show the note written on its back.
+  const card = page.locator("article").filter({ hasText: "Nuestro picnic" });
+  const polaroid = card.getByRole("button", { name: /Darle la vuelta/ });
+  await polaroid.click();
+  await expect(card.getByRole("button", { name: /Ver la foto/ })).toHaveAttribute("aria-pressed", "true");
+  await expect(card.getByText("Nos llovió y fue perfecto")).toBeVisible();
+  // The memory stays editable, starting from what was saved.
+  await card.getByRole("button", { name: "Editar recuerdo" }).click();
+  await expect(dialog.getByLabel("¿Cuándo la vivieron?")).toHaveValue("2026-02-14");
+  await expect(dialog.getByLabel("Lo que queremos recordar (va detrás de la polaroid)")).toHaveValue("Nos llovió y fue perfecto");
+  await expect(dialog.getByText("Cambiar foto")).toBeVisible();
+  await dialog.getByRole("button", { name: "Quitar foto" }).click();
+  await dialog.getByRole("button", { name: "Guardar cambios" }).click();
+  await expect(dialog).toHaveCount(0);
+  expect(calls[1].p_photo_id).toBeNull();
+  expect(rows.photos[0].deleted_at).toBeTruthy();
+});
+
+test("a lived date's photo also appears in the memory album with its note", async ({ page }) => {
+  const rows = await fixture(page);
+  const pid = "a4444444-4444-4444-8444-444444444444";
+  rows.photos.push({
+    id: pid, space_id: sid, uploaded_by: a, title: "Nuestro picnic",
+    storage_path: `${sid}/${pid}/full.webp`, thumb_path: `${sid}/${pid}/thumb.webp`,
+    captured_at: "2026-02-14T17:00:00Z", uploaded_at: new Date().toISOString(),
+    visibility: "shared", trip_id: null, size_bytes: 100, deleted_at: null,
+  });
+  rows.entries.push({
+    id: "d5555555-5555-4555-8555-555555555555", owner_id: b, space_id: sid, kind: "date",
+    title: "Nuestro picnic", details: { photo_id: pid, memory_note: "Nos llovió y fue perfecto" },
+    visibility: "shared", status: "done", occurred_on: "2026-02-14",
+    created_at: new Date().toISOString(), deleted_at: null, entry_bodies: null,
+  });
+  await page.route("**/storage/v1/object/**", (route) =>
+    route.fulfill({ json: { signedURL: "/storage/v1/object/sign/photos/x" } }),
+  );
+  await page.goto("/recuerdos/vault");
+  await page.getByRole("button", { name: /Nuestro picnic/ }).click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog.getByText("De nuestra cita")).toBeVisible();
+  await expect(dialog.getByText("Nos llovió y fue perfecto")).toBeVisible();
+});
