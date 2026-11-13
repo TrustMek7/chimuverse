@@ -265,6 +265,101 @@ test("both partners can use a shared YouTube playlist, create unlisted and confi
   expect(actions.filter((a) => a === "create")).toHaveLength(1);
 });
 
+test("YouTube onboarding follows connection and shared-owner state", async ({
+  page,
+}, info) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await fixture(page);
+  let connected = false;
+  let playlist: any = null;
+  let expired = false;
+  await page.route("**/functions/v1/youtube", (route) => {
+    const action = route.request().postDataJSON().action;
+    return route.fulfill(
+      action === "status"
+        ? { json: { connected, playlist } }
+        : expired
+          ? {
+              status: 400,
+              json: { error: "Reconecta YouTube para renovar el permiso." },
+            }
+          : { json: { items: [] } },
+    );
+  });
+  const panel = page.getByRole("region", {
+    name: "Playlist compartida de YouTube",
+  });
+  await page.goto("/ocio/soundtrack");
+  await expect(panel.getByRole("status")).toContainText("Conecta tu cuenta");
+  await expect(
+    panel.getByRole("button", { name: "Conectar mi YouTube", exact: true }),
+  ).toBeVisible();
+  await expect(
+    panel.getByRole("button", { name: "Crear nuestra playlist en YouTube" }),
+  ).toHaveCount(0);
+  connected = true;
+  await page.reload();
+  await expect(
+    panel.getByRole("button", { name: "Crear nuestra playlist en YouTube" }),
+  ).toBeVisible();
+  await expect(panel.getByRole("status")).toHaveCount(0);
+  await expect(
+    panel.getByRole("button", { name: "Conectar mi YouTube", exact: true }),
+  ).toHaveCount(0);
+  connected = false;
+  playlist = {
+    id: "PLshared123",
+    title: "Nuestra música",
+    owner: false,
+    available: true,
+  };
+  await page.reload();
+  await expect(
+    panel.getByRole("button", { name: "Añadir a nuestra playlist" }),
+  ).toBeVisible();
+  await expect(
+    panel.getByRole("button", {
+      name: /Conectar|Reconectar|Crear nuestra|Importar una/,
+    }),
+  ).toHaveCount(0);
+  await expect(panel.getByText("Sin conectar", { exact: true })).toHaveCount(0);
+  playlist.available = false;
+  await page.reload();
+  await expect(panel.getByRole("status")).toContainText(
+    "El propietario debe reconectar",
+  );
+  await expect(
+    panel.getByRole("button", { name: "Conectar mi YouTube", exact: true }),
+  ).toHaveCount(0);
+  connected = true;
+  playlist = { ...playlist, owner: true, available: true };
+  expired = true;
+  await page.reload();
+  await expect(
+    panel.getByRole("button", { name: "Reconectar mi YouTube" }),
+  ).toBeVisible();
+  await expect(
+    panel.getByRole("button", { name: "Añadir a nuestra playlist" }),
+  ).toHaveCount(0);
+  await page.goto("/ocio/deseos");
+  await expect(
+    page.getByRole("heading", { name: "Wishlist & Soundtrack" }),
+  ).toBeVisible();
+  await page.screenshot({
+    path: `test-results/containers-light-${info.project.name}.png`,
+    fullPage: true,
+  });
+  await page.getByRole("button", { name: "Activar tema oscuro" }).click();
+  await page.screenshot({
+    path: `test-results/containers-dark-${info.project.name}.png`,
+    fullPage: true,
+  });
+  const contrast = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
+    .analyze();
+  expect(contrast.violations).toEqual([]);
+});
+
 test("weekly series supports selected days, inclusive end date, no end and deleting the whole series", async ({
   page,
 }) => {

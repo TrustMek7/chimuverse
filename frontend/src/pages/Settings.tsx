@@ -244,7 +244,7 @@ export default function Settings() {
         </section>
       ) : tab === "Conexiones" ? (
         <>
-          <YouTubePlaylist />
+          <YouTubePlaylist manageConnection />
           <section className="card settings-card">
             <div className="row gap">
               {connection.data?.status === "connected" ? (

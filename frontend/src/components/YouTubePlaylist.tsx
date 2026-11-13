@@ -20,7 +20,11 @@ async function youtube(action: string, body: Record<string, unknown> = {}) {
   if (result.data?.error) throw new Error(result.data.error);
   return result.data;
 }
-export function YouTubePlaylist() {
+export function YouTubePlaylist({
+  manageConnection = false,
+}: {
+  manageConnection?: boolean;
+}) {
   const qc = useQueryClient();
   const [busy, setBusy] = useState(false),
     [error, setError] = useState<unknown>(null);
@@ -54,6 +58,12 @@ export function YouTubePlaylist() {
     enabled: choosing && !!status.data?.connected,
     retry: false,
   });
+  const expired =
+    items.error instanceof Error &&
+    /reconecta|renovar el permiso/i.test(items.error.message);
+  const needsOwner = !!playlist && (!playlist.available || expired);
+  const showConnection =
+    manageConnection || !playlist || (needsOwner && playlist.owner);
   async function run(action: string, body: Record<string, unknown> = {}) {
     setBusy(true);
     setError(null);
@@ -77,14 +87,13 @@ export function YouTubePlaylist() {
   }
   return (
     <section
-      className="card settings-card"
+      className="card settings-card youtube-playlist"
       aria-label="Playlist compartida de YouTube"
     >
       <h2>YouTube · Nuestro soundtrack</h2>
       <p>
-        Una playlist para los dos. Los cambios que hagan aquí se guardan
-        directamente en YouTube; los de YouTube aparecen al actualizar o en un
-        minuto.
+        Una playlist para los dos. Las canciones que añadan aquí se guardan en
+        YouTube.
       </p>
       <ErrorMessage
         error={error || status.error || items.error || mine.error}
@@ -94,18 +103,26 @@ export function YouTubePlaylist() {
         <p>Cargando conexión…</p>
       ) : (
         <>
-          <p>
-            Mi cuenta:{" "}
-            <strong>
-              {status.data?.connected ? "Conectada" : "Sin conectar"}
-            </strong>
-          </p>
+          {showConnection && (
+            <p>
+              Mi cuenta:{" "}
+              <strong>
+                {needsOwner && playlist?.owner
+                  ? "Requiere reconexión"
+                  : status.data?.connected
+                    ? "Conectada"
+                    : "Sin conectar"}
+              </strong>
+            </p>
+          )}
           <div className="row gap wrap">
-            {!status.data?.connected ? (
+            {showConnection &&
+            (!playlist || playlist.owner || manageConnection) &&
+            (!status.data?.connected || expired) ? (
               <Button disabled={busy} onClick={() => void run("connect")}>
-                Conectar mi YouTube
+                {needsOwner ? "Reconectar mi YouTube" : "Conectar mi YouTube"}
               </Button>
-            ) : (
+            ) : manageConnection && status.data?.connected ? (
               <Button
                 variant="secondary"
                 disabled={busy}
@@ -113,23 +130,24 @@ export function YouTubePlaylist() {
               >
                 Desconectar mi YouTube
               </Button>
+            ) : null}
+            {playlist?.available && !expired && (
+              <Button
+                variant="secondary"
+                disabled={busy}
+                onClick={() => {
+                  void status.refetch();
+                  if (playlist?.available) void items.refetch();
+                }}
+              >
+                Traer cambios de YouTube
+              </Button>
             )}
-            <Button
-              variant="secondary"
-              disabled={busy}
-              onClick={() => {
-                void status.refetch();
-                void items.refetch();
-              }}
-            >
-              Traer cambios de YouTube
-            </Button>
           </div>
-          {!status.data?.connected && (
-            <p className="small muted">
-              Solicitaremos permiso para administrar playlists, independiente
-              del acceso a Calendar. Google puede mostrar permisos más amplios;
-              la app solo opera sobre la playlist que elijan.
+          {!playlist && !status.data?.connected && !status.isError && (
+            <p className="banner" role="status">
+              Conecta tu cuenta de YouTube para crear nuestra playlist o
+              importar una de tu canal.
             </p>
           )}
           {!playlist && status.data?.connected && (
@@ -211,16 +229,20 @@ export function YouTubePlaylist() {
                   Abrir playlist en YouTube ↗
                 </a>
               </p>
-              <p className="small muted">
-                Para editar directamente en YouTube: el propietario abre la
-                playlist → Compartir → Invitar colaboradores, y comparte ese
-                enlace con la otra cuenta. YouTube no permite enviar estas
-                invitaciones por correo desde su API.
-              </p>
-              {!playlist.available ? (
+              <details className="small muted">
+                <summary>Colaborar también desde YouTube</summary>
                 <p>
-                  El propietario debe reconectar su cuenta para que ambos puedan
-                  editar.
+                  Para editar directamente en YouTube: el propietario abre la
+                  playlist → Compartir → Invitar colaboradores, y comparte ese
+                  enlace con la otra cuenta. YouTube no permite enviar estas
+                  invitaciones por correo desde su API.
+                </p>
+              </details>
+              {needsOwner ? (
+                <p className="banner" role="status">
+                  {playlist.owner
+                    ? "Reconecta tu cuenta para continuar editando nuestra playlist."
+                    : "El propietario debe reconectar su cuenta para que ambos puedan editar. No necesitas conectar la tuya."}
                 </p>
               ) : (
                 <>

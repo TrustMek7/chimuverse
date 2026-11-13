@@ -209,7 +209,7 @@ blockquote {
   border: 1px solid var(--color-line);
   border-radius: 20px;
   padding: 24px;
-  box-shadow: 0 2px 3px #241b3503;
+  box-shadow: var(--shadow-2);
 }
 .pill {
   display: inline-flex;
@@ -270,18 +270,27 @@ blockquote {
 }
 .empty {
   text-align: center;
-  padding: 64px 24px;
+  padding: 44px 24px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 14px;
   color: var(--color-ink-2);
-  border: 1px dashed var(--color-line-strong);
+  border: 1px solid var(--color-line-strong);
   border-radius: 24px;
-  background: color-mix(in srgb, var(--color-surface) 60%, transparent);
+  background: linear-gradient(
+    135deg,
+    var(--color-surface),
+    var(--color-primary-soft)
+  );
+  box-shadow: var(--shadow-2);
 }
 .empty > svg {
   color: var(--color-primary);
+  box-sizing: content-box;
+  padding: 12px;
+  background: var(--color-primary-soft);
+  border-radius: 16px;
 }
 .empty h3 {
   font: 600 25px var(--font-display);
@@ -2558,4 +2567,39 @@ input[type="checkbox"] {
 }
 .repeat-options .segments > button {
   min-height: 44px;
+}
+
+.youtube-playlist {
+  margin-bottom: 24px;
+}
+.youtube-playlist > .row:empty {
+  display: none;
+}
+.youtube-playlist form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.youtube-playlist details {
+  padding: 14px 16px;
+  background: var(--color-bg-sunk);
+  border: 1px solid var(--color-line);
+  border-radius: 12px;
+}
+.youtube-playlist summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.youtube-playlist details[open] summary {
+  margin-bottom: 12px;
+}
+.youtube-playlist ol {
+  display: grid;
+  gap: 12px;
+}
+.youtube-playlist li {
+  padding: 12px;
+  border: 1px solid var(--color-line);
+  border-radius: 12px;
+  background: var(--color-bg);
 }

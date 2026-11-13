@@ -1,5 +1,5 @@
 /* Chimuverse — tokens para Tailwind CSS v4.
-   Fuente de verdad: design/prototipo/project/chimu.css (mismos valores).
+   Basado en design/prototipo/project/chimu.css, con contraste reforzado en la app.
    Uso: importar desde src/styles/index.css después de `@import "tailwindcss";`.
    Clases resultantes: bg-bg, bg-surface, text-ink, text-ink-2, border-line, bg-primary,
    text-on-primary, bg-st-review-soft, text-st-review, rounded-lg, shadow-2, font-display… */
@@ -33,16 +33,16 @@
   --text-4xl--line-height: 52px; /* display (solo escritorio) */
 
   /* Superficies */
-  --color-bg: #fff8f1;
-  --color-bg-sunk: #f8ede2;
+  --color-bg: #f5ece4;
+  --color-bg-sunk: #ebddd2;
   --color-surface: #ffffff;
   --color-surface-raised: #ffffff;
-  --color-line: #eee2d6;
-  --color-line-strong: #958aa3;
+  --color-line: #d3c2b8;
+  --color-line-strong: #897795;
   /* Texto */
   --color-ink: #241b35;
   --color-ink-2: #554a6a;
-  --color-ink-3: #6a5f7e;
+  --color-ink-3: #62536f;
   --color-on-primary: #ffffff;
   /* Marca */
   --color-primary: #6b45d8;
@@ -104,10 +104,10 @@
 [data-theme="dark"] {
   --color-bg: #120e1e;
   --color-bg-sunk: #0b0814;
-  --color-surface: #1c1630;
-  --color-surface-raised: #251d3d;
-  --color-line: #33294a;
-  --color-line-strong: #7e719a;
+  --color-surface: #241c38;
+  --color-surface-raised: #302544;
+  --color-line: #514260;
+  --color-line-strong: #a08bb5;
   --color-ink: #f6f1ff;
   --color-ink-2: #cec4e2;
   --color-ink-3: #a99dc2;

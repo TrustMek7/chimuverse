@@ -19,7 +19,7 @@
 
 ## Activación pendiente en servicios externos
 
-Validación local ejecutada: build de producción y typecheck correctos; 14 tests PostgreSQL/RLS, 7 tests Calendar, 4 tests YouTube, 10 unitarios y 12 de navegador (47 en total). Axe sin violaciones en acceso y dashboard en los temas revisados. Las pruebas SQL incluyen almacenamiento privado, notas de ánimo, cápsulas, restauración y recordatorios deduplicados.
+Validación local ejecutada: build de producción y typecheck correctos; 14 tests PostgreSQL/RLS, 7 tests Calendar, 4 tests YouTube, 10 unitarios y 14 de navegador (49 en total). Axe sin violaciones en acceso y dashboard en los temas revisados. Las pruebas SQL incluyen almacenamiento privado, notas de ánimo, cápsulas, restauración y recordatorios deduplicados.
 
 El token de administración ya está configurado. Se aplicaron las ocho migraciones al proyecto remoto, se desplegaron las funciones Calendar y YouTube y se programaron sincronización/recordatorios cada 15 minutos. Antes del despliegue se guardó una instantánea cifrada del catálogo y datos públicos: el proyecto tenía cero tablas públicas y cero usuarios. La copia está fuera de Git y no incluye Auth ni objetos Storage.
 
@@ -57,3 +57,10 @@ La API no expone invitaciones de colaboradores por correo: se configura una vez 
 No se han creado playlists reales ni enviado invitaciones durante las pruebas. Falta el consentimiento interactivo de Google del propietario para crear la playlist real; no se puede sustituir con el token de login o Calendar.
 
 Despliegue YouTube verificado: ocho migraciones remotas, endpoint público rechaza solicitudes anónimas (401), Calendar conserva su scheduler sin fallos. Snapshot público cifrado realizado antes de la migración 008. El JSON OAuth local aún no contiene el callback de YouTube; debe añadirse en Google Cloud.
+
+
+## Contraste y estados del panel YouTube
+
+Se reforzó la separación entre el fondo cálido y las tarjetas blancas, los bordes y el texto secundario; en oscuro se elevaron las superficies y se aclararon sus bordes. Los estados vacíos son más compactos, con fondo violeta suave y borde sólido. Los tokens de la app son una adaptación del prototipo aprobada por el usuario.
+
+En Nuestro soundtrack, sin conexión ni playlist se muestra el aviso de conectar; conectado sin playlist aparecen crear/importar. Con una playlist activa se ocultan los controles de conexión y creación, incluso para la pareja que no ha conectado su cuenta. Las opciones de conectar/desconectar quedan disponibles en Ajustes. Cuando falta o caduca la conexión del propietario se muestra el aviso de reconexión, sin exigir la conexión de la otra persona. La ayuda de colaboración en YouTube queda plegada.
