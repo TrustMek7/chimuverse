@@ -1,0 +1,53 @@
+{
+  "v": 3,
+  "createdOnFiles": {"v": 1, "at": "2026-11-12T23:40:00Z"},
+  "title": "Chimuverse — Constelación doméstica",
+  "launch": {"view": "canvas", "page": "direccion"},
+  "pages": [
+    {"id": "direccion", "name": "Dirección y mapa"},
+    {"id": "inicio", "name": "Inicio y Daily Quests"},
+    {"id": "principales", "name": "Módulos principales"},
+    {"id": "complementarios", "name": "Módulos complementarios"},
+    {"id": "sistema", "name": "Sistema y handoff"}
+  ],
+  "boards": {
+    "Main.dc.html": {"x": 0, "y": 0, "w": 1440, "h": 1640, "page": "direccion", "title": "Dirección visual y mapa de navegación", "expand": "fill", "is_interactive": true},
+
+    "InicioDesktop.dc.html": {"x": 0, "y": 0, "w": 1440, "h": 1180, "page": "inicio", "title": "Inicio · escritorio", "expand": "fill", "is_interactive": true},
+    "InicioMovil.dc.html": {"x": 1520, "y": 0, "w": 390, "h": 844, "page": "inicio", "title": "Inicio · móvil", "is_interactive": true},
+    "Mas.dc.html": {"x": 1990, "y": 0, "w": 390, "h": 844, "page": "inicio", "title": "Más + Crear · móvil", "is_interactive": true},
+    "QuestsDesktop.dc.html": {"x": 0, "y": 1300, "w": 1440, "h": 1080, "page": "inicio", "title": "Daily Quests · escritorio", "expand": "fill", "is_interactive": true},
+    "QuestsMovil.dc.html": {"x": 1520, "y": 1300, "w": 390, "h": 844, "page": "inicio", "title": "Daily Quests · móvil", "is_interactive": true},
+    "InicioOscuro.dc.html": {"x": 0, "y": 2500, "w": 1440, "h": 1180, "page": "inicio", "title": "Inicio · tema oscuro", "expand": "fill", "is_interactive": true},
+
+    "Acceso.dc.html": {"x": 0, "y": 0, "w": 1440, "h": 900, "page": "principales", "title": "Acceso · escritorio", "expand": "fill", "is_interactive": true},
+    "AccesoMovil.dc.html": {"x": 1520, "y": 0, "w": 1680, "h": 844, "page": "principales", "title": "Acceso · móvil (4 estados)"},
+    "Universo.dc.html": {"x": 0, "y": 1020, "w": 1440, "h": 1160, "page": "principales", "title": "Nuestro Universo", "expand": "fill", "is_interactive": true},
+    "Calendario.dc.html": {"x": 1520, "y": 1020, "w": 1440, "h": 1160, "page": "principales", "title": "Our Calendar · escritorio", "expand": "fill", "is_interactive": true},
+    "CalendarioMovil.dc.html": {"x": 3040, "y": 1020, "w": 390, "h": 844, "page": "principales", "title": "Our Calendar · móvil (agenda)", "is_interactive": true},
+    "Vault.dc.html": {"x": 0, "y": 2300, "w": 1440, "h": 1160, "page": "principales", "title": "Memory Vault", "expand": "fill", "is_interactive": true},
+    "DevLog.dc.html": {"x": 1520, "y": 2300, "w": 1440, "h": 1160, "page": "principales", "title": "DevLog of Us", "expand": "fill", "is_interactive": true},
+    "Ajustes.dc.html": {"x": 3040, "y": 2300, "w": 1440, "h": 1160, "page": "principales", "title": "Ajustes y notificaciones", "expand": "fill", "is_interactive": true},
+
+    "Citas.dc.html": {"x": 0, "y": 0, "w": 390, "h": 844, "page": "complementarios", "title": "Date Planner", "is_interactive": true},
+    "Metas.dc.html": {"x": 470, "y": 0, "w": 390, "h": 844, "page": "complementarios", "title": "Goals & Dreams", "is_interactive": true},
+    "Watchlist.dc.html": {"x": 940, "y": 0, "w": 390, "h": 844, "page": "complementarios", "title": "Watchlist", "is_interactive": true},
+    "Animo.dc.html": {"x": 1410, "y": 0, "w": 390, "h": 844, "page": "complementarios", "title": "Mood Tracker", "is_interactive": true},
+    "Finanzas.dc.html": {"x": 1880, "y": 0, "w": 390, "h": 844, "page": "complementarios", "title": "Our Finances", "is_interactive": true},
+    "Deseos.dc.html": {"x": 2350, "y": 0, "w": 390, "h": 844, "page": "complementarios", "title": "Wishlist & Soundtrack", "is_interactive": true},
+    "Wrapped.dc.html": {"x": 2820, "y": 0, "w": 390, "h": 844, "page": "complementarios", "title": "Our Wrapped", "is_interactive": true},
+
+    "Sistema.dc.html": {"x": 0, "y": 0, "w": 1440, "h": 2300, "page": "sistema", "title": "Sistema de diseño y componentes", "expand": "fill"},
+    "Handoff.dc.html": {"x": 1520, "y": 0, "w": 1440, "h": 2300, "page": "sistema", "title": "Handoff: tokens, reglas y supuestos", "expand": "fill"},
+    "Sidebar.dc.html": {"x": 3040, "y": 0, "w": 272, "h": 1080, "page": "sistema", "title": "Componente · Barra lateral"}
+  },
+  "order": [
+    "Main.dc.html",
+    "InicioDesktop.dc.html", "InicioMovil.dc.html", "Mas.dc.html", "QuestsDesktop.dc.html", "QuestsMovil.dc.html", "InicioOscuro.dc.html",
+    "Acceso.dc.html", "AccesoMovil.dc.html", "Universo.dc.html", "Calendario.dc.html", "CalendarioMovil.dc.html", "Vault.dc.html", "DevLog.dc.html", "Ajustes.dc.html",
+    "Citas.dc.html", "Metas.dc.html", "Watchlist.dc.html", "Animo.dc.html", "Finanzas.dc.html", "Deseos.dc.html", "Wrapped.dc.html",
+    "Sistema.dc.html", "Handoff.dc.html", "Sidebar.dc.html"
+  ],
+  "notes": {},
+  "designSystems": []
+}

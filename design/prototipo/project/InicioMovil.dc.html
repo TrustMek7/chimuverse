@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Nuestro día (móvil) · Chimuverse</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./chimu.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&amp;family=Figtree:wght@400..800&amp;family=Fraunces:ital,opsz,wght@0,9..144,500..700;1,9..144,500..600&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{rootClass}}" style="width: 390px; height: 844px">
+<div class="phone">
+  <header class="ph-top">
+    <svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true"><path d="M6 23C10 11 20 7 26 10" fill="none" stroke="currentColor" stroke-width="1.4" stroke-dasharray="2 3" style="opacity:.55"></path><circle cx="6" cy="23" r="3.5" style="fill:var(--primary)"></circle><circle cx="26" cy="10" r="3.5" style="fill:var(--accent-ink)"></circle><path d="m17 2.5 1 2.4 2.5.4-1.8 1.7.4 2.5-2.1-1.2-2.2 1.2.4-2.5-1.8-1.7 2.5-.4z" style="fill:var(--gold)"></path></svg>
+    <span class="t-sm muted grow">Jue 12 nov</span>
+    <button class="btn btn-ghost btn-icon" aria-label="{{themeLabel}}" onClick="{{toggleTheme}}" style="color: var(--ink-2)"><span class="i {{themeIcon}}" aria-hidden="true"></span></button>
+    <a class="btn btn-ghost btn-icon dot-badge" href="Mas.dc.html" aria-label="Notificaciones, 3 sin leer" style="color: var(--ink-2)"><span class="i i-bell" aria-hidden="true"></span></a>
+  </header>
+
+  <main class="ph-scroll col g24">
+    <div class="col g4">
+      <h1 class="t-h1" style="font-size: 32px">Hola, José Luis.</h1>
+      <p class="t-sm muted">Glenny espera tu visto bueno en una quest.</p>
+    </div>
+
+    <a href="QuestsMovil.dc.html" class="card col g12" style="padding: 16px; border-color: color-mix(in srgb, var(--st-review) 40%, transparent)">
+      <span class="row g12" style="align-items: flex-start"><span class="av av-gs">GS</span><span class="t-sm grow">Glenny reportó <b>70 %</b> en «Terminar el informe de laboratorio».</span></span>
+      <span class="row between"><span class="chip st-review"><span class="i i-st-review" aria-hidden="true"></span>Te toca verificar</span><span class="row g4 t-sm" style="color: var(--primary); font-weight: 700">Revisar<span class="i i-chev-r i-sm" aria-hidden="true"></span></span></span>
+    </a>
+
+    <section class="sky col g16" aria-labelledby="m-sky" style="padding: 20px">
+      <div class="row between"><h2 id="m-sky" class="t-h3">La constelación de hoy</h2><span class="t-xs" style="color: var(--on-night-2)">6 quests</span></div>
+      <svg viewBox="0 0 440 190" style="width: 100%; height: auto" role="img" aria-label="1 completada, 1 en progreso, 2 por verificar, 1 rechazada, 1 pendiente">
+        <defs><clipPath id="halfm"><rect x="-14" y="-14" width="14" height="28"></rect></clipPath></defs>
+        <path d="M40 140 L112 72" stroke="#EBC77E" stroke-width="2" fill="none"></path>
+        <path d="M112 72 L196 112 L268 46 L338 96 L404 34" stroke="#CFC3E6" stroke-width="1.6" stroke-dasharray="4 6" fill="none" style="opacity:.6"></path>
+        <g transform="translate(40 140) scale(1.4)"><path d="M0-11 3.2-3.5 11-3.4 4.8 1.7 6.8 9.5 0 5-6.8 9.5-4.8 1.7-11-3.4-3.2-3.5Z" fill="#EBC77E"></path></g>
+        <g transform="translate(112 72) scale(1.4)"><path d="M0-11 3.2-3.5 11-3.4 4.8 1.7 6.8 9.5 0 5-6.8 9.5-4.8 1.7-11-3.4-3.2-3.5Z" fill="none" stroke="#F6F0FF" stroke-width="1.4"></path><path d="M0-11 3.2-3.5 11-3.4 4.8 1.7 6.8 9.5 0 5-6.8 9.5-4.8 1.7-11-3.4-3.2-3.5Z" fill="#F6F0FF" clip-path="url(#halfm)"></path></g>
+        <g transform="translate(196 112) scale(1.4)"><path d="M0-11 3.2-3.5 11-3.4 4.8 1.7 6.8 9.5 0 5-6.8 9.5-4.8 1.7-11-3.4-3.2-3.5Z" fill="none" stroke="#F0B65C" stroke-width="1.6"></path><circle r="16" fill="none" stroke="#F0B65C" stroke-dasharray="2 3"></circle></g>
+        <g transform="translate(268 46) scale(1.4)"><path d="M0-11 3.2-3.5 11-3.4 4.8 1.7 6.8 9.5 0 5-6.8 9.5-4.8 1.7-11-3.4-3.2-3.5Z" fill="none" stroke="#F0B65C" stroke-width="1.6"></path><circle r="16" fill="none" stroke="#F0B65C" stroke-dasharray="2 3"></circle></g>
+        <g transform="translate(338 96) scale(1.4)"><path d="M0-11 3.2-3.5 11-3.4 4.8 1.7 6.8 9.5 0 5-6.8 9.5-4.8 1.7-11-3.4-3.2-3.5Z" fill="none" stroke="#F29389" stroke-width="1.6"></path><path d="M12 -14l6 6M18 -14l-6 6" stroke="#F29389" stroke-width="1.6" stroke-linecap="round"></path></g>
+        <g transform="translate(404 34) scale(1.4)"><path d="M0-11 3.2-3.5 11-3.4 4.8 1.7 6.8 9.5 0 5-6.8 9.5-4.8 1.7-11-3.4-3.2-3.5Z" fill="none" stroke="#CFC3E6" stroke-width="1.3" stroke-dasharray="2.5 2.5"></path></g>
+      </svg>
+      <div class="col g8">
+        <div class="row g8"><span class="legend" style="color: var(--on-night-2); width: 92px"><span class="sw sw-rep" style="--st-review: #F0B65C"></span>Reportado</span><div class="track grow" style="background: rgba(255,255,255,.08); box-shadow: none"><div class="fill-rep" style="width: 68%; --st-review: #F0B65C"></div></div><b class="t-sm t-num" style="width: 40px; text-align: right">68 %</b></div>
+        <div class="row g8"><span class="legend" style="color: var(--on-night-2); width: 92px"><span class="sw" style="background: #80D2A7"></span>Verificado</span><div class="track grow" style="background: rgba(255,255,255,.08); box-shadow: none"><div class="fill-ver" style="width: 28%; background: #80D2A7"></div></div><b class="t-sm t-num" style="width: 40px; text-align: right">28 %</b></div>
+      </div>
+      <a class="btn btn-night btn-block" href="QuestsMovil.dc.html">Ver mis quests</a>
+    </section>
+
+    <section class="card" aria-label="Lo que viene" style="overflow: hidden">
+      <a href="CalendarioMovil.dc.html" class="row g12" style="padding: 16px">
+        <span class="col" style="align-items: center; min-width: 48px; padding: 6px 0; border-radius: 12px; background: var(--primary-soft); color: var(--primary-ink)"><span class="t-xs" style="text-transform: uppercase">sáb</span><span class="t-h3 t-num" style="line-height: 1">14</span></span>
+        <span class="col grow"><span class="t-xs subtle">Próximo evento</span><b>Cena con tus papás</b><span class="t-sm muted">19:30 · Compartido</span></span>
+        <span class="i i-chev-r i-sm subtle" aria-hidden="true"></span>
+      </a>
+      <div style="border-top: 2px dashed var(--line); margin: 0 12px"></div>
+      <a href="CalendarioMovil.dc.html" class="row g12" style="padding: 16px">
+        <span class="i i-heart-fill i-xl" style="color: var(--accent-ink); margin: 0 8px" aria-hidden="true"></span>
+        <span class="col grow"><span class="t-xs subtle">Fecha especial</span><b>2.º aniversario</b><span class="t-sm muted">20 dic · faltan 38 días</span></span>
+      </a>
+    </section>
+
+    <section class="col g12" aria-labelledby="m-q">
+      <p class="t-eyebrow">Pregunta del día</p>
+      <h2 id="m-q" class="t-h3" style="font-weight: 500">Si pudiéramos vivir un año en otra ciudad, ¿cuál elegirías?</h2>
+      <p class="t-sm muted">Glenny ya respondió. Verás su respuesta al responder.</p>
+      <div class="row g8"><a class="btn btn-primary grow" href="Universo.dc.html">Responder</a><button class="btn btn-secondary grow" onClick="{{openCreate}}"><span class="i i-pencil i-sm" aria-hidden="true"></span>Nota</button></div>
+    </section>
+
+    <section class="col g12" style="align-items: center; padding: 8px 0 12px" aria-labelledby="m-mem">
+      <h2 id="m-mem" class="t-eyebrow">Hace un año, hoy</h2>
+      <a href="Vault.dc.html" class="pol" style="width: 210px; transform: rotate(-2deg)">
+        <span class="pol-img ph-sea" style="display: block" role="img" aria-label="Foto de ejemplo: atardecer en la playa"></span>
+        <span class="pol-cap" style="display: block">Atardecer en Mollendo</span>
+      </a>
+      <p class="t-xs subtle row g6"><span class="i i-users i-xs" aria-hidden="true"></span>Compartido · 12 nov 2025</p>
+    </section>
+  </main>
+
+  <nav class="bnav" aria-label="Principal">
+    <a href="InicioMovil.dc.html" aria-current="page"><span class="i i-home i-lg" aria-hidden="true"></span>Inicio</a>
+    <a href="QuestsMovil.dc.html"><span class="i i-quests i-lg" aria-hidden="true"></span>Día</a>
+    <button aria-haspopup="dialog" onClick="{{openCreate}}"><span class="bn-plus"><span class="i i-plus" aria-hidden="true"></span></span>Crear</button>
+    <a href="Vault.dc.html"><span class="i i-image i-lg" aria-hidden="true"></span>Recuerdos</a>
+    <a href="Mas.dc.html"><span class="i i-grid i-lg" aria-hidden="true"></span>Más</a>
+  </nav>
+
+  <sc-if value="{{createOpen}}" hint-placeholder-val="{{ false }}">
+    <div class="scrim scrim-sheet">
+      <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="cr-t">
+        <span class="grab" aria-hidden="true"></span>
+        <div class="row between"><h2 id="cr-t" class="t-h3">Crear</h2><button class="btn btn-ghost btn-icon" aria-label="Cerrar" onClick="{{closeCreate}}"><span class="i i-x" aria-hidden="true"></span></button></div>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+          <a class="choice" href="QuestsMovil.dc.html"><span class="i i-quests" style="color: var(--primary)" aria-hidden="true"></span>Quest</a>
+          <a class="choice" href="CalendarioMovil.dc.html"><span class="i i-calendar" style="color: var(--primary)" aria-hidden="true"></span>Evento</a>
+          <a class="choice" href="Vault.dc.html"><span class="i i-camera" style="color: var(--primary)" aria-hidden="true"></span>Foto</a>
+          <a class="choice" href="DevLog.dc.html"><span class="i i-book" style="color: var(--primary)" aria-hidden="true"></span>Entrada</a>
+          <a class="choice" href="DevLog.dc.html"><span class="i i-message" style="color: var(--accent-ink)" aria-hidden="true"></span>Nota a Glenny</a>
+          <a class="choice" href="Animo.dc.html"><span class="i i-smile" style="color: var(--primary)" aria-hidden="true"></span>Ánimo</a>
+        </div>
+        <p class="help">Solo aparecen los módulos activos. Cada formulario indica su visibilidad antes de guardar.</p>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"tema":{"editor":"enum","options":["claro","oscuro"],"default":"claro"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { dark: null, create: false }; }
+  renderVals() {
+    const dark = this.state.dark === null ? (this.props.tema === 'oscuro') : this.state.dark;
+    return {
+      rootClass: dark ? 'cv dark' : 'cv',
+      themeIcon: dark ? 'i-sun' : 'i-moon',
+      themeLabel: dark ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro',
+      toggleTheme: () => this.setState({ dark: !dark }),
+      createOpen: this.state.create,
+      openCreate: () => this.setState({ create: true }),
+      closeCreate: () => this.setState({ create: false })
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Nuestro Universo · Chimuverse</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./chimu.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&amp;family=Figtree:wght@400..800&amp;family=Fraunces:ital,opsz,wght@0,9..144,500..700;1,9..144,500..600&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="cv" style="min-height: 100%">
+<div class="app" style="min-height: 1160px">
+  <div style="flex: 1 1 240px; max-width: 272px; display: flex"><dc-import name="Sidebar" activo="universo" hint-size="272px,1160px"></dc-import></div>
+  <main class="main" style="position: relative">
+    <div class="top"><p class="t-sm muted grow">Nosotros</p><a class="btn btn-secondary btn-icon dot-badge" href="InicioDesktop.dc.html" aria-label="Notificaciones, 3 sin leer"><span class="i i-bell" aria-hidden="true"></span></a><span class="av-pair"><span class="av av-jl">JL</span><span class="av av-gs">GS</span></span></div>
+    <div class="content col g24">
+      <header class="col g16">
+        <div class="col g6"><h1 class="t-h1">Nuestro Universo</h1><p class="t-body muted">Conocernos un poco más cada día.</p></div>
+        <div class="seg" role="tablist" aria-label="Secciones" style="align-self: flex-start">
+          <sc-for list="{{tabs}}" as="t" hint-placeholder-count="4"><button role="tab" aria-selected="{{t.on}}" aria-pressed="{{t.on}}" onClick="{{t.pick}}"><span class="i i-sm {{t.icon}}" aria-hidden="true"></span>{{t.label}}</button></sc-for>
+        </div>
+      </header>
+
+      <sc-if value="{{tProfiles}}" hint-placeholder-val="{{ false }}">
+        <div class="row g24 wrap" style="align-items: stretch">
+          <sc-for list="{{profiles}}" as="p" hint-placeholder-count="2">
+            <section class="card col g20" style="flex: 1 1 380px; padding: 28px">
+              <div class="row g16"><span class="av av-xl {{p.av}}">{{p.ini}}</span><div class="col g4 grow"><h2 class="t-h2">{{p.name}}</h2><p class="t-sm muted">{{p.bio}}</p></div><sc-if value="{{p.me}}" hint-placeholder-val="{{ false }}"><button class="btn btn-secondary btn-sm"><span class="i i-pencil i-sm" aria-hidden="true"></span>Editar mis gustos</button></sc-if></div>
+              <sc-for list="{{p.cats}}" as="c" hint-placeholder-count="4">
+                <div class="col g8"><p class="t-eyebrow">{{c.label}}</p><div class="row g8 wrap"><sc-for list="{{c.items}}" as="x" hint-placeholder-count="3"><span class="tag {{x.cls}}"><sc-if value="{{x.match}}" hint-placeholder-val="{{ false }}"><span class="i i-star-fill" style="color: var(--gold-ink)" aria-hidden="true"></span></sc-if>{{x.t}}<sc-if value="{{x.match}}" hint-placeholder-val="{{ false }}"><span class="sr">(coinciden)</span></sc-if></span></sc-for></div></div>
+              </sc-for>
+            </section>
+          </sc-for>
+        </div>
+        <p class="t-sm subtle row g6"><span class="i i-star-fill i-sm" style="color: var(--gold-ink)" aria-hidden="true"></span>La estrella marca lo que tienen en común.</p>
+      </sc-if>
+
+      <sc-if value="{{tQuestions}}" hint-placeholder-val="{{ true }}">
+        <div class="row g24 wrap" style="align-items: flex-start">
+          <nav aria-label="Temas" class="col g6" style="flex: 0 1 260px">
+            <sc-for list="{{topics}}" as="tp" hint-placeholder-count="5">
+              <button class="nav-a" aria-current="{{tp.cur}}" onClick="{{tp.pick}}" style="width: 100%"><span class="grow" style="text-align: left">{{tp.label}}</span><span class="t-xs subtle t-num">{{tp.done}}/{{tp.total}}</span></button>
+            </sc-for>
+            <button class="btn btn-ghost" style="justify-content: flex-start"><span class="i i-plus i-sm" aria-hidden="true"></span>Crear pregunta propia</button>
+          </nav>
+          <section class="col g20" style="flex: 1 1 560px; min-width: 0" aria-labelledby="qq">
+            <div class="col g8">
+              <p class="t-eyebrow">{{topicLabel}} · pregunta 4 de 12</p>
+              <h2 id="qq" class="t-h1" style="font-weight: 500">Si pudiéramos vivir un año en otra ciudad, ¿cuál elegirías?</h2>
+            </div>
+            <div class="row g20 wrap" style="align-items: stretch">
+              <div class="card col g12" style="flex: 1 1 300px; padding: 22px">
+                <p class="row g8 t-sm"><span class="av av-sm av-jl">JL</span><b>Tu respuesta</b></p>
+                <sc-if value="{{notAnswered}}" hint-placeholder-val="{{ true }}">
+                  <div class="col g12">
+                    <label class="sr" for="ans">Tu respuesta</label>
+                    <textarea id="ans" class="textarea {{ansInvalid}}" value="{{ans}}" onChange="{{setAns}}" placeholder="Escribe con calma; Glenny la verá cuando respondas." aria-invalid="{{ansErr}}" aria-describedby="ans-e"></textarea>
+                    <sc-if value="{{ansErr}}" hint-placeholder-val="{{ false }}"><p id="ans-e" class="err"><span class="i i-alert i-sm" aria-hidden="true"></span>Escribe tu respuesta antes de guardarla.</p></sc-if>
+                    <button class="btn btn-primary" onClick="{{saveAns}}" style="align-self: flex-start">Guardar y ver la de Glenny</button>
+                  </div>
+                </sc-if>
+                <sc-if value="{{answered}}" hint-placeholder-val="{{ false }}"><p class="t-body">{{ans}}</p><p class="t-xs subtle">Respondida ahora · <button class="link">Editar</button></p></sc-if>
+              </div>
+              <div class="card col g12" style="flex: 1 1 300px; padding: 22px; background: var(--accent-soft); border-color: transparent">
+                <p class="row g8 t-sm"><span class="av av-sm av-gs">GS</span><b>Glenny</b></p>
+                <sc-if value="{{notAnswered}}" hint-placeholder-val="{{ true }}">
+                  <div class="col g8" style="align-items: flex-start"><span class="i i-lock i-lg" style="color: var(--accent-ink)" aria-hidden="true"></span><p class="t-sm" style="color: var(--accent-ink); font-weight: 600">Glenny ya respondió. Su respuesta aparece cuando guardes la tuya.</p></div>
+                </sc-if>
+                <sc-if value="{{answered}}" hint-placeholder-val="{{ false }}"><p class="t-body">Lisboa. Por el mar, las cuestas y porque podríamos ir a Oporto en tren los fines de semana.</p><p class="t-xs subtle">Respondida el 10 nov</p></sc-if>
+              </div>
+            </div>
+            <sc-if value="{{answered}}" hint-placeholder-val="{{ false }}"><div class="banner banner-info"><span class="i i-sparkle" aria-hidden="true"></span><span>Ambos respondieron. Esta pregunta ya se puede usar en la trivia.</span></div></sc-if>
+            <div class="row between"><button class="btn btn-ghost"><span class="i i-chev-l i-sm" aria-hidden="true"></span>Anterior</button><button class="btn btn-ghost">Siguiente<span class="i i-chev-r i-sm" aria-hidden="true"></span></button></div>
+          </section>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{tCompare}}" hint-placeholder-val="{{ false }}">
+        <div class="card" style="overflow-x: auto">
+          <table style="width: 100%; border-collapse: collapse; min-width: 640px; font-size: 15px">
+            <caption class="sr">Comparación de respuestas</caption>
+            <thead><tr style="text-align: left; background: var(--bg-sunk)"><th scope="col" class="t-eyebrow" style="padding: 14px 20px">Pregunta</th><th scope="col" style="padding: 14px 20px"><span class="row g8 t-sm"><span class="av av-sm av-jl">JL</span>José Luis</span></th><th scope="col" style="padding: 14px 20px"><span class="row g8 t-sm"><span class="av av-sm av-gs">GS</span>Glenny</span></th><th scope="col" class="t-eyebrow" style="padding: 14px 20px">Resultado</th></tr></thead>
+            <tbody>
+              <sc-for list="{{compare}}" as="r" hint-placeholder-count="5">
+                <tr style="border-top: 1px solid var(--line)"><th scope="row" style="padding: 16px 20px; text-align: left; font-weight: 600">{{r.q}}</th><td style="padding: 16px 20px">{{r.a}}</td><td style="padding: 16px 20px">{{r.b}}</td><td style="padding: 16px 20px"><sc-if value="{{r.match}}" hint-placeholder-val="{{ true }}"><span class="chip st-done"><span class="i i-star-fill" aria-hidden="true"></span>Coinciden</span></sc-if><sc-if value="{{r.diff}}" hint-placeholder-val="{{ false }}"><span class="chip st-pending"><span class="i i-swap" aria-hidden="true"></span>Distintas</span></sc-if></td></tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{tTrivia}}" hint-placeholder-val="{{ false }}">
+        <section class="sky col g20" style="padding: 32px; max-width: 760px" aria-labelledby="tv">
+          <div class="row between"><p class="t-eyebrow" style="color: var(--on-night-2)">Trivia de pareja · ronda 3 de 5</p><p class="t-sm t-num">Aciertos: <b>{{score}}</b></p></div>
+          <h2 id="tv" class="t-h2">¿Qué respondió Glenny a «¿Cuál era tu comida favorita de niña?»</h2>
+          <div class="col g8" role="radiogroup" aria-labelledby="tv">
+            <sc-for list="{{opts}}" as="o" hint-placeholder-count="3">
+              <button role="radio" aria-checked="{{o.sel}}" onClick="{{o.pick}}" class="row g12" style="min-height: 52px; padding: 0 18px; border-radius: 14px; border: 1px solid {{o.border}}; background: {{o.bg}}; color: var(--on-night); font-weight: 600; text-align: left">
+                <span class="grow">{{o.t}}</span><sc-if value="{{o.showIcon}}" hint-placeholder-val="{{ false }}"><span class="row g6 t-sm"><span class="i i-sm {{o.icon}}" aria-hidden="true"></span>{{o.verdict}}</span></sc-if>
+              </button>
+            </sc-for>
+          </div>
+          <p class="t-sm" aria-live="polite" style="color: var(--on-night-2)">{{feedback}}</p>
+          <sc-if value="{{picked}}" hint-placeholder-val="{{ false }}"><button class="btn btn-night" onClick="{{nextQ}}" style="align-self: flex-start">Siguiente pregunta</button></sc-if>
+        </section>
+      </sc-if>
+    </div>
+  </main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1160}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { tab: 'questions', topic: 'futuro', ans: '', answered: false, ansErr: false, pick: null }; }
+  renderVals() {
+    const s = this.state;
+    const T = [['profiles', 'Perfiles', 'i-user'], ['questions', 'Preguntas', 'i-message'], ['compare', 'Comparar', 'i-swap'], ['trivia', 'Trivia', 'i-dice']];
+    const TOP = [['infancia', 'Infancia', 7, 12], ['futuro', 'Futuro', 3, 12], ['prefs', 'Preferencias', 10, 15], ['hipo', 'Hipotéticas', 2, 10], ['propias', 'Personalizadas', 1, 3]];
+    const tag = (t, m) => ({ t, match: m, cls: m ? 'priv-us' : '' });
+    const opts = [['Ají de gallina', false], ['Rocoto relleno de su abuela', true], ['Arroz con leche', false]];
+    const picked = s.pick !== null;
+    return {
+      tabs: T.map(t => ({ label: t[1], icon: t[2], on: s.tab === t[0] ? 'true' : 'false', pick: () => this.setState({ tab: t[0] }) })),
+      tProfiles: s.tab === 'profiles', tQuestions: s.tab === 'questions', tCompare: s.tab === 'compare', tTrivia: s.tab === 'trivia',
+      profiles: [
+        { name: 'José Luis', ini: 'JL', av: 'av-jl', me: true, bio: 'Arequipeño, ingeniero en formación, fan de los mapas.', cats: [
+          { label: 'Comida', items: [tag('Rocoto relleno', true), tag('Ramen', false), tag('Queso helado', true)] },
+          { label: 'Música', items: [tag('Indie rock', false), tag('Bandas sonoras', true)] },
+          { label: 'Películas y series', items: [tag('Ciencia ficción', true), tag('Documentales', false)] },
+          { label: 'Lugares', items: [tag('Montaña', false), tag('Cusco', true)] } ] },
+        { name: 'Glenny Shinderly', ini: 'GS', av: 'av-gs', me: false, bio: 'Curiosa, lectora nocturna, coleccionista de atardeceres.', cats: [
+          { label: 'Comida', items: [tag('Rocoto relleno', true), tag('Queso helado', true), tag('Sushi', false)] },
+          { label: 'Música', items: [tag('Bandas sonoras', true), tag('Pop latino', false)] },
+          { label: 'Películas y series', items: [tag('Ciencia ficción', true), tag('Comedias románticas', false)] },
+          { label: 'Lugares', items: [tag('Playa', false), tag('Cusco', true)] } ] }
+      ],
+      topics: TOP.map(t => ({ label: t[1], done: t[2], total: t[3], cur: s.topic === t[0] ? 'page' : 'false', pick: () => this.setState({ topic: t[0] }) })),
+      topicLabel: (TOP.find(t => t[0] === s.topic) || TOP[1])[1],
+      ans: s.ans, answered: s.answered, notAnswered: !s.answered, ansErr: s.ansErr, ansInvalid: s.ansErr ? 'is-invalid' : '',
+      setAns: e => this.setState({ ans: e.target.value, ansErr: false }),
+      saveAns: () => { if (!s.ans.trim()) { this.setState({ ansErr: true }); return; } this.setState({ answered: true }); },
+      compare: [
+        { q: '¿Playa o montaña?', a: 'Montaña', b: 'Playa', match: false, diff: true },
+        { q: 'Película para un domingo lluvioso', a: 'Interestelar', b: 'Interestelar', match: true, diff: false },
+        { q: 'Destino soñado', a: 'Japón', b: 'Japón', match: true, diff: false },
+        { q: '¿Desayuno salado o dulce?', a: 'Salado', b: 'Dulce', match: false, diff: true },
+        { q: 'Superpoder elegido', a: 'Teletransportarse', b: 'Teletransportarse', match: true, diff: false }
+      ],
+      score: picked && opts[s.pick][1] ? 3 : 2,
+      picked,
+      opts: opts.map((o, i) => {
+        const sel = s.pick === i;
+        const show = picked && (sel || o[1]);
+        return { t: o[0], sel: sel ? 'true' : 'false', pick: () => { if (!picked) this.setState({ pick: i }); },
+          showIcon: show, icon: o[1] ? 'i-check' : 'i-x', verdict: o[1] ? 'Correcta' : 'Tu elección',
+          border: show ? (o[1] ? '#80D2A7' : '#F29389') : 'rgba(255,255,255,.18)', bg: show ? (o[1] ? 'rgba(128,210,167,.14)' : 'rgba(242,147,137,.12)') : 'rgba(255,255,255,.04)' };
+      }),
+      feedback: picked ? (opts[s.pick][1] ? '¡Correcto! Lo contó en «Infancia», pregunta 2.' : 'Casi. Glenny respondió «Rocoto relleno de su abuela».') : 'Elige una opción.',
+      nextQ: () => this.setState({ pick: null })
+    };
+  }
+}
+</script>
+</body>
+</html>

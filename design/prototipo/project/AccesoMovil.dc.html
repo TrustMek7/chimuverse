@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Entrar (móvil, 4 estados) · Chimuverse</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./chimu.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&amp;family=Figtree:wght@400..800&amp;family=Fraunces:ital,opsz,wght@0,9..144,500..700;1,9..144,500..600&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="cv" style="width: 1680px; height: 844px; display: flex; gap: 40px; background: transparent">
+  <sc-for list="{{states}}" as="s" hint-placeholder-count="4">
+    <div class="phone sky" style="border-radius: 0; flex: none">
+      <div class="col" style="flex: 1; padding: 28px 24px 24px; gap: 20px">
+        <div class="row g8"><svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true"><path d="M6 23C10 11 20 7 26 10" fill="none" stroke="#CFC3E6" stroke-width="1.4" stroke-dasharray="2 3"></path><circle cx="6" cy="23" r="3.5" fill="#B79EEA"></circle><circle cx="26" cy="10" r="3.5" fill="#F2A1BB"></circle><path d="m17 2.5 1 2.4 2.5.4-1.8 1.7.4 2.5-2.1-1.2-2.2 1.2.4-2.5-1.8-1.7 2.5-.4z" fill="#EBC77E"></path></svg><span class="t-h4">Chimuverse</span><span class="t-xs grow" style="text-align: right; color: var(--on-night-2)">{{s.tag}}</span></div>
+        <svg viewBox="0 0 340 220" style="width: 100%; height: auto" aria-hidden="true">
+          <path d="M40 180 C 110 90, 170 170, 210 90 S 290 40, 305 50" fill="none" stroke="#CFC3E6" stroke-width="1.2" stroke-dasharray="3 6" opacity=".55"></path>
+          <circle cx="40" cy="180" r="8" fill="#B79EEA"></circle><circle cx="305" cy="50" r="8" fill="#F2A1BB"></circle>
+          <g transform="translate(210 90)"><path d="M0-12 3.5-4 12-3.8 5.2 1.8 7.4 10.4 0 5.4-7.4 10.4-5.2 1.8-12-3.8-3.5-4Z" fill="#EBC77E"></path></g>
+          <g fill="#EBC77E"><circle cx="110" cy="128" r="2.5"></circle><circle cx="160" cy="150" r="2"></circle><circle cx="262" cy="60" r="2"></circle></g>
+        </svg>
+        <div class="col g8" style="margin-top: auto">
+          <h1 class="t-h1 t-italic" style="font-weight: 500; font-size: 32px">Un universo que construimos juntos.</h1>
+          <p class="t-sm muted">Espacio privado para José Luis y Glenny.</p>
+        </div>
+        <sc-if value="{{s.err}}" hint-placeholder-val="{{ false }}">
+          <div class="banner" role="alert" style="background: #3A1D1D; border-color: #6B2E2E; color: var(--on-night)"><span class="i i-alert" style="color: #F29389" aria-hidden="true"></span><span>No pudimos conectar con Google. Inténtalo de nuevo.</span></div>
+        </sc-if>
+        <sc-if value="{{s.denied}}" hint-placeholder-val="{{ false }}">
+          <div class="col g12" style="background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.14); border-radius: 18px; padding: 16px">
+            <p class="row g8 t-h4"><span class="i i-lock" aria-hidden="true"></span>Esta cuenta no tiene acceso</p>
+            <p class="t-sm muted">Entraste como m•••••@gmail.com. Solo las dos cuentas del espacio pueden entrar.</p>
+            <button class="btn btn-night btn-block">Usar otra cuenta</button>
+          </div>
+        </sc-if>
+        <sc-if value="{{s.loading}}" hint-placeholder-val="{{ false }}">
+          <button class="btn btn-block" aria-busy="true" aria-disabled="true" style="min-height: 52px; background: #FFFFFF; color: #1F1F1F; opacity: .8"><span class="i i-refresh i-sm spin" aria-hidden="true"></span>Conectando con Google…</button>
+        </sc-if>
+        <sc-if value="{{s.btn}}" hint-placeholder-val="{{ true }}">
+          <a class="btn btn-block" href="InicioMovil.dc.html" style="min-height: 52px; background: #FFFFFF; color: #1F1F1F; border-color: #747775">
+            <svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.6 5.4 2.7 13.3l7.9 6.1C12.5 13.6 17.8 9.5 24 9.5z"></path><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.7 6c4.5-4.2 7.1-10.3 6.9-17.7z"></path><path fill="#FBBC05" d="M10.5 28.6c-.5-1.4-.8-3-.8-4.6s.3-3.2.8-4.6l-7.9-6.1C1 16.6 0 20.2 0 24s.9 7.4 2.6 10.7l7.9-6.1z"></path><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.7-6c-2.2 1.5-5 2.3-8.2 2.3-6.2 0-11.5-4.1-13.4-9.8l-7.9 6.1C6.6 42.6 14.6 48 24 48z"></path></svg>
+            {{s.btnLabel}}
+          </a>
+        </sc-if>
+        <p class="t-xs" style="color: var(--on-night-2); font-weight: 500; text-align: center">Google solo te identifica. Calendar se conecta aparte, en Ajustes.</p>
+      </div>
+    </div>
+  </sc-for>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1680,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { states: [
+      { tag: 'Inicio', btn: true, btnLabel: 'Continuar con Google', loading: false, err: false, denied: false },
+      { tag: 'Cargando', btn: false, loading: true, err: false, denied: false },
+      { tag: 'Error', btn: true, btnLabel: 'Intentar de nuevo con Google', loading: false, err: true, denied: false },
+      { tag: 'Sin acceso', btn: false, loading: false, err: false, denied: true }
+    ] };
+  }
+}
+</script>
+</body>
+</html>

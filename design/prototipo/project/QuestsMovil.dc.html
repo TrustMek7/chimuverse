@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Daily Quests (móvil) · Chimuverse</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./chimu.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&amp;family=Figtree:wght@400..800&amp;family=Fraunces:ital,opsz,wght@0,9..144,500..700;1,9..144,500..600&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="cv" style="width: 390px; height: 844px">
+<div class="phone">
+
+  <sc-if value="{{isList}}" hint-placeholder-val="{{ true }}">
+    <header class="ph-top" style="padding-bottom: 0">
+      <h1 class="t-h2 grow">Nuestro día</h1>
+      <a class="btn btn-ghost btn-icon dot-badge" href="Mas.dc.html" aria-label="Notificaciones, 3 sin leer" style="color: var(--ink-2)"><span class="i i-bell" aria-hidden="true"></span></a>
+    </header>
+    <div style="padding: 8px 20px 0">
+      <div class="seg seg-fill" role="group" aria-label="Sección">
+        <button aria-pressed="true">Daily Quests</button>
+        <a href="CalendarioMovil.dc.html" class="row" style="flex: 1; justify-content: center; min-height: 44px; font-weight: 650; font-size: 14px; color: var(--ink-2); border-radius: 999px">Calendario</a>
+      </div>
+    </div>
+    <main class="ph-scroll col g16" style="padding-top: 16px">
+      <div class="row g8" role="group" aria-label="Filtrar quests" style="overflow-x: auto; margin: 0 -20px; padding: 0 20px 2px">
+        <sc-for list="{{filters}}" as="f" hint-placeholder-count="4">
+          <button class="choice" aria-pressed="{{f.on}}" onClick="{{f.pick}}" style="flex: none; border-radius: 999px; min-height: 40px; padding: 0 14px; font-size: 14px">{{f.label}}<sc-if value="{{f.hasCount}}" hint-placeholder-val="{{ false }}"><span class="count">{{f.count}}</span></sc-if></button>
+        </sc-for>
+      </div>
+      <ul class="col g8">
+        <sc-for list="{{items}}" as="q" hint-placeholder-count="6">
+          <li>
+            <button class="q" onClick="{{q.pick}}" style="grid-template-columns: auto minmax(0, 1fr); padding: 14px">
+              <span class="qstar {{q.stClass}}" style="border: 0"><span class="i {{q.stIcon}}" aria-hidden="true"></span></span>
+              <span class="col g6" style="min-width: 0">
+                <span class="t-h4" style="font-size: 16px; line-height: 1.3">{{q.title}}</span>
+                <span class="row g8 wrap"><span class="chip {{q.stClass}}">{{q.stLabel}}</span><span class="row g6 t-xs subtle"><span class="av av-sm {{q.ownerAv}}">{{q.ownerIni}}</span>{{q.ownerName}} · {{q.due}}</span></span>
+                <span class="row g8"><span class="track grow" style="height: 6px" aria-hidden="true"><span class="fill-rep" style="width: {{q.repW}}"></span><span class="fill-ver" style="width: {{q.verW}}"></span></span><span class="t-xs subtle t-num">Rep. {{q.rep}} · Ver. {{q.ver}}</span></span>
+              </span>
+            </button>
+          </li>
+        </sc-for>
+      </ul>
+      <sc-if value="{{isEmpty}}" hint-placeholder-val="{{ false }}">
+        <div class="empty">
+          <svg width="72" height="36" viewBox="0 0 72 36" aria-hidden="true"><path d="M8 28 L36 10 L64 22" stroke="var(--line-strong)" stroke-dasharray="3 4" fill="none"></path><circle cx="8" cy="28" r="4" fill="none" stroke="var(--line-strong)"></circle><circle cx="36" cy="10" r="4" fill="none" stroke="var(--line-strong)"></circle><circle cx="64" cy="22" r="4" fill="none" stroke="var(--line-strong)"></circle></svg>
+          <p class="t-h4">Todo al día</p>
+          <p class="t-sm muted">Nada que verificar por ahora.</p>
+        </div>
+      </sc-if>
+      <button class="btn btn-primary" onClick="{{openNew}}" style="position: absolute; right: 20px; bottom: 96px; box-shadow: var(--sh-3)"><span class="i i-plus i-sm" aria-hidden="true"></span>Nueva quest</button>
+    </main>
+    <nav class="bnav" aria-label="Principal">
+      <a href="InicioMovil.dc.html"><span class="i i-home i-lg" aria-hidden="true"></span>Inicio</a>
+      <a href="QuestsMovil.dc.html" aria-current="page"><span class="i i-quests i-lg" aria-hidden="true"></span>Día</a>
+      <button onClick="{{openNew}}"><span class="bn-plus"><span class="i i-plus" aria-hidden="true"></span></span>Crear</button>
+      <a href="Vault.dc.html"><span class="i i-image i-lg" aria-hidden="true"></span>Recuerdos</a>
+      <a href="Mas.dc.html"><span class="i i-grid i-lg" aria-hidden="true"></span>Más</a>
+    </nav>
+  </sc-if>
+
+  <sc-if value="{{isDetail}}" hint-placeholder-val="{{ false }}">
+    <header class="ph-top" style="padding-left: 8px">
+      <button class="btn btn-ghost btn-icon" aria-label="Volver a la lista" onClick="{{back}}" style="color: var(--ink)"><span class="i i-chev-l" aria-hidden="true"></span></button>
+      <span class="t-sm muted grow">Daily Quests</span>
+    </header>
+    <main class="ph-scroll col g20">
+      <div class="col g8">
+        <div class="row g8 wrap"><span class="chip {{cur.stClass}}"><span class="i {{cur.stIcon}}" aria-hidden="true"></span>{{cur.stLabel}}</span><span class="tag"><span class="i {{cur.scopeIcon}}" aria-hidden="true"></span>{{cur.scope}}</span></div>
+        <h1 class="t-h2">{{cur.title}}</h1>
+        <p class="t-sm muted">{{cur.desc}}</p>
+        <p class="row g8 t-sm"><span class="av av-sm {{cur.ownerAv}}">{{cur.ownerIni}}</span><b>{{cur.ownerName}}</b><span class="subtle">· {{cur.due}}</span></p>
+      </div>
+      <div class="panel col g12" style="padding: 16px" role="group" aria-label="Avance">
+        <div class="col g6"><div class="row between"><span class="legend"><span class="sw sw-rep"></span>Reportado</span><b class="t-h4 t-num">{{cur.rep}} %</b></div><div class="track" role="meter" aria-label="Reportado" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{cur.rep}}"><span class="fill-rep" style="width: {{cur.repW}}"></span></div></div>
+        <div class="col g6"><div class="row between"><span class="legend"><span class="sw sw-ver"></span>Verificado</span><b class="t-h4 t-num">{{cur.ver}} %</b></div><div class="track" role="meter" aria-label="Verificado" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{cur.ver}}"><span class="fill-ver" style="width: {{cur.verW}}"></span></div></div>
+      </div>
+      <sc-if value="{{cur.canVerify}}" hint-placeholder-val="{{ false }}"><div class="banner banner-warn"><span class="i i-st-review" aria-hidden="true"></span><div class="col g4"><b>Glenny reportó {{cur.rep}} %</b><span class="muted">«{{cur.lastNote}}»</span></div></div></sc-if>
+      <sc-if value="{{cur.waiting}}" hint-placeholder-val="{{ false }}"><div class="banner banner-info"><span class="i i-lock" aria-hidden="true"></span><span>Tú enviaste este reporte. Solo Glenny puede verificarlo.</span></div></sc-if>
+      <sc-if value="{{cur.rejected}}" hint-placeholder-val="{{ false }}"><div class="banner banner-err"><span class="i i-st-rejected" aria-hidden="true"></span><div class="col g4"><b>{{cur.rejTitle}}</b><span>«{{cur.lastReason}}»</span></div></div></sc-if>
+      <sc-if value="{{cur.done}}" hint-placeholder-val="{{ false }}"><div class="banner banner-ok"><span class="i i-st-done" aria-hidden="true"></span><span>Completada y verificada. El historial se conserva.</span></div></sc-if>
+      <div class="col g12">
+        <h2 class="t-h4">Historial</h2>
+        <ol>
+          <sc-for list="{{cur.hist}}" as="h" hint-placeholder-count="3">
+            <li class="tl-item"><span class="tl-dot {{h.dot}}"><span class="i i-sm {{h.icon}}" aria-hidden="true"></span></span><div class="col g4" style="padding-top: 4px"><p class="t-sm"><b>{{h.text}}</b></p><sc-if value="{{h.hasNote}}" hint-placeholder-val="{{ true }}"><p class="t-sm muted">«{{h.note}}»</p></sc-if><p class="t-xs subtle">{{h.when}}</p></div></li>
+          </sc-for>
+        </ol>
+      </div>
+    </main>
+    <sc-if value="{{cur.hasActions}}" hint-placeholder-val="{{ true }}">
+      <div class="row g8" style="padding: 12px 20px 20px; border-top: 1px solid var(--line); background: var(--surface)">
+        <sc-if value="{{cur.canVerify}}" hint-placeholder-val="{{ false }}">
+          <button class="btn btn-danger" onClick="{{openReject}}" style="flex: 1">Rechazar</button>
+          <button class="btn btn-ok" onClick="{{openVerify}}" style="flex: 1.4"><span class="i i-check i-sm" aria-hidden="true"></span>Verificar</button>
+        </sc-if>
+        <sc-if value="{{cur.canReport}}" hint-placeholder-val="{{ false }}">
+          <button class="btn btn-primary btn-block" onClick="{{openReport}}">{{cur.reportLabel}}</button>
+        </sc-if>
+      </div>
+    </sc-if>
+  </sc-if>
+
+  <sc-if value="{{isNew}}" hint-placeholder-val="{{ false }}">
+    <header class="ph-top" style="padding-left: 8px">
+      <button class="btn btn-ghost btn-icon" aria-label="Cancelar" onClick="{{back}}" style="color: var(--ink)"><span class="i i-x" aria-hidden="true"></span></button>
+      <h1 class="t-h4 grow">Nueva quest</h1>
+    </header>
+    <form class="ph-scroll col g20" onSubmit="{{createQuest}}" novalidate>
+      <sc-if value="{{fTitleErr}}" hint-placeholder-val="{{ false }}"><div class="banner banner-err" role="alert"><span class="i i-alert" aria-hidden="true"></span><span>Revisa el campo marcado antes de crear la quest.</span></div></sc-if>
+      <div class="field">
+        <label class="label" for="m-t">Título</label>
+        <input id="m-t" class="input {{fTitleInvalid}}" value="{{fTitle}}" onChange="{{setTitle}}" placeholder="Ej.: Regar las plantas" aria-invalid="{{fTitleErr}}" aria-describedby="m-te" maxlength="80" style="font-size: 16px">
+        <sc-if value="{{fTitleErr}}" hint-placeholder-val="{{ false }}"><p id="m-te" class="err"><span class="i i-alert i-sm" aria-hidden="true"></span>Escribe un título de 3 a 80 caracteres.</p></sc-if>
+      </div>
+      <div class="field">
+        <label class="label" for="m-d">Descripción <span class="opt">(opcional)</span></label>
+        <textarea id="m-d" class="textarea" placeholder="Detalles para que la otra persona pueda verificarla" style="font-size: 16px"></textarea>
+      </div>
+      <fieldset class="field" style="border: 0; padding: 0; margin: 0">
+        <legend class="label" style="margin-bottom: 6px">Responsable</legend>
+        <div class="col g8">
+          <sc-for list="{{owners}}" as="o" hint-placeholder-count="3">
+            <button type="button" class="choice" aria-pressed="{{o.on}}" onClick="{{o.pick}}"><span class="{{o.avClass}}">{{o.ini}}</span>{{o.label}}</button>
+          </sc-for>
+        </div>
+      </fieldset>
+      <div class="field">
+        <label class="label" for="m-f">Fecha</label>
+        <input id="m-f" class="input" type="date" value="2026-11-12" style="font-size: 16px">
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">Crear quest</button>
+    </form>
+  </sc-if>
+
+  <sc-if value="{{sheetReport}}" hint-placeholder-val="{{ false }}">
+    <div class="scrim scrim-sheet"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="s-r">
+      <span class="grab" aria-hidden="true"></span>
+      <div class="row between"><h2 id="s-r" class="t-h3">Reportar avance</h2><button class="btn btn-ghost btn-icon" aria-label="Cerrar" onClick="{{closeSheet}}"><span class="i i-x" aria-hidden="true"></span></button></div>
+      <div class="field">
+        <div class="row between"><label class="label" for="s-rr">Avance</label><span class="t-h2 t-num">{{rPct}} %</span></div>
+        <input id="s-rr" class="range" type="range" min="0" max="100" step="5" value="{{rPct}}" onChange="{{setRPct}}">
+        <sc-if value="{{rErr}}" hint-placeholder-val="{{ false }}"><p class="err"><span class="i i-alert i-sm" aria-hidden="true"></span>Debe ser mayor que lo ya verificado ({{cur.ver}} %).</p></sc-if>
+      </div>
+      <div class="field"><label class="label" for="s-rn">Nota <span class="opt">(opcional)</span></label><textarea id="s-rn" class="textarea" maxlength="280" placeholder="¿Qué hiciste?" style="font-size: 16px; min-height: 80px"></textarea></div>
+      <button class="btn btn-primary btn-block" onClick="{{sendReport}}">Enviar a Glenny</button>
+    </div></div>
+  </sc-if>
+
+  <sc-if value="{{sheetVerify}}" hint-placeholder-val="{{ false }}">
+    <div class="scrim scrim-sheet"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="s-v">
+      <span class="grab" aria-hidden="true"></span>
+      <div class="row between"><h2 id="s-v" class="t-h3">Verificar avance</h2><button class="btn btn-ghost btn-icon" aria-label="Cerrar" onClick="{{closeSheet}}"><span class="i i-x" aria-hidden="true"></span></button></div>
+      <p class="t-sm muted">Glenny reportó {{cur.rep}} %. Puedes confirmarlo completo o solo una parte.</p>
+      <div class="field">
+        <div class="row between"><label class="label" for="s-vv">Confirmo</label><span class="t-h2 t-num">{{pPct}} %</span></div>
+        <input id="s-vv" class="range" type="range" min="0" max="{{cur.rep}}" step="5" value="{{pPct}}" onChange="{{setPPct}}">
+      </div>
+      <button class="btn btn-ok btn-block" onClick="{{verify}}"><span class="i i-check i-sm" aria-hidden="true"></span>{{verifyLabel}}</button>
+    </div></div>
+  </sc-if>
+
+  <sc-if value="{{sheetReject}}" hint-placeholder-val="{{ false }}">
+    <div class="scrim scrim-sheet"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="s-j">
+      <span class="grab" aria-hidden="true"></span>
+      <div class="row between"><h2 id="s-j" class="t-h3">Rechazar reporte</h2><button class="btn btn-ghost btn-icon" aria-label="Cerrar" onClick="{{closeSheet}}"><span class="i i-x" aria-hidden="true"></span></button></div>
+      <div class="field">
+        <label class="label" for="s-jm">Motivo</label>
+        <textarea id="s-jm" class="textarea {{jInvalid}}" value="{{jReason}}" onChange="{{setJReason}}" placeholder="Cuéntale qué faltó, con cariño" aria-invalid="{{jErr}}" style="font-size: 16px"></textarea>
+        <sc-if value="{{jErr}}" hint-placeholder-val="{{ false }}"><p class="err"><span class="i i-alert i-sm" aria-hidden="true"></span>El motivo es obligatorio (mínimo 10 caracteres).</p></sc-if>
+      </div>
+      <button class="btn btn-danger btn-block" onClick="{{reject}}">Rechazar reporte</button>
+    </div></div>
+  </sc-if>
+
+  <sc-if value="{{hasToast}}" hint-placeholder-val="{{ false }}">
+    <div class="toast" role="status" style="bottom: 100px"><span class="i i-check i-sm" aria-hidden="true"></span>{{toast}}</div>
+  </sc-if>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+const ME = 'JL';
+const PEOPLE = { JL: { n: 'José Luis', av: 'av-jl', i: 'JL' }, GS: { n: 'Glenny', av: 'av-gs', i: 'GS' } };
+const SEED = [
+  { id: 'q1', title: 'Terminar el informe de laboratorio', desc: 'Sección de resultados y conclusiones.', owner: 'GS', due: 'Hoy, 23:00', status: 'review', rep: 70, ver: 30, reporter: 'GS',
+    hist: [ { k: 'report', who: 'GS', pct: 70, note: 'Ya tengo los resultados; faltan las conclusiones.', when: 'Hoy, 15:20' }, { k: 'approve', who: 'JL', pct: 30, when: '10 nov, 21:15' }, { k: 'create', who: 'GS', when: '9 nov' } ] },
+  { id: 'q2', title: 'Comprar los ingredientes para el ají de gallina', desc: 'Para la cena del sábado.', owner: 'JL', due: 'Hoy', status: 'review', rep: 100, ver: 0, reporter: 'JL',
+    hist: [ { k: 'report', who: 'JL', pct: 100, note: 'Todo comprado en el mercado San Camilo.', when: 'Hoy, 13:05' }, { k: 'create', who: 'JL', when: 'Hoy, 08:10' } ] },
+  { id: 'q3', title: 'Ordenar las fotos del viaje a Cusco', desc: 'Elegir las mejores para el álbum.', owner: 'US', due: 'Dom 15 nov', status: 'progress', rep: 40, ver: 40, reporter: 'GS',
+    hist: [ { k: 'approve', who: 'JL', pct: 40, when: 'Ayer, 22:10' }, { k: 'report', who: 'GS', pct: 40, note: 'Elegimos las del día 1 y 2.', when: 'Ayer, 21:30' } ] },
+  { id: 'q4', title: 'Ordenar el escritorio', desc: 'Dejarlo listo para el lunes.', owner: 'JL', due: 'Hoy', status: 'rejected', rep: 100, ver: 0, reporter: 'JL', reason: 'Aún faltan los cables de abajo; repórtalo cuando estén.',
+    hist: [ { k: 'reject', who: 'GS', note: 'Aún faltan los cables de abajo; repórtalo cuando estén.', when: 'Ayer, 21:40' }, { k: 'report', who: 'JL', pct: 100, note: 'Listo.', when: 'Ayer, 20:05' } ] },
+  { id: 'q5', title: 'Llamar a la abuela Rosa', desc: 'Por su cumpleaños.', owner: 'JL', due: 'Hoy, 20:00', status: 'pending', rep: 0, ver: 0, hist: [ { k: 'create', who: 'GS', when: 'Hoy, 07:45' } ] },
+  { id: 'q6', title: 'Pagar el recibo de luz', desc: 'Vence el 15 de noviembre.', owner: 'US', due: '11 nov', status: 'done', rep: 100, ver: 100, reporter: 'JL',
+    hist: [ { k: 'approve', who: 'GS', pct: 100, when: '11 nov, 20:30' }, { k: 'report', who: 'JL', pct: 100, note: 'Pagado desde la app del banco.', when: '11 nov, 12:10' } ] }
+];
+const ST = { pending: ['st-pending', 'i-st-pending', 'Pendiente'], progress: ['st-progress', 'i-st-progress', 'En progreso'], review: ['st-review', 'i-st-review', 'Por verificar'], rejected: ['st-rejected', 'i-st-rejected', 'Rechazada'], done: ['st-done', 'i-st-done', 'Completada'] };
+const HK = { create: ['i-plus', 'st-pending'], report: ['i-st-review', 'st-review'], approve: ['i-check', 'st-done'], partial: ['i-st-progress', 'st-progress'], reject: ['i-x', 'st-rejected'] };
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { quests: SEED, filter: 'all', sel: 'q1', screen: 'list', sheet: null, toast: '', fTitle: '', fOwner: 'JL', fTitleErr: false, rPct: 50, rErr: false, pPct: 70, jReason: '', jErr: false }; }
+  done(id, fn, toast) {
+    this.setState({ quests: this.state.quests.map(q => q.id === id ? fn(q) : q), sheet: null, toast });
+    clearTimeout(this.tt); this.tt = setTimeout(() => this.setState({ toast: '' }), 3000);
+  }
+  meta(q) {
+    const st = ST[q.status];
+    const lbl = q.status === 'review' ? (q.reporter === ME ? 'Esperando a Glenny' : 'Te toca verificar') : st[2];
+    const p = PEOPLE[q.owner];
+    return { stClass: st[0], stIcon: st[1], stLabel: lbl, ownerName: q.owner === 'US' ? 'Compartida' : (q.owner === ME ? 'Tú' : p.n), ownerIni: q.owner === 'US' ? '+' : p.i, ownerAv: q.owner === 'US' ? 'av-jl' : p.av, repW: q.rep + '%', verW: q.ver + '%' };
+  }
+  renderVals() {
+    const s = this.state;
+    const toVerify = s.quests.filter(q => q.status === 'review' && q.reporter !== ME).length;
+    const F = [ ['all', 'Todas', () => true], ['mine', 'Mías', q => q.owner === ME], ['shared', 'Compartidas', q => q.owner === 'US'], ['verify', 'Por verificar', q => q.status === 'review' && q.reporter !== ME] ];
+    const f = F.find(x => x[0] === s.filter);
+    const items = s.quests.filter(f[2]).map(q => Object.assign({}, q, this.meta(q), { pick: () => this.setState({ sel: q.id, screen: 'detail' }) }));
+    const q = s.quests.find(x => x.id === s.sel);
+    const canVerify = q.status === 'review' && q.reporter !== ME;
+    const canReport = (q.owner === ME || q.owner === 'US') && ['pending', 'progress', 'rejected'].indexOf(q.status) >= 0;
+    const lastRep = q.hist.find(h => h.k === 'report') || {};
+    const cur = Object.assign({}, q, this.meta(q), {
+      scope: q.owner === 'US' ? 'Compartida' : (q.owner === ME ? 'Mía' : 'De Glenny'), scopeIcon: q.owner === 'US' ? 'i-users' : 'i-user',
+      canVerify, canReport, hasActions: canVerify || canReport, waiting: q.status === 'review' && q.reporter === ME,
+      rejected: q.status === 'rejected', rejTitle: q.reporter === ME ? 'Glenny no aprobó tu reporte' : 'Rechazaste el reporte', lastReason: q.reason || '',
+      done: q.status === 'done', lastNote: lastRep.note || 'Sin nota', reportLabel: q.status === 'rejected' ? 'Reportar de nuevo' : 'Reportar avance',
+      hist: q.hist.map(h => {
+        const w = PEOPLE[h.who].n;
+        const t = { create: w + ' creó la quest', report: w + ' reportó ' + h.pct + ' %', approve: w + ' verificó ' + h.pct + ' %', partial: w + ' verificó ' + h.pct + ' % de ' + h.of + ' %', reject: w + ' rechazó el reporte' }[h.k];
+        return { text: t, note: h.note || '', hasNote: !!h.note, when: h.when, icon: HK[h.k][0], dot: HK[h.k][1] };
+      })
+    });
+    return {
+      isList: s.screen === 'list', isDetail: s.screen === 'detail', isNew: s.screen === 'new',
+      filters: F.map(x => ({ label: x[1], on: x[0] === s.filter ? 'true' : 'false', hasCount: x[0] === 'verify' && toVerify > 0, count: toVerify, pick: () => this.setState({ filter: x[0] }) })),
+      items, isEmpty: items.length === 0, cur,
+      back: () => this.setState({ screen: 'list' }),
+      openNew: () => this.setState({ screen: 'new', fTitle: '', fTitleErr: false, fOwner: 'JL' }),
+      fTitle: s.fTitle, fTitleErr: s.fTitleErr, fTitleInvalid: s.fTitleErr ? 'is-invalid' : '',
+      setTitle: e => this.setState({ fTitle: e.target.value, fTitleErr: false }),
+      owners: [['JL', 'Yo', 'av av-sm av-jl', 'JL'], ['GS', 'Glenny', 'av av-sm av-gs', 'GS'], ['US', 'Compartida', 'i i-users', '']].map(o => ({ label: o[1], avClass: o[2], ini: o[3], on: s.fOwner === o[0] ? 'true' : 'false', pick: () => this.setState({ fOwner: o[0] }) })),
+      createQuest: e => {
+        if (e && e.preventDefault) e.preventDefault();
+        const t = s.fTitle.trim();
+        if (t.length < 3) { this.setState({ fTitleErr: true }); return; }
+        const id = 'n' + Date.now();
+        this.setState({ quests: [{ id, title: t, desc: 'Sin descripción.', owner: s.fOwner, due: 'Hoy', status: 'pending', rep: 0, ver: 0, hist: [{ k: 'create', who: ME, when: 'Ahora' }] }].concat(s.quests), screen: 'list', filter: 'all', toast: 'Quest creada' });
+        clearTimeout(this.tt); this.tt = setTimeout(() => this.setState({ toast: '' }), 3000);
+      },
+      sheetReport: s.sheet === 'report', sheetVerify: s.sheet === 'verify', sheetReject: s.sheet === 'reject',
+      closeSheet: () => this.setState({ sheet: null }),
+      openReport: () => this.setState({ sheet: 'report', rPct: Math.min(100, q.ver + 50), rErr: false }),
+      openVerify: () => this.setState({ sheet: 'verify', pPct: q.rep }),
+      openReject: () => this.setState({ sheet: 'reject', jReason: '', jErr: false }),
+      rPct: s.rPct, rErr: s.rErr, setRPct: e => this.setState({ rPct: Number(e.target.value), rErr: false }),
+      sendReport: () => {
+        if (s.rPct <= q.ver) { this.setState({ rErr: true }); return; }
+        this.done(q.id, x => Object.assign({}, x, { status: 'review', rep: s.rPct, reporter: ME, hist: [{ k: 'report', who: ME, pct: s.rPct, when: 'Ahora' }].concat(x.hist) }), 'Reporte enviado a Glenny');
+      },
+      pPct: s.pPct, setPPct: e => this.setState({ pPct: Number(e.target.value) }),
+      verifyLabel: s.pPct === q.rep ? 'Aprobar ' + q.rep + ' %' : 'Aprobar parcial: ' + s.pPct + ' %',
+      verify: () => this.done(q.id, x => Object.assign({}, x, { status: s.pPct === 100 ? 'done' : 'progress', ver: s.pPct, hist: [{ k: s.pPct === x.rep ? 'approve' : 'partial', who: ME, pct: s.pPct, of: x.rep, when: 'Ahora' }].concat(x.hist) }), 'Avance verificado'),
+      jReason: s.jReason, jErr: s.jErr, jInvalid: s.jErr ? 'is-invalid' : '',
+      setJReason: e => this.setState({ jReason: e.target.value, jErr: false }),
+      reject: () => {
+        if (s.jReason.trim().length < 10) { this.setState({ jErr: true }); return; }
+        this.done(q.id, x => Object.assign({}, x, { status: 'rejected', reason: s.jReason.trim(), hist: [{ k: 'reject', who: ME, note: s.jReason.trim(), when: 'Ahora' }].concat(x.hist) }), 'Reporte rechazado');
+      },
+      toast: s.toast, hasToast: !!s.toast
+    };
+  }
+}
+</script>
+</body>
+</html>

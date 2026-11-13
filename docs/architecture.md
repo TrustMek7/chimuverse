@@ -1,7 +1,7 @@
 # Arquitectura inicial
 
 ## Decisión
-**Monorepo, no monolito desplegado**. React/Vite como sitio estático; Supabase como backend administrado (Postgres, Auth, Storage, Realtime, Edge Functions). No NestJS ni Django al inicio.
+**Frontend y backend en carpetas y despliegues independientes.** `frontend/` contiene React/Vite como sitio estático; `backend/` contiene la lógica de servidor, migraciones y funciones de Supabase (Postgres, Auth, Storage, Realtime, Edge Functions). No NestJS ni Django al inicio. Ambos se conservan en el repositorio actual; esta separación no implica crear dos repositorios Git.
 
 ```text
 React (Vercel) --> Supabase Auth (Google login)
@@ -24,13 +24,16 @@ React (Vercel) --> Supabase Auth (Google login)
 - No guardar client secrets, refresh tokens ni service role en Vite. Secretos solo en entorno de funciones.
 - Idempotencia para notificaciones/sync, paginación, índices, límites de tamaño de fotos, backups y observabilidad.
 - El ORM no es necesario; migraciones SQL versionadas con Supabase CLI.
-- Monorepo permite despliegue independiente de web y funciones.
+- La raíz de compilación de Vite y de despliegue en Vercel es exclusivamente `frontend/`.
+- `frontend/.env.local` contiene solo configuración pública `VITE_`; `backend/.env` contiene credenciales privadas sin prefijo `VITE_`. No hay archivo de entorno compartido en la raíz.
+- Las funciones verifican identidad y permisos antes de usar credenciales privilegiadas. La clave secreta no sustituye la autorización de cada operación.
 
 ## Estructura prevista
-- `apps/web`: React + Vite + Tailwind
-- `supabase/migrations`: SQL versionado
-- `supabase/functions`: Edge Functions
-- `packages/shared`: tipos/validaciones compartidas cuando haga falta
+- `frontend`: React + Vite + Tailwind
+- `backend/supabase/migrations`: SQL versionado
+- `backend/supabase/functions`: Edge Functions
+- `frontend/.env.example`: plantilla de configuración pública
+- `backend/.env.example`: plantilla de configuración del servidor
 - `docs`: decisiones y contratos
 
 ## Diseño

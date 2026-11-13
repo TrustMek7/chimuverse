@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Más (móvil) · Chimuverse</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./chimu.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&amp;family=Figtree:wght@400..800&amp;family=Fraunces:ital,opsz,wght@0,9..144,500..700;1,9..144,500..600&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="cv" style="width: 390px; height: 844px">
+<div class="phone">
+  <header class="ph-top"><h1 class="t-h2 grow">Más</h1><a class="btn btn-ghost btn-icon" href="Ajustes.dc.html" aria-label="Ajustes" style="color: var(--ink-2)"><span class="i i-sliders" aria-hidden="true"></span></a></header>
+  <div style="padding: 0 20px 8px">
+    <div class="seg seg-fill" role="group" aria-label="Vista">
+      <button aria-pressed="{{onMods}}" onClick="{{showMods}}">Módulos</button>
+      <button aria-pressed="{{onNotif}}" onClick="{{showNotif}}">Notificaciones<span class="count">3</span></button>
+    </div>
+  </div>
+  <main class="ph-scroll col g20" style="padding-top: 12px">
+    <sc-if value="{{onModsB}}" hint-placeholder-val="{{ true }}">
+      <div class="col g20">
+        <section class="col g6"><h2 class="t-eyebrow">Nosotros</h2>
+          <a class="nav-a" href="Universo.dc.html" style="min-height: 48px"><span class="i i-orbit" aria-hidden="true"></span>Nuestro Universo<span class="i i-chev-r i-sm" style="margin-left: auto" aria-hidden="true"></span></a>
+          <a class="nav-a" href="Animo.dc.html" style="min-height: 48px"><span class="i i-smile" aria-hidden="true"></span>Mood Tracker<span class="i i-chev-r i-sm" style="margin-left: auto" aria-hidden="true"></span></a>
+        </section>
+        <section class="col g6"><h2 class="t-eyebrow">Recuerdos</h2>
+          <a class="nav-a" href="DevLog.dc.html" style="min-height: 48px"><span class="i i-book" aria-hidden="true"></span>DevLog of Us<span class="i i-chev-r i-sm" style="margin-left: auto" aria-hidden="true"></span></a>
+          <a class="nav-a" href="Wrapped.dc.html" style="min-height: 48px"><span class="i i-sparkle" aria-hidden="true"></span>Our Wrapped<span class="i i-chev-r i-sm" style="margin-left: auto" aria-hidden="true"></span></a>
+        </section>
+        <section class="col g6"><h2 class="t-eyebrow">Experiencias</h2>
+          <a class="nav-a" href="Citas.dc.html" style="min-height: 48px"><span class="i i-heart" aria-hidden="true"></span>Date Planner<span class="i i-chev-r i-sm" style="margin-left: auto" aria-hidden="true"></span></a>
+        </section>
+        <section class="col g6"><h2 class="t-eyebrow">Entretenimiento</h2>
+          <a class="nav-a" href="Watchlist.dc.html" style="min-height: 48px"><span class="i i-film" aria-hidden="true"></span>Watchlist<span class="i i-chev-r i-sm" style="margin-left: auto" aria-hidden="true"></span></a>
+          <a class="nav-a" href="Deseos.dc.html" style="min-height: 48px"><span class="i i-music" aria-hidden="true"></span>Wishlist &amp; Soundtrack<span class="i i-chev-r i-sm" style="margin-left: auto" aria-hidden="true"></span></a>
+        </section>
+        <section class="col g6"><h2 class="t-eyebrow">Creciendo</h2>
+          <a class="nav-a" href="Metas.dc.html" style="min-height: 48px"><span class="i i-target" aria-hidden="true"></span>Goals &amp; Dreams<span class="i i-chev-r i-sm" style="margin-left: auto" aria-hidden="true"></span></a>
+          <a class="nav-a" href="Finanzas.dc.html" style="min-height: 48px"><span class="i i-wallet" aria-hidden="true"></span>Our Finances<span class="i i-chev-r i-sm" style="margin-left: auto" aria-hidden="true"></span></a>
+        </section>
+        <hr class="divider">
+        <a class="nav-a" href="Ajustes.dc.html" style="min-height: 56px"><span class="av av-jl">JL</span><span class="col" style="line-height: 1.25"><span style="color: var(--ink)">José Luis</span><span class="t-xs subtle">Perfil, apariencia, privacidad e integraciones</span></span></a>
+        <a class="nav-a" href="Acceso.dc.html" style="min-height: 48px; color: var(--st-rejected)"><span class="i i-logout" aria-hidden="true"></span>Cerrar sesión</a>
+      </div>
+    </sc-if>
+    <sc-if value="{{onNotifB}}" hint-placeholder-val="{{ false }}">
+      <div class="col g16">
+        <div class="row between"><h2 class="t-eyebrow">Hoy</h2><button class="btn btn-ghost btn-sm">Marcar todo como leído</button></div>
+        <a class="card row g12" href="QuestsMovil.dc.html" style="padding: 14px; align-items: flex-start"><span class="av av-gs">GS</span><span class="grow t-sm">Glenny reportó <b>70 %</b> en «Terminar el informe de laboratorio».<span class="t-xs subtle" style="display: block">Hace 25 min · Daily Quests</span></span><span style="width: 8px; height: 8px; border-radius: 50%; background: var(--accent-ink); margin-top: 6px" aria-label="Sin leer"></span></a>
+        <a class="card row g12" href="DevLog.dc.html" style="padding: 14px; align-items: flex-start"><span class="av av-gs">GS</span><span class="grow t-sm">Glenny te dejó una nota en el DevLog.<span class="t-xs subtle" style="display: block">Hace 2 h · DevLog of Us</span></span><span style="width: 8px; height: 8px; border-radius: 50%; background: var(--accent-ink); margin-top: 6px" aria-label="Sin leer"></span></a>
+        <h2 class="t-eyebrow">Esta semana</h2>
+        <a class="card row g12" href="QuestsMovil.dc.html" style="padding: 14px; align-items: flex-start"><span class="i i-st-rejected" style="color: var(--st-rejected); margin: 6px" aria-hidden="true"></span><span class="grow t-sm">Glenny no aprobó «Ordenar el escritorio».<span class="t-xs subtle" style="display: block">Ayer, 21:40 · Daily Quests</span></span><span style="width: 8px; height: 8px; border-radius: 50%; background: var(--accent-ink); margin-top: 6px" aria-label="Sin leer"></span></a>
+        <a class="row g12" href="CalendarioMovil.dc.html" style="padding: 14px; align-items: flex-start"><span class="i i-calendar subtle" style="margin: 6px" aria-hidden="true"></span><span class="grow t-sm muted">Recordatorio: cena del sábado con tus papás.<span class="t-xs subtle" style="display: block">Ayer · Our Calendar</span></span></a>
+        <a class="row g12" href="Vault.dc.html" style="padding: 14px; align-items: flex-start"><span class="i i-image subtle" style="margin: 6px" aria-hidden="true"></span><span class="grow t-sm muted">Glenny compartió 12 fotos en «Cusco, oct 2026».<span class="t-xs subtle" style="display: block">Lun · Memory Vault</span></span></a>
+      </div>
+    </sc-if>
+  </main>
+  <nav class="bnav" aria-label="Principal">
+    <a href="InicioMovil.dc.html"><span class="i i-home i-lg" aria-hidden="true"></span>Inicio</a>
+    <a href="QuestsMovil.dc.html"><span class="i i-quests i-lg" aria-hidden="true"></span>Día</a>
+    <a href="InicioMovil.dc.html"><span class="bn-plus"><span class="i i-plus" aria-hidden="true"></span></span>Crear</a>
+    <a href="Vault.dc.html"><span class="i i-image i-lg" aria-hidden="true"></span>Recuerdos</a>
+    <a href="Mas.dc.html" aria-current="page"><span class="i i-grid i-lg" aria-hidden="true"></span>Más</a>
+  </nav>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { tab: 'mods' }; }
+  renderVals() {
+    const m = this.state.tab === 'mods';
+    return { onMods: m ? 'true' : 'false', onNotif: m ? 'false' : 'true', onModsB: m, onNotifB: !m,
+      showMods: () => this.setState({ tab: 'mods' }), showNotif: () => this.setState({ tab: 'notif' }) };
+  }
+}
+</script>
+</body>
+</html>

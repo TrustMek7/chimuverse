@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Nuestro día · Chimuverse</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./chimu.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&amp;family=Figtree:wght@400..800&amp;family=Fraunces:ital,opsz,wght@0,9..144,500..700;1,9..144,500..600&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="{{rootClass}}" style="min-height: 100%">
+<div class="app" style="min-height: 1180px">
+
+  <nav class="side" aria-label="Principal">
+    <a class="brand" href="InicioDesktop.dc.html">
+      <svg width="30" height="30" viewBox="0 0 32 32" aria-hidden="true"><path d="M6 23C10 11 20 7 26 10" fill="none" stroke="currentColor" stroke-width="1.4" stroke-dasharray="2 3" style="opacity:.55"></path><circle cx="6" cy="23" r="3.5" style="fill:var(--primary)"></circle><circle cx="26" cy="10" r="3.5" style="fill:var(--accent-ink)"></circle><path d="m17 2.5 1 2.4 2.5.4-1.8 1.7.4 2.5-2.1-1.2-2.2 1.2.4-2.5-1.8-1.7 2.5-.4z" style="fill:var(--gold)"></path></svg>
+      Chimuverse
+    </a>
+    <a class="nav-a" aria-current="page" href="InicioDesktop.dc.html"><span class="i i-home" aria-hidden="true"></span>Inicio</a>
+    <p class="t-eyebrow nav-g">Nuestro día</p>
+    <a class="nav-a" href="QuestsDesktop.dc.html"><span class="i i-quests" aria-hidden="true"></span>Daily Quests<span class="count" aria-label="1 por verificar">1</span></a>
+    <a class="nav-a" href="Calendario.dc.html"><span class="i i-calendar" aria-hidden="true"></span>Our Calendar</a>
+    <p class="t-eyebrow nav-g">Nosotros</p>
+    <a class="nav-a" href="Universo.dc.html"><span class="i i-orbit" aria-hidden="true"></span>Nuestro Universo</a>
+    <a class="nav-a" href="Animo.dc.html"><span class="i i-smile" aria-hidden="true"></span>Mood Tracker</a>
+    <p class="t-eyebrow nav-g">Recuerdos</p>
+    <a class="nav-a" href="Vault.dc.html"><span class="i i-image" aria-hidden="true"></span>Memory Vault</a>
+    <a class="nav-a" href="DevLog.dc.html"><span class="i i-book" aria-hidden="true"></span>DevLog of Us</a>
+    <a class="nav-a" href="Wrapped.dc.html"><span class="i i-sparkle" aria-hidden="true"></span>Our Wrapped</a>
+    <p class="t-eyebrow nav-g">Experiencias</p>
+    <a class="nav-a" href="Citas.dc.html"><span class="i i-heart" aria-hidden="true"></span>Date Planner</a>
+    <p class="t-eyebrow nav-g">Entretenimiento</p>
+    <a class="nav-a" href="Watchlist.dc.html"><span class="i i-film" aria-hidden="true"></span>Watchlist</a>
+    <a class="nav-a" href="Deseos.dc.html"><span class="i i-music" aria-hidden="true"></span>Wishlist &amp; Soundtrack</a>
+    <p class="t-eyebrow nav-g">Creciendo</p>
+    <a class="nav-a" href="Metas.dc.html"><span class="i i-target" aria-hidden="true"></span>Goals &amp; Dreams</a>
+    <a class="nav-a" href="Finanzas.dc.html"><span class="i i-wallet" aria-hidden="true"></span>Our Finances</a>
+    <div style="flex: 1 1 24px"></div>
+    <a class="nav-a" href="Ajustes.dc.html" style="min-height: 56px"><span class="av av-jl">JL</span><span class="col" style="line-height: 1.2"><span style="color: var(--ink)">José Luis</span><span class="t-xs subtle">Ajustes</span></span><span class="i i-sliders i-sm" style="margin-left: auto" aria-hidden="true"></span></a>
+  </nav>
+
+  <main class="main" style="position: relative">
+    <div class="top">
+      <p class="t-sm muted grow"><span class="i i-clock i-sm" style="vertical-align: -3px" aria-hidden="true"></span> Jueves 12 de noviembre · Hora de Lima</p>
+      <button class="btn btn-secondary btn-icon" aria-label="{{themeLabel}}" onClick="{{toggleTheme}}"><span class="i {{themeIcon}}" aria-hidden="true"></span></button>
+      <button class="btn btn-secondary btn-icon dot-badge" aria-label="Notificaciones, 3 sin leer" aria-expanded="{{notifOpen}}" onClick="{{toggleNotif}}"><span class="i i-bell" aria-hidden="true"></span></button>
+      <span class="av-pair" aria-label="José Luis y Glenny"><span class="av av-jl">JL</span><span class="av av-gs">GS</span></span>
+    </div>
+
+    <sc-if value="{{notifOpen}}" hint-placeholder-val="{{ false }}">
+      <div class="card-raised" role="dialog" aria-label="Notificaciones" style="position: absolute; right: 40px; top: 76px; width: 380px; z-index: 20; padding: 8px">
+        <div class="row between" style="padding: 10px 12px"><p class="t-h4">Notificaciones</p><button class="btn btn-ghost btn-sm">Marcar todo como leído</button></div>
+        <a class="row g12" href="QuestsDesktop.dc.html" style="padding: 12px; border-radius: 12px; align-items: flex-start"><span class="av av-gs av-sm">GS</span><span class="grow t-sm">Glenny reportó <b>70 %</b> en «Terminar el informe de laboratorio».<span class="t-xs subtle" style="display: block">Hace 25 min · Daily Quests</span></span><span style="width: 8px; height: 8px; border-radius: 50%; background: var(--accent-ink); margin-top: 6px" aria-label="Sin leer"></span></a>
+        <a class="row g12" href="DevLog.dc.html" style="padding: 12px; border-radius: 12px; align-items: flex-start"><span class="av av-gs av-sm">GS</span><span class="grow t-sm">Glenny te dejó una nota en el DevLog.<span class="t-xs subtle" style="display: block">Hace 2 h · DevLog of Us</span></span><span style="width: 8px; height: 8px; border-radius: 50%; background: var(--accent-ink); margin-top: 6px" aria-label="Sin leer"></span></a>
+        <a class="row g12" href="QuestsDesktop.dc.html" style="padding: 12px; border-radius: 12px; align-items: flex-start"><span class="av av-gs av-sm">GS</span><span class="grow t-sm">Glenny no aprobó «Ordenar el escritorio». Motivo: «Aún faltan los cables de abajo».<span class="t-xs subtle" style="display: block">Ayer, 21:40 · Daily Quests</span></span><span style="width: 8px; height: 8px; border-radius: 50%; background: var(--accent-ink); margin-top: 6px" aria-label="Sin leer"></span></a>
+        <a class="row g12" href="Calendario.dc.html" style="padding: 12px; border-radius: 12px; align-items: flex-start"><span class="i i-calendar" style="color: var(--ink-3); margin: 2px" aria-hidden="true"></span><span class="grow t-sm muted">Recordatorio: cena del sábado con tus papás.<span class="t-xs subtle" style="display: block">Ayer · Our Calendar</span></span></a>
+      </div>
+    </sc-if>
+
+    <div class="content col g32">
+      <header class="col g8">
+        <h1 class="t-display">Buenas tardes, José Luis.</h1>
+        <p class="t-body muted">Glenny reportó un avance que espera tu visto bueno, y tiene una nota para ti.</p>
+      </header>
+
+      <div class="row g24 wrap" style="align-items: stretch">
+        <section class="sky" aria-labelledby="sky-t" style="flex: 2 1 560px; padding: 28px 32px; display: flex; flex-direction: column; gap: 20px">
+          <div class="row between wrap g12">
+            <div class="col g4">
+              <p class="t-eyebrow" style="color: var(--on-night-2)">Daily Quests · hoy</p>
+              <h2 id="sky-t" class="t-h2">La constelación de hoy</h2>
+            </div>
+            <a class="btn btn-night btn-sm" href="QuestsDesktop.dc.html">Ver quests<span class="i i-arrow-r i-sm" aria-hidden="true"></span></a>
+          </div>
+          <div class="row g32 wrap" style="align-items: center">
+            <svg viewBox="0 0 440 210" style="flex: 1 1 380px; max-width: 460px; height: auto" role="img" aria-label="6 quests de hoy: 1 completada, 1 en progreso, 2 por verificar, 1 rechazada y 1 pendiente">
+              <defs><clipPath id="halfc"><rect x="-12" y="-12" width="12" height="24"></rect></clipPath></defs>
+              <path d="M40 150 L112 82" stroke="#EBC77E" stroke-width="1.5" fill="none"></path>
+              <path d="M112 82 L196 122 L268 56 L338 106 L404 44" stroke="#CFC3E6" stroke-width="1.2" stroke-dasharray="3 5" fill="none" style="opacity:.6"></path>
+              <g transform="translate(40 150)"><path d="M0-11 3.2-3.5 11-3.4 4.8 1.7 6.8 9.5 0 5-6.8 9.5-4.8 1.7-11-3.4-3.2-3.5Z" fill="#EBC77E"></path><circle r="18" fill="none" stroke="#EBC77E" style="opacity:.25"></circle></g>
+              <g transform="translate(112 82)"><path d="M0-11 3.2-3.5 11-3.4 4.8 1.7 6.8 9.5 0 5-6.8 9.5-4.8 1.7-11-3.4-3.2-3.5Z" fill="none" stroke="#F6F0FF" stroke-width="1.4"></path><path d="M0-11 3.2-3.5 11-3.4 4.8 1.7 6.8 9.5 0 5-6.8 9.5-4.8 1.7-11-3.4-3.2-3.5Z" fill="#F6F0FF" clip-path="url(#halfc)"></path></g>
+              <g transform="translate(196 122)"><path d="M0-11 3.2-3.5 11-3.4 4.8 1.7 6.8 9.5 0 5-6.8 9.5-4.8 1.7-11-3.4-3.2-3.5Z" fill="none" stroke="#F0B65C" stroke-width="1.6"></path><circle r="17" fill="none" stroke="#F0B65C" stroke-width="1.2" stroke-dasharray="2 3"></circle></g>
+              <g transform="translate(268 56)"><path d="M0-11 3.2-3.5 11-3.4 4.8 1.7 6.8 9.5 0 5-6.8 9.5-4.8 1.7-11-3.4-3.2-3.5Z" fill="none" stroke="#F0B65C" stroke-width="1.6"></path><circle r="17" fill="none" stroke="#F0B65C" stroke-width="1.2" stroke-dasharray="2 3"></circle></g>
+              <g transform="translate(338 106)"><path d="M0-11 3.2-3.5 11-3.4 4.8 1.7 6.8 9.5 0 5-6.8 9.5-4.8 1.7-11-3.4-3.2-3.5Z" fill="none" stroke="#F29389" stroke-width="1.6"></path><path d="M14 -14l6 6M20 -14l-6 6" stroke="#F29389" stroke-width="1.6" stroke-linecap="round"></path></g>
+              <g transform="translate(404 44)"><path d="M0-11 3.2-3.5 11-3.4 4.8 1.7 6.8 9.5 0 5-6.8 9.5-4.8 1.7-11-3.4-3.2-3.5Z" fill="none" stroke="#CFC3E6" stroke-width="1.3" stroke-dasharray="2.5 2.5"></path></g>
+              <g font-family="Figtree, sans-serif" font-size="12" font-weight="600" fill="#CFC3E6">
+                <text x="40" y="186" text-anchor="middle">Recibo de luz</text>
+                <text x="112" y="116" text-anchor="middle">Fotos de Cusco</text>
+                <text x="196" y="158" text-anchor="middle">Informe (Glenny)</text>
+                <text x="268" y="26" text-anchor="middle">Ají de gallina</text>
+                <text x="338" y="142" text-anchor="middle">Escritorio</text>
+                <text x="404" y="80" text-anchor="middle">Llamar a la abuela</text>
+              </g>
+            </svg>
+            <div class="col g16" style="flex: 1 1 240px">
+              <div class="col g6">
+                <div class="row between"><span class="legend" style="color: var(--on-night-2)"><span class="sw sw-rep"></span>Reportado</span><span class="t-h3 t-num">68 %</span></div>
+                <div class="track track-lg" style="background: rgba(255,255,255,.08); box-shadow: none"><div class="fill-rep" style="width: 68%; --st-review: #F0B65C"></div></div>
+              </div>
+              <div class="col g6">
+                <div class="row between"><span class="legend" style="color: var(--on-night-2)"><span class="sw sw-ver" style="background: #80D2A7"></span>Verificado</span><span class="t-h3 t-num">28 %</span></div>
+                <div class="track track-lg" style="background: rgba(255,255,255,.08); box-shadow: none"><div class="fill-ver" style="width: 28%; background: #80D2A7"></div></div>
+              </div>
+              <p class="t-sm muted">1 de 6 completada. Lo reportado solo cuenta como verificado cuando la otra persona lo confirma.</p>
+            </div>
+          </div>
+          <div class="row g16 wrap t-xs" style="color: var(--on-night-2); padding-top: 4px; border-top: 1px solid rgba(255,255,255,.12)">
+            <span class="row g6" style="padding-top: 12px"><span class="i i-st-done i-sm" style="color: #EBC77E" aria-hidden="true"></span>Completada</span>
+            <span class="row g6" style="padding-top: 12px"><span class="i i-st-progress i-sm" aria-hidden="true"></span>En progreso</span>
+            <span class="row g6" style="padding-top: 12px"><span class="i i-st-review i-sm" style="color: #F0B65C" aria-hidden="true"></span>Por verificar</span>
+            <span class="row g6" style="padding-top: 12px"><span class="i i-st-rejected i-sm" style="color: #F29389" aria-hidden="true"></span>Rechazada</span>
+            <span class="row g6" style="padding-top: 12px"><span class="i i-st-pending i-sm" aria-hidden="true"></span>Pendiente</span>
+          </div>
+        </section>
+
+        <section aria-labelledby="todo-t" class="col g12" style="flex: 1 1 300px">
+          <div class="row between"><h2 id="todo-t" class="t-h3">Te toca</h2><span class="t-sm subtle">3 pendientes</span></div>
+          <div class="card col" style="padding: 18px; gap: 14px; border-color: color-mix(in srgb, var(--st-review) 40%, transparent)">
+            <div class="row g12" style="align-items: flex-start"><span class="av av-gs">GS</span><p class="t-sm grow">Glenny reportó <b class="t-num">70 %</b> en «Terminar el informe de laboratorio».</p></div>
+            <div class="row g8 wrap"><span class="chip st-review"><span class="i i-st-review" aria-hidden="true"></span>Te toca verificar</span><span class="t-xs subtle">hace 25 min</span></div>
+            <a class="btn btn-primary btn-block" href="QuestsDesktop.dc.html">Revisar y verificar</a>
+          </div>
+          <a class="card row g12" href="DevLog.dc.html" style="padding: 16px 18px"><span class="i i-message" style="color: var(--accent-ink)" aria-hidden="true"></span><span class="grow t-sm"><b>Glenny te dejó una nota</b><span class="subtle" style="display: block">DevLog of Us · hace 2 h</span></span><span class="i i-chev-r i-sm subtle" aria-hidden="true"></span></a>
+          <a class="card row g12" href="QuestsDesktop.dc.html" style="padding: 16px 18px"><span class="i i-st-rejected" style="color: var(--st-rejected)" aria-hidden="true"></span><span class="grow t-sm"><b>«Ordenar el escritorio» no fue aprobada</b><span class="subtle" style="display: block">Glenny dejó un motivo · ayer</span></span><span class="i i-chev-r i-sm subtle" aria-hidden="true"></span></a>
+        </section>
+      </div>
+
+      <div class="row g24 wrap" style="align-items: flex-start">
+        <section aria-labelledby="next-t" class="card" style="flex: 1 1 300px; overflow: hidden">
+          <h2 id="next-t" class="sr">Lo que viene</h2>
+          <a href="Calendario.dc.html" class="col g8" style="padding: 22px 24px">
+            <span class="t-eyebrow">Próximo evento</span>
+            <span class="row g16" style="align-items: flex-start">
+              <span class="col" style="align-items: center; min-width: 52px; padding: 6px 0; border-radius: 12px; background: var(--primary-soft); color: var(--primary-ink)"><span class="t-xs" style="text-transform: uppercase">sáb</span><span class="t-h2 t-num" style="line-height: 1">14</span></span>
+              <span class="col g4"><span class="t-h4">Cena con tus papás</span><span class="t-sm muted">19:30 · Casa de Yanahuara</span><span class="tag priv-us" style="align-self: flex-start"><span class="i i-users" aria-hidden="true"></span>Compartido</span></span>
+            </span>
+          </a>
+          <div style="border-top: 2px dashed var(--line); margin: 0 16px"></div>
+          <a href="Calendario.dc.html" class="col g8" style="padding: 22px 24px">
+            <span class="t-eyebrow">Próxima fecha especial</span>
+            <span class="row g16">
+              <span class="i i-heart-fill i-xl" style="color: var(--accent-ink)" aria-hidden="true"></span>
+              <span class="col"><span class="t-h3">Nuestro 2.º aniversario</span><span class="t-sm muted">Domingo 20 de diciembre · faltan <b class="t-num">38 días</b></span></span>
+            </span>
+          </a>
+        </section>
+
+        <section aria-labelledby="mem-t" style="flex: 1 1 260px; display: flex; flex-direction: column; align-items: center; gap: 14px; padding-top: 8px">
+          <h2 id="mem-t" class="t-eyebrow" style="align-self: stretch; text-align: center">Hace un año, hoy</h2>
+          <a href="Vault.dc.html" class="pol" style="width: 236px; transform: rotate(-2.5deg)">
+            <span class="pol-img ph-sea" style="display: block" role="img" aria-label="Foto de ejemplo: atardecer en la playa"></span>
+            <span class="pol-cap" style="display: block">Atardecer en Mollendo</span>
+          </a>
+          <p class="t-xs subtle row g6"><span class="i i-users i-xs" aria-hidden="true"></span>Compartido · 12 nov 2025</p>
+        </section>
+
+        <section aria-labelledby="q-t" class="col g16" style="flex: 1.3 1 320px; padding: 4px 0">
+          <p class="t-eyebrow row g6"><span class="i i-orbit i-sm" aria-hidden="true"></span>Pregunta del día · Futuro</p>
+          <h2 id="q-t" class="t-h2" style="font-weight: 500">Si pudiéramos vivir un año en otra ciudad, ¿cuál elegirías?</h2>
+          <p class="t-sm muted row g8"><span class="av av-gs av-sm">GS</span>Glenny ya respondió. Su respuesta se muestra cuando respondas.</p>
+          <div class="row g8 wrap">
+            <a class="btn btn-primary" href="Universo.dc.html">Responder</a>
+            <button class="btn btn-secondary" onClick="{{openNote}}"><span class="i i-pencil i-sm" aria-hidden="true"></span>Escribir una nota a Glenny</button>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <sc-if value="{{noteOpen}}" hint-placeholder-val="{{ false }}">
+      <div class="scrim">
+        <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="note-t">
+          <div class="row between"><h2 id="note-t" class="t-h3">Nota para Glenny</h2><button class="btn btn-ghost btn-icon" aria-label="Cerrar" onClick="{{closeNote}}"><span class="i i-x" aria-hidden="true"></span></button></div>
+          <div class="banner banner-info"><span class="i i-users" aria-hidden="true"></span><span>Las notas son siempre para la otra persona: Glenny la verá en su DevLog y recibirá un aviso.</span></div>
+          <div class="field">
+            <label class="label" for="note-x">Tu nota</label>
+            <textarea id="note-x" class="textarea {{noteInvalid}}" placeholder="Algo que quieras que lea hoy…" aria-invalid="{{noteErr}}" aria-describedby="note-e" value="{{noteText}}" onChange="{{typeNote}}"></textarea>
+            <sc-if value="{{noteErr}}" hint-placeholder-val="{{ false }}"><p id="note-e" class="err"><span class="i i-alert i-sm" aria-hidden="true"></span>Escribe al menos unas palabras antes de enviar.</p></sc-if>
+          </div>
+          <div class="row g8" style="justify-content: flex-end"><button class="btn btn-secondary" onClick="{{closeNote}}">Cancelar</button><button class="btn btn-primary" onClick="{{sendNote}}"><span class="i i-send i-sm" aria-hidden="true"></span>Enviar nota</button></div>
+        </div>
+      </div>
+    </sc-if>
+    <sc-if value="{{toast}}" hint-placeholder-val="{{ false }}">
+      <div class="toast" role="status"><span class="i i-check i-sm" aria-hidden="true"></span>Nota enviada a Glenny</div>
+    </sc-if>
+  </main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"tema":{"editor":"enum","options":["claro","oscuro"],"default":"claro"},"$preview":{"width":1440,"height":1180}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { dark: null, notif: false, note: false, noteText: '', noteErr: false, toast: false }; }
+  renderVals() {
+    const dark = this.state.dark === null ? (this.props.tema === 'oscuro') : this.state.dark;
+    return {
+      rootClass: dark ? 'cv dark' : 'cv',
+      themeIcon: dark ? 'i-sun' : 'i-moon',
+      themeLabel: dark ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro',
+      toggleTheme: () => this.setState({ dark: !dark }),
+      notifOpen: this.state.notif,
+      toggleNotif: () => this.setState({ notif: !this.state.notif }),
+      noteOpen: this.state.note,
+      noteText: this.state.noteText,
+      noteErr: this.state.noteErr,
+      noteInvalid: this.state.noteErr ? 'is-invalid' : '',
+      openNote: () => this.setState({ note: true, noteErr: false, toast: false }),
+      closeNote: () => this.setState({ note: false, noteErr: false }),
+      typeNote: (e) => this.setState({ noteText: e.target.value, noteErr: false }),
+      sendNote: () => {
+        if (this.state.noteText.trim().length < 2) { this.setState({ noteErr: true }); return; }
+        this.setState({ note: false, noteText: '', toast: true });
+      },
+      toast: this.state.toast
+    };
+  }
+}
+</script>
+</body>
+</html>

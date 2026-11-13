@@ -2,7 +2,7 @@
 
 ## Confirmadas
 - Nombre: **Chimuverse**; proyecto privado para José Luis y Glenny Shinderly.
-- Monorepo GitHub, React + Vite + TypeScript, Tailwind.
+- Frontend y backend separados en `frontend/` y `backend/`, con entornos y despliegues independientes en el repositorio actual. React + Vite + TypeScript, Tailwind.
 - Supabase: PostgreSQL, Auth con Google, Storage, Realtime y Edge Functions.
 - Sin Django/NestJS ni backend dedicado en MVP.
 - Google Calendar: sincronización bidireccional, cuentas conectadas individualmente.

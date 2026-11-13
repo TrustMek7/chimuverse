@@ -23,6 +23,8 @@ pnpm-debug.log*
 .supabase/
 supabase/.branches/
 supabase/.temp/
+backend/supabase/.branches/
+backend/supabase/.temp/
 
 # IDE / OS
 .vscode/*
