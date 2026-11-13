@@ -161,6 +161,9 @@ export type Question = {
   depth?: number;
   source_id?: string | null;
   bank_key?: string | null;
+  /** null for the shared bank; set for questions we wrote. */
+  space_id?: string | null;
+  deleted_at?: string | null;
 };
 export type Answer = {
   id: string;
@@ -185,6 +188,7 @@ export type Snapshot = {
   task_events: TaskEvent[];
   finance_recurring: FinanceRecurring[];
   savings_goals: SavingsGoal[];
+  question_hidden: { space_id: string; question_id: string }[];
   entries: Entry[];
   calendar_events: CalendarEvent[];
   photos: Photo[];

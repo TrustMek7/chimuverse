@@ -1,5 +1,13 @@
 import { useState } from "react";
-import { Plus, Orbit, ArrowRight, Shuffle } from "lucide-react";
+import {
+  Plus,
+  Orbit,
+  ArrowRight,
+  Shuffle,
+  Pencil,
+  EyeOff,
+  Trash2,
+} from "lucide-react";
 import { useSpace, useAction } from "../lib/store";
 import { check, supabase } from "../lib/supabase";
 import {
@@ -21,19 +29,23 @@ export default function Universe() {
   const [answer, setAnswer] = useState("");
   const [selected, setSelected] = useState<string | null>(null);
   const [newQuestion, setNewQuestion] = useState(false);
+  const [editingQuestion, setEditingQuestion] = useState<string | null>(null);
+  const [newDepth, setNewDepth] = useState(1);
+  // Trashed questions and bank questions hidden for our space stay out of every view.
+  const hidden = new Set(data!.question_hidden.map((h) => h.question_id));
+  const visible = data!.questions.filter(
+    (q) => !q.deleted_at && !hidden.has(q.id),
+  );
   const [title, setTitle] = useState(""),
     [newCategory, setNewCategory] = useState("Nosotros");
   const [trivia, setTrivia] = useState<string | null>(null);
   const [guess, setGuess] = useState("");
   const [revealed, setRevealed] = useState(false);
   const action = useAction();
-  const categories = [
-    "Todas",
-    ...new Set(data!.questions.map((q) => q.category)),
-  ];
+  const categories = ["Todas", ...new Set(visible.map((q) => q.category))];
   const normalize = (s: string) =>
     s.normalize("NFD").replace(/\p{M}/gu, "").toLocaleLowerCase("es");
-  const questions = data!.questions
+  const questions = visible
     .filter((q) => {
       const own = data!.answers.some(
         (a) => a.question_id === q.id && a.respondent_id === me.id,
@@ -81,7 +93,7 @@ export default function Universe() {
   };
   const depthName = (n = 1) =>
     ["", "Para empezar", "Para conocernos", "Para profundizar"][n];
-  const triviaQuestions = data!.questions.filter((q) =>
+  const triviaQuestions = visible.filter((q) =>
     data!.answers.some(
       (a) => a.question_id === q.id && a.respondent_id !== me.id,
     ),
@@ -304,7 +316,56 @@ export default function Universe() {
                     <Orbit size={22} />
                   </div>
                   <h2>{q.title}</h2>
-                  <small className="muted">{depthName(q.depth)}</small>
+                  <div className="row between wrap">
+                    <small className="muted">
+                      {depthName(q.depth)}
+                      {q.space_id ? " · Escrita por nosotros" : ""}
+                    </small>
+                    <div className="row gap-sm">
+                      {q.space_id && (
+                        <button
+                          className="icon-button"
+                          aria-label={`Editar la pregunta ${q.title}`}
+                          onClick={() => {
+                            setEditingQuestion(q.id);
+                            setTitle(q.title);
+                            setNewCategory(q.category);
+                            setNewDepth(q.depth ?? 1);
+                            action.setError("");
+                            setNewQuestion(true);
+                          }}
+                        >
+                          <Pencil size={16} />
+                        </button>
+                      )}
+                      <button
+                        className="icon-button"
+                        aria-label={`${q.space_id ? "Enviar a la papelera" : "Ocultar"} la pregunta ${q.title}`}
+                        title={
+                          q.space_id
+                            ? "Enviar a la papelera"
+                            : "Ocultar (se recupera desde la Papelera)"
+                        }
+                        disabled={action.busy}
+                        onClick={() =>
+                          void action.run(async () =>
+                            check(
+                              await supabase.rpc("trash_item", {
+                                p_table: "questions",
+                                p_id: q.id,
+                              }),
+                            ),
+                          )
+                        }
+                      >
+                        {q.space_id ? (
+                          <Trash2 size={16} />
+                        ) : (
+                          <EyeOff size={16} />
+                        )}
+                      </button>
+                    </div>
+                  </div>
                   {own ? (
                     <>
                       <div className="answer own">
@@ -412,9 +473,12 @@ export default function Universe() {
         </form>
       </Modal>
       <Modal
-        title="Una pregunta nuestra"
+        title={editingQuestion ? "Editar la pregunta" : "Una pregunta nuestra"}
         open={newQuestion}
-        onOpenChange={setNewQuestion}
+        onOpenChange={(v) => {
+          setNewQuestion(v);
+          if (!v) setEditingQuestion(null);
+        }}
       >
         <form
           className="form"
@@ -423,14 +487,23 @@ export default function Universe() {
             void action.run(
               async () =>
                 check(
-                  await supabase.from("questions").insert({
-                    space_id: spaceId,
-                    title: title.trim(),
-                    category: newCategory,
-                  }),
+                  editingQuestion
+                    ? await supabase.rpc("edit_question", {
+                        p_id: editingQuestion,
+                        p_title: title,
+                        p_category: newCategory,
+                        p_depth: newDepth,
+                      })
+                    : await supabase.from("questions").insert({
+                        space_id: spaceId,
+                        title: title.trim(),
+                        category: newCategory,
+                        depth: newDepth,
+                      }),
                 ),
               () => {
                 setNewQuestion(false);
+                setEditingQuestion(null);
                 setTitle("");
               },
             );
@@ -455,9 +528,22 @@ export default function Universe() {
               onChange={(e) => setNewCategory(e.target.value)}
             />
           </label>
+          <label className="field">
+            Profundidad
+            <select
+              value={newDepth}
+              onChange={(e) => setNewDepth(Number(e.target.value))}
+            >
+              {[1, 2, 3].map((d) => (
+                <option key={d} value={d}>
+                  {depthName(d)}
+                </option>
+              ))}
+            </select>
+          </label>
           <ErrorMessage error={action.error} />
           <Button type="submit" busy={action.busy}>
-            Guardar pregunta
+            {editingQuestion ? "Guardar cambios" : "Guardar pregunta"}
           </Button>
         </form>
       </Modal>

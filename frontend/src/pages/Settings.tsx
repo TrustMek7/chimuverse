@@ -92,8 +92,26 @@ export default function Settings() {
   });
   const trash = [
     ...data!.entries
-      .filter((e) => e.deleted_at && e.owner_id === me.id)
+      // Shared things (finances, date ideas) can be restored by either of us.
+      .filter(
+        (e) =>
+          e.deleted_at &&
+          (e.owner_id === me.id ||
+            ["transaction", "budget", "date"].includes(e.kind)),
+      )
       .map((e) => ({ ...e, table: "entries" })),
+    ...data!.questions
+      .filter(
+        (q) =>
+          q.deleted_at ||
+          data!.question_hidden.some((h) => h.question_id === q.id),
+      )
+      .map((q) => ({
+        ...q,
+        visibility: "shared" as const,
+        table: "questions",
+        title: q.deleted_at ? q.title : `${q.title} (pregunta oculta)`,
+      })),
     ...data!.photos
       .filter((e) => e.deleted_at && e.uploaded_by === me.id)
       .map((e) => ({ ...e, table: "photos" })),
@@ -231,10 +249,7 @@ export default function Settings() {
           <hr />
           <EmailSummary />
           <hr />
-          <Button
-            variant="secondary"
-            onClick={() => void signOut()}
-          >
+          <Button variant="secondary" onClick={() => void signOut()}>
             <LogOut size={18} />
             Cerrar sesión
           </Button>

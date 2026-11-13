@@ -126,6 +126,7 @@ export function useSnapshot() {
         "task_events",
         "finance_recurring",
         "savings_goals",
+        "question_hidden",
         "photos",
         "notifications",
         "questions",
@@ -141,7 +142,7 @@ export function useSnapshot() {
               .order("id")
               .range(offset, offset + 499);
             if (
-              ["calendar_overrides", "task_events", "finance_recurring", "savings_goals"].includes(table) &&
+              ["calendar_overrides", "task_events", "finance_recurring", "savings_goals", "question_hidden"].includes(table) &&
               result.error?.code === "PGRST205"
             )
               return [table, []];

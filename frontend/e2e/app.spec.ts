@@ -1252,3 +1252,41 @@ test("finances are shared, filtered by month, measured against the budget, and f
   const page2 = await new AxeBuilder({ page }).include(".finance-fixed").analyze();
   expect(page2.violations).toEqual([]);
 });
+
+test("questions are added, edited, trashed or hidden from Nuestro Universo, and come back from the trash", async ({
+  page,
+}) => {
+  const rows = await fixture(page);
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  rows.question_hidden = [];
+  rows.questions.push({ id: "f9999999-9999-4999-8999-999999999999", space_id: sid, category: "Nosotros", title: "¿Qué canción nos define?", depth: 1, deleted_at: null });
+  const edits: any[] = [];
+  await page.route("**/rest/v1/rpc/edit_question", async (route) => {
+    const b = route.request().postDataJSON();
+    edits.push(b);
+    Object.assign(rows.questions.find((q) => q.id === b.p_id), { title: b.p_title, category: b.p_category, depth: b.p_depth });
+    await route.fulfill({ json: null });
+  });
+  await page.goto("/nosotros/universo");
+  // Only our own questions can be edited; bank questions can only be hidden.
+  await expect(page.getByRole("button", { name: /^Editar la pregunta ¿Qué pequeño gesto/ })).toHaveCount(0);
+  await page.getByRole("button", { name: "Editar la pregunta ¿Qué canción nos define?" }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByLabel("¿Qué te gustaría preguntar?").fill("¿Qué canción nos define hoy?");
+  await dialog.getByLabel("Profundidad").selectOption("2");
+  await dialog.getByRole("button", { name: "Guardar cambios" }).click();
+  await expect(dialog).toHaveCount(0);
+  expect(edits[0]).toMatchObject({ p_title: "¿Qué canción nos define hoy?", p_depth: 2 });
+  await expect(page.getByRole("heading", { name: "¿Qué canción nos define hoy?" })).toBeVisible();
+  await page.getByRole("button", { name: /^Ocultar la pregunta ¿Qué pequeño gesto/ }).click();
+  await expect(page.getByRole("heading", { name: /¿Qué pequeño gesto/ })).toHaveCount(0);
+  await page.getByRole("button", { name: "Enviar a la papelera la pregunta ¿Qué canción nos define hoy?" }).click();
+  await expect(page.getByRole("heading", { name: "¿Qué canción nos define hoy?" })).toHaveCount(0);
+  // Both come back from the trash.
+  await page.goto("/ajustes/papelera");
+  await expect(page.getByRole("heading", { name: "¿Qué canción nos define hoy?" })).toBeVisible();
+  const axe = await new AxeBuilder({ page }).include(".settings-card").analyze();
+  expect(axe.violations).toEqual([]);
+  await page.getByRole("button", { name: "Restaurar" }).first().click();
+  await expect(page.getByRole("button", { name: "Restaurar" })).toHaveCount(1);
+});

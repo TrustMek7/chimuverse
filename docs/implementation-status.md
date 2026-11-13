@@ -157,3 +157,13 @@ Migración 018 (`savings_goals`, `save_savings_goal`, `delete_savings_goal`; `sa
 - **Conexión perdida** (migración 019): si Calendar o Gmail registran un error de permiso (token vencido o revocado; en modo Prueba pasa cada 7 días), su dueño recibe un aviso por push, o por correo si no tiene push, con enlace a **Ajustes → Conexiones**. Es uno por servicio y por día, y las caídas temporales de Google no avisan. YouTube se usa a demanda y muestra el error en el momento.
 - **Respaldo de fotos:** `npm run backup:photos` copia las fotos del álbum, también las de la papelera, a `backend/backups/photos/`. Cada foto va cifrada con `BACKUP_ENCRYPTION_KEY` (AES-256-GCM) y la copia es incremental: solo baja las nuevas. Para recuperarlas: `npm run backup:photos -- --restore <carpeta>`. Complementa `npm run backup`, que guarda los datos.
 - **Ideas de citas** (migración 020): cualquiera de los dos edita o manda a la papelera cualquier idea, incluidas las 150 precargadas, que quedaron a nombre de una sola persona.
+
+## Edición desde cada módulo (sin panel de administración)
+
+Migración 021 (`edit_question`, `question_hidden`; `trash_item` acepta `questions`). El panel de tareas que se diseñó ya no hace falta: cada módulo se edita desde sí mismo.
+
+- **Preguntas** (Nuestro Universo):
+  - Las que escribimos nosotros se pueden editar (texto, tema y profundidad) o mandar a la papelera, y lo puede hacer cualquiera de los dos.
+  - Las 300 del banco no se editan ni se borran: se **ocultan** para nuestro espacio.
+  - En los dos casos se recuperan desde **Ajustes → Papelera**. Las respuestas se conservan.
+- **Papelera compartida:** lo que es de los dos (movimientos, presupuestos, ideas de citas y preguntas) aparece en la papelera de ambos, así que cualquiera puede restaurar lo que haya quitado el otro. Lo personal sigue visible solo para su autor.

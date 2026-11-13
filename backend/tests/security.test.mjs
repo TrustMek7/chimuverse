@@ -139,6 +139,7 @@ before(async () => {
     "202611130018_finance_people_goals.sql",
     "202611130019_connection_alerts.sql",
     "202611130020_shared_dates.sql",
+    "202611130021_question_management.sql",
   ]) {
     await db.exec(
       readFileSync(
@@ -1377,4 +1378,33 @@ test("a lost Google permission alerts its owner once a day; outages do not; date
   assert.deepEqual([e.title, e.owner_id, e.ed], ["Picnic en el parque", idea.owner_id, other]);
   await as(other, () => db.query("select public.trash_item('entries',$1)", [idea.id]));
   assert.ok((await db.query("select deleted_at from public.entries where id=$1", [idea.id])).rows[0].deleted_at);
+});
+
+test("our questions are edited and trashed by either member, bank questions are only hidden, and shared trash is visible to both", async () => {
+  const own = (await as(a, () => db.query("insert into public.questions(space_id,created_by,category,title,depth) values($1,$2,'Nosotros','¿Qué canción nos define?',1) returning id", [sid, a]))).rows[0].id;
+  await as(b, () => db.query("select public.edit_question($1,'¿Qué canción nos define hoy?','Música',2)", [own]));
+  assert.deepEqual((await db.query("select title,category,depth from public.questions where id=$1", [own])).rows[0], { title: "¿Qué canción nos define hoy?", category: "Música", depth: 2 });
+  await assert.rejects(() => as(b, () => db.query("select public.edit_question($1,'no','Música',2)", [own])), /entre 3 y 240/);
+  await as(b, () => db.query("select public.trash_item('questions',$1)", [own]));
+  assert.ok((await db.query("select deleted_at from public.questions where id=$1", [own])).rows[0].deleted_at);
+  await as(a, () => db.query("select public.trash_item('questions',$1,true)", [own]));
+  assert.equal((await db.query("select deleted_at from public.questions where id=$1", [own])).rows[0].deleted_at, null);
+  // A bank question cannot be edited; hiding it is per space and reversible, and the row stays.
+  const bank = (await db.query("select id from public.questions where space_id is null limit 1")).rows[0].id;
+  await assert.rejects(() => as(a, () => db.query("select public.edit_question($1,'Otra cosa','Nosotros',1)", [bank])), /banco/);
+  await as(a, () => db.query("select public.trash_item('questions',$1)", [bank]));
+  assert.equal((await as(b, () => db.query("select count(*)::int n from public.question_hidden where question_id=$1", [bank]))).rows[0].n, 1);
+  await as(b, () => db.query("select public.trash_item('questions',$1,true)", [bank]));
+  assert.equal((await db.query("select count(*)::int n from public.question_hidden where question_id=$1", [bank])).rows[0].n, 0);
+  assert.equal((await db.query("select count(*)::int n from public.questions where id=$1", [bank])).rows[0].n, 1);
+  await assert.rejects(() => as(c, () => db.query("select public.trash_item('questions',$1)", [own])), /Sin acceso/);
+  // A shared entry trashed by one member is visible to the other in the trash and restorable by them.
+  const exp = (await as(a, () => db.query("select public.save_entry($1) id", [JSON.stringify({ kind: "transaction", title: "Taxi", amount: 20, details: { direction: "expense" } })]))).rows[0].id;
+  await as(a, () => db.query("select public.trash_item('entries',$1)", [exp]));
+  assert.equal((await as(b, () => db.query("select count(*)::int n from public.entries where id=$1 and deleted_at is not null", [exp]))).rows[0].n, 1);
+  await as(b, () => db.query("select public.trash_item('entries',$1,true)", [exp]));
+  // Personal trashed content stays hidden from the partner.
+  const note = (await as(a, () => db.query("select public.save_entry($1,'texto') id", [JSON.stringify({ kind: "journal", title: "Borrador" })]))).rows[0].id;
+  await as(a, () => db.query("select public.trash_item('entries',$1)", [note]));
+  assert.equal((await as(b, () => db.query("select count(*)::int n from public.entries where id=$1", [note]))).rows[0].n, 0);
 });
