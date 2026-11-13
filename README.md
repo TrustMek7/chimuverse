@@ -51,6 +51,37 @@ Para configurar la base de datos, Google y el despliegue, seguir [la guía de ar
 
 Diseño: [handoff v2](design/handoff/HANDOFF.md). Estado de módulos y dependencias externas: [implementación](docs/implementation-status.md).
 
+## Notificaciones en el celular y la computadora
+
+Chimuverse avisa con notificaciones del sistema (Web Push), aunque la app esté cerrada. Se activan **una vez por dispositivo** desde la tarjeta de Inicio («Activar notificaciones») o desde **Ajustes → Perfil → Notificaciones en tus dispositivos**. Allí también se ven y se quitan los dispositivos activos. Cerrar sesión desactiva los avisos en ese dispositivo.
+
+Los permisos son **por sitio**: permitir Chimuverse no permite a ninguna otra web. Si tu navegador bloquea las notificaciones de todos los sitios, ninguna web puede pedir permiso (el navegador responde «bloqueado» sin preguntar), así que hay que agregar Chimuverse a mano a la lista de permitidos.
+
+### Android (Chrome)
+1. Abre Chimuverse y toca **Activar notificaciones** → **Permitir**. No hace falta instalarla, aunque se recomienda (menú ⋮ → **Agregar a pantalla principal**).
+2. Si sale «bloqueadas»: Chrome → ⋮ → **Configuración → Configuración de sitios → Notificaciones** → agrega o permite la dirección de Chimuverse.
+3. Si no aparecen: Ajustes de Android → **Apps → Chrome → Notificaciones** activadas, y «No molestar» apagado.
+
+### iPhone / iPad (iOS 16.4 o posterior)
+1. Abre Chimuverse en **Safari** → **Compartir** → **Agregar a inicio**. En una pestaña de Safari los avisos no funcionan; es una regla de Apple.
+2. Abre Chimuverse **desde el ícono** del inicio y toca **Activar notificaciones** → **Permitir**.
+3. Si no aparecen: Ajustes de iOS → **Notificaciones → Chimuverse** (aparece como una app aparte), y Modo Concentración desactivado.
+
+### Windows (Chrome o Edge)
+1. Toca **Activar notificaciones** → **Permitir**.
+2. Si sale «bloqueadas» y tu navegador está en «No permitir que los sitios envíen notificaciones»: en `chrome://settings/content/notifications`, en **Con permiso para enviar notificaciones**, toca **Añadir** y escribe la dirección de Chimuverse (en desarrollo, `http://localhost:5173`; `127.0.0.1` cuenta como otro sitio). Recarga.
+3. Si llegan al centro de actividades (Win + A en Windows 10, Win + N en Windows 11) pero no saltan:
+   - **Configuración → Sistema → Notificaciones y acciones → Google Chrome** → activa **Mostrar banners de notificación**.
+   - Apaga el **Asistente de concentración** (y revisa sus reglas automáticas).
+   - Reinicia el navegador.
+4. El navegador tiene que estar abierto, aunque sea en segundo plano. Con todas las ventanas cerradas, los avisos llegan al volver a abrirlo.
+
+### macOS (Chrome o Safari 16+)
+1. Toca **Activar notificaciones** → **Permitir**.
+2. Si no aparecen: **Ajustes del Sistema → Notificaciones → Google Chrome / Safari** → permitir, y Modo Concentración apagado.
+
+Detalles técnicos y de seguridad: [implementación → Notificaciones push](docs/implementation-status.md#notificaciones-push).
+
 ## Reglas de colaboración
 - Una rama por funcionalidad (`feature/...`), PR revisado por la otra persona.
 - Nunca subir `.env`, secretos, tokens OAuth, claves de servicio ni fotos privadas.
