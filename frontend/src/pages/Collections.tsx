@@ -914,7 +914,7 @@ export default function Collections() {
                               .find((p) => p.id === e.owner_id)
                               ?.display_name.split(" ")[0])}
                     </small>
-                    {(e.owner_id === me.id || financeKind(kind)) && !sealed && (
+                    {(e.owner_id === me.id || financeKind(kind) || kind === "date") && !sealed && (
                       <div className="row gap-sm">
                         <button
                           className="icon-button"

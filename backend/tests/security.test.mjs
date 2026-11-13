@@ -137,6 +137,8 @@ before(async () => {
     "202611130016_task_carryover.sql",
     "202611130017_finances.sql",
     "202611130018_finance_people_goals.sql",
+    "202611130019_connection_alerts.sql",
+    "202611130020_shared_dates.sql",
   ]) {
     await db.exec(
       readFileSync(
@@ -1349,4 +1351,30 @@ test("each movement says whose it is, fixed ones carry it, and savings feed shar
   assert.equal((await db.query("select details->>'goal_id' g,amount::float a from public.entries where id=$1", [id])).rows[0].g, null);
   await assert.rejects(() => as(c, () => db.query("select public.save_savings_goal(null,$1)", [JSON.stringify({ title: "x", target: 1 })])), /Sin acceso/);
   await assert.rejects(() => as(a, () => db.query("insert into public.savings_goals(space_id,title,target) values($1,'x',1)", [sid])), /permission denied/);
+});
+
+test("a lost Google permission alerts its owner once a day; outages do not; date ideas are editable by both", async () => {
+  const alerts = async (uid) => (await db.query("select title,path from public.notifications where kind='connection_error' and recipient_id=$1", [uid])).rows;
+  await db.query("insert into private.google_connections(user_id,encrypted_refresh_token,calendar_id) values($1,'enc','primary') on conflict(user_id) do update set last_error=null", [b]);
+  await db.query("update private.google_connections set last_error='Google Calendar no respondió. Puedes volver a intentar.' where user_id=$1", [b]);
+  assert.equal((await alerts(b)).length, 0);
+  await db.query("update private.google_connections set last_error='Reconecta Google Calendar para renovar el permiso.' where user_id=$1", [b]);
+  await db.query("update private.google_connections set last_error=null where user_id=$1", [b]);
+  await db.query("update private.google_connections set last_error='El permiso de Google caducó. Reconecta tu cuenta.' where user_id=$1", [b]);
+  const cal = await alerts(b);
+  assert.equal(cal.length, 1);
+  assert.match(cal[0].title, /Calendar/);
+  assert.equal(cal[0].path, "/ajustes/conexiones");
+  await db.query("select public.gmail_service('connect',$1,$2)", [b, { email: "b@example.test", token: "enc-b" }]);
+  await db.query("select public.gmail_service('error',$1,$2)", [b, { message: "Reconecta Gmail para renovar el permiso." }]);
+  assert.ok((await alerts(b)).some((n) => /Gmail/.test(n.title)));
+  // The seeded ideas belong to one member; the other can now edit and trash them.
+  const idea = (await db.query("select id,owner_id from public.entries where kind='date' and deleted_at is null and owner_id=$1 limit 1", [a])).rows[0]
+    ?? (await db.query("select id,owner_id from public.entries where kind='date' and deleted_at is null limit 1")).rows[0];
+  const other = idea.owner_id === a ? b : a;
+  await as(other, () => db.query("select public.save_entry($1,'',$2)", [JSON.stringify({ kind: "date", title: "Picnic en el parque", details: { category: "Aire libre" } }), idea.id]));
+  const e = (await db.query("select title,owner_id,details->>'edited_by' ed from public.entries where id=$1", [idea.id])).rows[0];
+  assert.deepEqual([e.title, e.owner_id, e.ed], ["Picnic en el parque", idea.owner_id, other]);
+  await as(other, () => db.query("select public.trash_item('entries',$1)", [idea.id]));
+  assert.ok((await db.query("select deleted_at from public.entries where id=$1", [idea.id])).rows[0].deleted_at);
 });

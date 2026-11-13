@@ -151,3 +151,9 @@ Migración 018 (`savings_goals`, `save_savings_goal`, `delete_savings_goal`; `sa
 
 - **De quién:** cada movimiento dice de quién es: de José Luis, de Glenny o «de los dos» (fondo común). En un ingreso es de quién es el sueldo; en un gasto, quién pagó; en un ahorro, quién lo puso. Por defecto es quien lo registra. Los movimientos anteriores cuentan como de quien los registró. Los fijos también lo llevan (por ejemplo, «Sueldo Glenny» es de Glenny). La tabla **Por persona** del mes muestra ingresos, gastos, ahorro y disponible de cada uno y del fondo común.
 - **Metas de ahorro:** cada meta tiene nombre, monto, fecha opcional y es de uno o de los dos. Al registrar un ahorro (suelto o fijo) se elige su meta, y la barra muestra lo ahorrado, el porcentaje y cuánto falta. Si hay fecha, sugiere cuánto ahorrar por mes. Quitar una meta conserva sus ahorros.
+
+## Avisos de conexión, respaldo de fotos e ideas de citas compartidas
+
+- **Conexión perdida** (migración 019): si Calendar o Gmail registran un error de permiso (token vencido o revocado; en modo Prueba pasa cada 7 días), su dueño recibe un aviso por push, o por correo si no tiene push, con enlace a **Ajustes → Conexiones**. Es uno por servicio y por día, y las caídas temporales de Google no avisan. YouTube se usa a demanda y muestra el error en el momento.
+- **Respaldo de fotos:** `npm run backup:photos` copia las fotos del álbum, también las de la papelera, a `backend/backups/photos/`. Cada foto va cifrada con `BACKUP_ENCRYPTION_KEY` (AES-256-GCM) y la copia es incremental: solo baja las nuevas. Para recuperarlas: `npm run backup:photos -- --restore <carpeta>`. Complementa `npm run backup`, que guarda los datos.
+- **Ideas de citas** (migración 020): cualquiera de los dos edita o manda a la papelera cualquier idea, incluidas las 150 precargadas, que quedaron a nombre de una sola persona.

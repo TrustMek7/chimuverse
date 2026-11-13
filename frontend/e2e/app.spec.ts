@@ -936,6 +936,9 @@ test("either partner marks a date as lived with a past day, an optional polaroid
   await expect(page.getByRole("heading", { name: "Cine en casa" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Nuestro picnic" })).toHaveCount(0);
   await page.getByRole("button", { name: "Todas", exact: true }).click();
+  // The partner's ideas (like the seeded ones) can be edited and trashed by either of us.
+  await expect(page.getByRole("button", { name: "Editar Nuestro picnic" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Enviar Nuestro picnic a la papelera" })).toBeVisible();
   // The partner's idea can be marked as lived by either of us, on a past day.
   await page.getByRole("button", { name: "Ya la vivimos" }).click();
   const dialog = page.getByRole("dialog");

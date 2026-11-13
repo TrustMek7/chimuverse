@@ -136,3 +136,9 @@ Desconectar quita solo la credencial de Gmail guardada; Calendar y YouTube sigue
    - Scopes en Acceso a los datos: Calendar, `youtube.force-ssl` y `gmail.send`.
 5. **En cada dispositivo:** abrir la URL de Vercel y activar las notificaciones desde Inicio. Los permisos son por sitio: lo activado en `localhost` no pasa a Vercel. Si el navegador tiene «No permitir» para todos los sitios, agregar la URL de Vercel a «Con permiso para enviar notificaciones» (ver README).
 6. **Gmail:** cada uno, en Ajustes → Conexiones → Conectar mi Gmail.
+
+## Respaldos
+
+- `npm run backup` (en `backend/`): copia cifrada de los datos (tablas públicas).
+- `npm run backup:photos`: copia cifrada e incremental de las fotos del álbum en `backend/backups/photos/`. Para recuperarlas: `npm run backup:photos -- --restore <carpeta>`.
+- Guarda `BACKUP_ENCRYPTION_KEY` (está en `backend/.env`) en un lugar seguro aparte: sin esa clave las copias no se pueden abrir.
