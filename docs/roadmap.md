@@ -8,7 +8,7 @@ El código implementado se detalla en [estado de implementación](implementation
 - [x] Supabase CLI, entornos separados, migraciones y RLS.
 - [x] Lista de dos cuentas autorizadas, máximo dos miembros.
 - [x] CI, build, typecheck, pruebas SQL, Calendar y navegador.
-- [ ] Aplicar migraciones en Supabase remoto (falta Personal Access Token).
+- [x] Aplicar migraciones en Supabase remoto.
 - [ ] Habilitar Google Auth con credenciales OAuth y probar ambas cuentas.
 
 ## Nuestro día y nosotros
@@ -20,7 +20,8 @@ El código implementado se detalla en [estado de implementación](implementation
 - [x] Calendario local, agenda, fechas anuales y zona horaria.
 - [x] OAuth Calendar individual, cifrado, sincronización, conflictos y reintentos.
 - [x] Notificaciones persistentes, Realtime y recordatorios deduplicados.
-- [ ] Desplegar función/scheduler y validar sincronización real con las dos cuentas.
+- [x] Desplegar función/scheduler.
+- [ ] Validar sincronización real con las dos cuentas tras configurar OAuth.
 - [ ] Correo y push: pendientes por decisión de producto; desactivados en la interfaz.
 
 ## Recuerdos y expansión

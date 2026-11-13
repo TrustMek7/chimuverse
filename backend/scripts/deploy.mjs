@@ -42,7 +42,8 @@ async function api(path, body, method = "POST") {
     );
     process.exit(1);
   }
-  return response.status === 204 ? null : response.json();
+  const text = await response.text();
+  return text.trim() ? JSON.parse(text) : null;
 }
 const sql = (query) => api("/database/query", { query });
 await sql(

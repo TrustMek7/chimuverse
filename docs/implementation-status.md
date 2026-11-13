@@ -21,9 +21,9 @@
 
 Validación local ejecutada: build de producción y typecheck correctos; 11 tests PostgreSQL/RLS, 6 tests Calendar, 5 unitarios y 6 de navegador (28 en total). Axe sin violaciones en acceso y dashboard en los temas revisados. Las pruebas SQL incluyen almacenamiento privado, notas de ánimo, cápsulas, restauración y recordatorios deduplicados.
 
-La clave de servidor presente permite consultar la API de datos y Auth. La inspección encontró **Google Auth deshabilitado y cero usuarios**. No hay `SUPABASE_ACCESS_TOKEN` de administración disponible: las migraciones no están aplicadas al proyecto remoto y la Edge Function/scheduler no están desplegados.
+El token de administración ya está configurado. Se aplicaron las cinco migraciones al proyecto remoto, se desplegó la función Calendar y se programaron sincronización/recordatorios cada 15 minutos. Antes del despliegue se guardó una instantánea cifrada del catálogo y datos públicos: el proyecto tenía cero tablas públicas y cero usuarios. La copia está fuera de Git y no incluye Auth ni objetos Storage.
 
-Hace falta completar el token de administración y las credenciales OAuth en `backend/.env`, ejecutar el despliegue y autorizar las dos cuentas. Ver `getting-started.md`. El frontend no crea datos ficticios ni permite entrar saltándose Auth para ocultar esta dependencia.
+Google Auth sigue deshabilitado porque faltan `GOOGLE_OAUTH_CLIENT_ID` y `GOOGLE_OAUTH_CLIENT_SECRET`. Deben configurarse el cliente OAuth y sus redirecciones, habilitar el proveedor y autorizar las dos cuentas. Ver `getting-started.md`.
 
 No se declara listo para producción ni validada la sincronización real hasta completar esa configuración y probar ambos usuarios con Google.
 

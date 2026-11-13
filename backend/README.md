@@ -15,7 +15,7 @@ Completar `.env` desde `.env.example` y seguir [la guía de arranque](../docs/ge
 
 ```powershell
 npm run deploy
-npm run deploy -- --functions --schedule
+npm run deploy:all
 ```
 
 El script requiere un Personal Access Token `SUPABASE_ACCESS_TOKEN`. La clave `SUPABASE_SECRET_KEY` permite usar la API, pero no aplicar migraciones. Cada migración se aplica y registra dentro de una transacción, sin recrear tablas ni borrar datos. Los secretos de funciones se configuran mediante Management API, sin incluirlos en React ni en argumentos de shell. No cambiar la clave de cifrado de tokens con conexiones activas.

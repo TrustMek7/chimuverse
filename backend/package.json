@@ -9,7 +9,10 @@
     "functions:deploy": "supabase functions deploy",
     "deploy": "node scripts/deploy.mjs",
     "test:calendar": "deno test --config supabase/functions/deno.json --allow-env supabase/functions/calendar/index_test.ts",
-    "typecheck": "deno check --config supabase/functions/deno.json supabase/functions/calendar/index.ts"
+    "typecheck": "deno check --config supabase/functions/deno.json supabase/functions/calendar/index.ts",
+    "deploy:all": "node scripts/deploy.mjs --functions --schedule",
+    "backup": "node scripts/preflight.mjs",
+    "verify:deployment": "node scripts/verify-deployment.mjs"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.3.14",

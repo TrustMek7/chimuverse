@@ -42,5 +42,6 @@ playwright-report/
 test-results/
 
 # Local uploads / exports
+backend/backups/
 uploads/
 exports/

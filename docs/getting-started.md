@@ -30,7 +30,7 @@ cd backend
 npm ci
 npm run deploy
 # Incluir funciones, secretos y programación cada 15 minutos:
-npm run deploy -- --functions --schedule
+npm run deploy:all
 ```
 
 Aplica únicamente migraciones pendientes y registra sus versiones. Configura redirecciones y habilita Google Auth si se proporcionaron sus credenciales. Al desplegar funciones, genera `GOOGLE_TOKEN_ENCRYPTION_KEY` y `CRON_SECRET` en el `.env` ignorado si faltaban; después configura secretos remotos por API. No cambiar la clave de cifrado con conexiones Google activas.
