@@ -123,6 +123,7 @@ export function useSnapshot() {
         "entries",
         "calendar_events",
         "calendar_overrides",
+        "task_events",
         "photos",
         "notifications",
         "questions",
@@ -138,7 +139,7 @@ export function useSnapshot() {
               .order("id")
               .range(offset, offset + 499);
             if (
-              table === "calendar_overrides" &&
+              (table === "calendar_overrides" || table === "task_events") &&
               result.error?.code === "PGRST205"
             )
               return [table, []];

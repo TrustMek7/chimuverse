@@ -18,6 +18,19 @@ export type Task = {
   verified_percent: number;
   rejections: number;
   created_at: string;
+  completed_at?: string | null;
+};
+/** A recorded change to a task: carried to another day (with its reason) or edited. */
+export type TaskEvent = {
+  id: string;
+  task_id: string;
+  actor_id: string;
+  kind: "postpone" | "edit";
+  from_date: string | null;
+  to_date: string | null;
+  reason: string;
+  changes: Record<string, unknown>;
+  created_at: string;
 };
 export type Progress = {
   id: string;
@@ -136,6 +149,7 @@ export type Snapshot = {
   tasks: Task[];
   task_progress: Progress[];
   task_verifications: Verification[];
+  task_events: TaskEvent[];
   entries: Entry[];
   calendar_events: CalendarEvent[];
   photos: Photo[];

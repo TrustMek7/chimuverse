@@ -5,13 +5,23 @@ import {
   useParams,
   useSearchParams,
 } from "react-router-dom";
-import { Plus, ArrowLeft, Lock, Users, CalendarDays } from "lucide-react";
+import {
+  Plus,
+  ArrowLeft,
+  Lock,
+  Users,
+  CalendarDays,
+  Pencil,
+  CalendarClock,
+  Check,
+} from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useSpace, useAction } from "../lib/store";
 import { supabase, check } from "../lib/supabase";
 import { formatDate, localDay } from "../lib/utils";
+import type { Progress, TaskEvent } from "../lib/types";
 import {
   Button,
   Modal,
@@ -35,7 +45,17 @@ export default function Quests() {
   const navigate = useNavigate();
   const [search, setSearch] = useSearchParams();
   const [open, setOpen] = useState(search.has("crear"));
-  const [filter, setFilter] = useState("Todas");
+  const [filter, setFilter] = useState("Activas");
+  const [editing, setEditing] = useState(false);
+  const [moving, setMoving] = useState(false);
+  const [edit, setEdit] = useState({
+    title: "",
+    description: "",
+    assignee_id: "",
+    due_on: "",
+  });
+  const [moveTo, setMoveTo] = useState("");
+  const [moveReason, setMoveReason] = useState("");
   const [day, setDay] = useState("");
   const [percent, setPercent] = useState(100),
     [note, setNote] = useState(""),
@@ -51,21 +71,72 @@ export default function Quests() {
       due_on: localDay(new Date(), me.timezone),
     },
   });
-  const tasks = data!.tasks.filter(
-    (t) =>
-      (!day || t.due_on === day) &&
-      (filter !== "Mías" || t.assignee_id === me.id) &&
-      (filter !== "Compartidas" || !t.assignee_id) &&
-      (filter !== "Por verificar" ||
-        data!.task_progress.some(
-          (p) =>
-            p.task_id === t.id &&
-            p.state === "pending" &&
-            p.reported_by !== me.id,
-        )),
-  );
+  const today = localDay(new Date(), me.timezone);
+  const history = filter === "Historial";
+  const name = (uid: string | null) =>
+    uid
+      ? (data!.profiles.find((p) => p.id === uid)?.display_name ?? "?")
+      : "Los dos";
+  const moves = (taskId: string) =>
+    data!.task_events.filter(
+      (e) => e.task_id === taskId && e.kind === "postpone",
+    ).length;
+  // Finished tasks leave the daily list and live in the history.
+  const tasks = data!.tasks
+    .filter(
+      (t) =>
+        (history ? t.status === "done" : t.status !== "done") &&
+        (!day || t.due_on === day) &&
+        (filter !== "Mías" || t.assignee_id === me.id) &&
+        (filter !== "Compartidas" || !t.assignee_id) &&
+        (filter !== "Por verificar" ||
+          data!.task_progress.some(
+            (p) =>
+              p.task_id === t.id &&
+              p.state === "pending" &&
+              p.reported_by !== me.id,
+          )),
+    )
+    .sort((a, b) =>
+      history
+        ? String(b.completed_at ?? b.due_on).localeCompare(
+            String(a.completed_at ?? a.due_on),
+          )
+        : a.due_on.localeCompare(b.due_on),
+    );
   const current = data!.tasks.find((t) => t.id === id);
   const reports = data!.task_progress.filter((p) => p.task_id === id);
+  const events = data!.task_events.filter((e) => e.task_id === id);
+  const timeline: ({ at: string } & (
+    | { report: Progress; event?: undefined }
+    | { event: TaskEvent; report?: undefined }
+  ))[] = [
+    ...reports.map((report) => ({ at: report.created_at, report })),
+    ...events.map((event) => ({ at: event.created_at, event })),
+  ].sort((a, b) => b.at.localeCompare(a.at));
+  const nextDay = (d: string) => {
+    const base = new Date((d > today ? d : today) + "T12:00:00");
+    base.setDate(base.getDate() + 1);
+    return localDay(base, me.timezone);
+  };
+  function openEdit() {
+    if (!current) return;
+    setEdit({
+      title: current.title,
+      description: current.description,
+      assignee_id: current.assignee_id ?? "",
+      due_on: current.due_on,
+    });
+    action.setError("");
+    setEditing(true);
+  }
+  function openMove() {
+    if (!current) return;
+    setMoveTo(nextDay(current.due_on));
+    setMoveReason("");
+    action.setError("");
+    setMoving(true);
+  }
   const latest = reports.find((p) => p.state === "pending");
   const canReport =
     current &&
@@ -139,10 +210,31 @@ export default function Quests() {
                   reported={current.reported_percent}
                   verified={current.verified_percent}
                 />
+                {current.status === "done" ? (
+                  <div className="banner" role="status">
+                    <Check size={18} aria-hidden />
+                    Completada
+                    {current.completed_at
+                      ? ` el ${formatDate(current.completed_at)}`
+                      : ""}
+                    . Ya es parte de nuestro historial.
+                  </div>
+                ) : (
+                  <div className="row gap-sm wrap">
+                    <Button variant="secondary" onClick={openEdit}>
+                      <Pencil size={16} aria-hidden />
+                      Editar
+                    </Button>
+                    <Button variant="secondary" onClick={openMove}>
+                      <CalendarClock size={16} aria-hidden />
+                      Pasar a otro día
+                    </Button>
+                  </div>
+                )}
                 {current.status === "in_talk" && (
                   <div className="banner">
                     Lo hablamos: ha habido varios desacuerdos. Pueden dejar un
-                    acuerdo en el DevLog y seguir reportando.
+                    acuerdo en Nuestro diario y seguir reportando.
                   </div>
                 )}
                 {latest && latest.reported_by === me.id && (
@@ -291,7 +383,40 @@ export default function Quests() {
               <section className="card">
                 <h2>La historia de esta tarea</h2>
                 <ol className="timeline">
-                  {reports.map((p) => {
+                  {timeline.map(({ report: p, event: ev }) => {
+                    if (ev)
+                      return (
+                        <li key={ev.id}>
+                          <Avatar
+                            name={name(ev.actor_id)}
+                            partner={ev.actor_id !== me.id}
+                          />
+                          <div>
+                            <strong>
+                              {ev.kind === "postpone"
+                                ? `Pasó del ${formatDate(ev.from_date!)} al ${formatDate(ev.to_date!)}`
+                                : "Editó la tarea"}
+                            </strong>
+                            <small>
+                              {name(ev.actor_id)} ·{" "}
+                              {formatDate(ev.created_at, {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </small>
+                            {ev.kind === "postpone" ? (
+                              <p>Motivo: {ev.reason}</p>
+                            ) : (
+                              <ul className="task-changes">
+                                {describeChanges(ev, name).map((c) => (
+                                  <li key={c}>{c}</li>
+                                ))}
+                              </ul>
+                            )}
+                          </div>
+                        </li>
+                      );
+                    if (!p) return null;
                     const v = data!.task_verifications.find(
                       (v) => v.progress_id === p.id,
                     );
@@ -362,7 +487,13 @@ export default function Quests() {
         <>
           <div className="toolbar">
             <div className="segments">
-              {["Todas", "Mías", "Compartidas", "Por verificar"].map((v) => (
+              {[
+                "Activas",
+                "Mías",
+                "Compartidas",
+                "Por verificar",
+                "Historial",
+              ].map((v) => (
                 <button
                   key={v}
                   onClick={() => setFilter(v)}
@@ -401,11 +532,18 @@ export default function Quests() {
                       <Status value={t.status} />
                     </div>
                     <p className="muted">
-                      {t.assignee_id
-                        ? data!.profiles.find((p) => p.id === t.assignee_id)
-                            ?.display_name
-                        : "Compartida"}{" "}
-                      · {formatDate(t.due_on)}
+                      {t.assignee_id ? name(t.assignee_id) : "Compartida"} ·{" "}
+                      {t.status === "done" ? (
+                        `Completada el ${formatDate(t.completed_at ?? t.due_on)}`
+                      ) : t.due_on < today ? (
+                        <span className="overdue">
+                          {formatDate(t.due_on)} · vencida
+                        </span>
+                      ) : (
+                        formatDate(t.due_on)
+                      )}
+                      {moves(t.id) > 0 &&
+                        ` · Movida ${moves(t.id)} ${moves(t.id) === 1 ? "vez" : "veces"}`}
                     </p>
                   </div>
                   <DualProgress
@@ -417,13 +555,160 @@ export default function Quests() {
               ))
             ) : (
               <Empty
-                title="Un día lleno de posibilidades"
-                text="Todavía no hay tareas con estos filtros. ¿Creamos un pequeño primer paso?"
+                title={
+                  history
+                    ? "Aún no hay tareas completadas"
+                    : "Un día lleno de posibilidades"
+                }
+                text={
+                  history
+                    ? "Cuando una tarea llegue al 100 % verificado, quedará guardada aquí."
+                    : "Todavía no hay tareas con estos filtros. ¿Creamos un pequeño primer paso?"
+                }
               />
             )}
           </div>
         </>
       )}
+      <Modal
+        title="Editar la tarea"
+        open={editing}
+        onOpenChange={(v) => !action.busy && setEditing(v)}
+      >
+        <form
+          className="form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!current) return;
+            void action.run(
+              async () =>
+                check(
+                  await supabase.rpc("edit_task", {
+                    p_task_id: current.id,
+                    p_title: edit.title,
+                    p_description: edit.description,
+                    p_assignee_id: edit.assignee_id || null,
+                    p_due_on: edit.due_on,
+                  }),
+                ),
+              () => setEditing(false),
+            );
+          }}
+        >
+          <label className="field">
+            Título
+            <input
+              required
+              minLength={3}
+              maxLength={80}
+              value={edit.title}
+              onChange={(e) => setEdit({ ...edit, title: e.target.value })}
+            />
+          </label>
+          <label className="field">
+            Descripción
+            <textarea
+              maxLength={2000}
+              value={edit.description}
+              onChange={(e) =>
+                setEdit({ ...edit, description: e.target.value })
+              }
+            />
+          </label>
+          <label className="field">
+            Para quién
+            <select
+              value={edit.assignee_id}
+              onChange={(e) =>
+                setEdit({ ...edit, assignee_id: e.target.value })
+              }
+            >
+              <option value={me.id}>{me.display_name}</option>
+              {partner && (
+                <option value={partner.id}>{partner.display_name}</option>
+              )}
+              <option value="">Los dos</option>
+            </select>
+          </label>
+          <label className="field">
+            Fecha
+            <input
+              type="date"
+              required
+              value={edit.due_on}
+              onChange={(e) => setEdit({ ...edit, due_on: e.target.value })}
+            />
+          </label>
+          <p className="small muted">
+            El avance se conserva. {partner?.display_name ?? "Tu pareja"}{" "}
+            recibirá un aviso y el cambio queda en la historia de la tarea.
+          </p>
+          <ErrorMessage error={action.error} />
+          <Button type="submit" busy={action.busy}>
+            Guardar cambios
+          </Button>
+        </form>
+      </Modal>
+      <Modal
+        title="Pasar a otro día"
+        open={moving}
+        onOpenChange={(v) => !action.busy && setMoving(v)}
+      >
+        <form
+          className="form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!current) return;
+            void action.run(
+              async () =>
+                check(
+                  await supabase.rpc("postpone_task", {
+                    p_task_id: current.id,
+                    p_to: moveTo,
+                    p_reason: moveReason,
+                  }),
+                ),
+              () => setMoving(false),
+            );
+          }}
+        >
+          {current && (
+            <p className="muted">
+              <strong>{current.title}</strong> · {current.verified_percent} %
+              verificado. Sigue con su avance en el nuevo día.
+            </p>
+          )}
+          <label className="field">
+            Nuevo día
+            <input
+              type="date"
+              required
+              min={current ? nextAfter(current.due_on) : undefined}
+              value={moveTo}
+              onChange={(e) => setMoveTo(e.target.value)}
+            />
+          </label>
+          <label className="field">
+            ¿Por qué no se completó?
+            <textarea
+              required
+              minLength={5}
+              maxLength={500}
+              value={moveReason}
+              onChange={(e) => setMoveReason(e.target.value)}
+              placeholder="Queda en el registro de la tarea."
+            />
+          </label>
+          <ErrorMessage error={action.error} />
+          <Button
+            type="submit"
+            busy={action.busy}
+            disabled={moveReason.trim().length < 5 || !moveTo}
+          >
+            {moveTo ? `Pasar al ${formatDate(moveTo)}` : "Pasar al nuevo día"}
+          </Button>
+        </form>
+      </Modal>
       <Modal title="Una nueva tarea" open={open} onOpenChange={close}>
         <form onSubmit={form.handleSubmit(create)} className="form">
           <ErrorMessage error={action.error} />
@@ -467,4 +752,32 @@ export default function Quests() {
       </Modal>
     </>
   );
+}
+
+const FIELD_NAMES: Record<string, string> = {
+  title: "Título",
+  description: "Descripción",
+  assignee_id: "Para quién",
+  due_on: "Fecha",
+};
+/** The day after `d` (YYYY-MM-DD), for the "move to another day" minimum. */
+function nextAfter(d: string) {
+  const day = new Date(d + "T12:00:00Z");
+  day.setUTCDate(day.getUTCDate() + 1);
+  return day.toISOString().slice(0, 10);
+}
+/** Human-readable lines for an "edit" event's recorded changes. */
+function describeChanges(
+  e: TaskEvent,
+  name: (uid: string | null) => string,
+): string[] {
+  return Object.entries(e.changes).map(([key, value]) => {
+    const [from, to] = Array.isArray(value) ? value : [];
+    if (key === "title") return `Título: «${from}» → «${to}»`;
+    if (key === "assignee_id")
+      return `Ahora es para ${name((to as string | null) ?? null)}`;
+    if (key === "due_on")
+      return `Fecha: ${formatDate(String(from))} → ${formatDate(String(to))}`;
+    return `${FIELD_NAMES[key] ?? key} actualizada`;
+  });
 }

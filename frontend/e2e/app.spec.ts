@@ -997,3 +997,72 @@ test("a lived date's photo also appears in the memory album with its note", asyn
   await expect(dialog.getByText("De nuestra cita")).toBeVisible();
   await expect(dialog.getByText("Nos llovió y fue perfecto")).toBeVisible();
 });
+
+test("unfinished tasks move to another day with a reason, can be edited, and finished ones live in the history", async ({
+  page,
+}) => {
+  const rows = await fixture(page);
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Lima" }).format(new Date());
+  rows.tasks.push({
+    id: "dddddddd-0000-4ddd-8ddd-000000000001",
+    space_id: sid,
+    created_by: a,
+    assignee_id: a,
+    title: "Regar las plantas",
+    description: "",
+    due_on: today,
+    status: "done",
+    reported_percent: 100,
+    verified_percent: 100,
+    rejections: 0,
+    created_at: new Date().toISOString(),
+    completed_at: new Date().toISOString(),
+  });
+  rows.task_events = [];
+  const calls: Record<string, any[]> = { postpone_task: [], edit_task: [] };
+  await page.route(/rest\/v1\/rpc\/(postpone_task|edit_task)/, async (route) => {
+    const fn = new URL(route.request().url()).pathname.split("/").pop()!;
+    const body = route.request().postDataJSON();
+    calls[fn].push(body);
+    const t = rows.tasks.find((t) => t.id === body.p_task_id);
+    if (fn === "postpone_task") {
+      rows.task_events.push({ id: crypto.randomUUID(), task_id: t.id, actor_id: a, kind: "postpone", from_date: t.due_on, to_date: body.p_to, reason: body.p_reason, changes: {}, created_at: new Date().toISOString() });
+      t.due_on = body.p_to;
+    } else {
+      rows.task_events.push({ id: crypto.randomUUID(), task_id: t.id, actor_id: a, kind: "edit", from_date: t.due_on, to_date: null, reason: "", changes: { title: [t.title, body.p_title] }, created_at: new Date().toISOString() });
+      Object.assign(t, { title: body.p_title, description: body.p_description, assignee_id: body.p_assignee_id, due_on: body.p_due_on });
+    }
+    await route.fulfill({ json: null });
+  });
+  // Finished tasks leave the active list and appear in the history.
+  await page.goto("/dia/quests");
+  await expect(page.getByRole("heading", { name: "Preparar una escapada" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Regar las plantas" })).toHaveCount(0);
+  await page.getByRole("button", { name: "Historial", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Regar las plantas" })).toBeVisible();
+  await expect(page.getByText(/Completada el/)).toBeVisible();
+  // An unfinished task moves to another day, with its reason on record.
+  await page.goto(`/dia/quests/${tid}`);
+  await page.getByRole("button", { name: "Pasar a otro día" }).click();
+  const dialog = page.getByRole("dialog");
+  const save = dialog.getByRole("button", { name: /^Pasar al/ });
+  await expect(save).toBeDisabled();
+  await dialog.getByLabel("¿Por qué no se completó?").fill("Faltó tiempo para comparar precios");
+  const axe = await new AxeBuilder({ page }).include(".dialog").analyze();
+  expect(axe.violations).toEqual([]);
+  await save.click();
+  await expect(dialog).toHaveCount(0);
+  expect(calls.postpone_task[0]).toMatchObject({ p_task_id: tid, p_reason: "Faltó tiempo para comparar precios" });
+  expect(calls.postpone_task[0].p_to > today).toBe(true);
+  await expect(page.getByText("Motivo: Faltó tiempo para comparar precios")).toBeVisible();
+  // Editing works from the task itself, keeping the change in its history.
+  await page.getByRole("button", { name: "Editar", exact: true }).click();
+  await dialog.getByLabel("Título").fill("Preparar la escapada a Paracas");
+  await dialog.getByRole("button", { name: "Guardar cambios" }).click();
+  await expect(dialog).toHaveCount(0);
+  expect(calls.edit_task[0]).toMatchObject({ p_title: "Preparar la escapada a Paracas", p_assignee_id: b });
+  await expect(page.getByRole("heading", { name: "Preparar la escapada a Paracas" })).toBeVisible();
+  await expect(page.getByText("Título: «Preparar una escapada» → «Preparar la escapada a Paracas»")).toBeVisible();
+  await page.goto("/dia/quests");
+  await expect(page.getByText(/Movida 1 vez/)).toBeVisible();
+});

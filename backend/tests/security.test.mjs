@@ -134,6 +134,7 @@ before(async () => {
     "202611130013_web_push.sql",
     "202611130014_gmail_notifications.sql",
     "202611130015_lived_dates.sql",
+    "202611130016_task_carryover.sql",
   ]) {
     await db.exec(
       readFileSync(
@@ -1177,4 +1178,41 @@ test("either member records a lived date with a past day, an optional photo and 
   await assert.rejects(() => live(a, "2026-02-15", "", "12345678-1234-4234-8234-123456789abc"), /Foto/);
   await assert.rejects(() => live(c, "2026-02-15", ""), /disponible/);
   await assert.rejects(() => as(a, () => db.query("select public.complete_date($1,'2026-02-15','',null)", [sid])), /disponible/);
+});
+
+test("unfinished tasks move to another day with a reason, either member edits them, and finished ones become history", async () => {
+  const id = (await as(a, () => db.query("insert into public.tasks(space_id,title,assignee_id,due_on) values($1,'Lavar la ropa',$2,'2026-11-13') returning id", [sid, a]))).rows[0].id;
+  // Reported 60 %, verified 60 %: not finished, so it is carried to tomorrow with the reason.
+  const pid = (await as(a, () => db.query("select public.report_task_progress($1,60,'la mitad') id", [id]))).rows[0].id;
+  await as(b, () => db.query("select public.verify_task_progress($1,'approve')", [pid]));
+  await as(b, () => db.query("select public.postpone_task($1,'2026-11-14','Faltó tiempo, quedan las sábanas')", [id]));
+  let t = (await db.query("select due_on::text d,verified_percent v,status,completed_at from public.tasks where id=$1", [id])).rows[0];
+  assert.deepEqual([t.d, t.v, t.status, t.completed_at], ["2026-11-14", 60, "progress", null]);
+  const events = async () => (await as(a, () => db.query("select kind,from_date::text f,to_date::text t,reason,changes,actor_id from public.task_events where task_id=$1 order by created_at", [id]))).rows;
+  assert.deepEqual((await events()).map((e) => [e.kind, e.f, e.t, e.reason, e.actor_id]), [["postpone", "2026-11-13", "2026-11-14", "Faltó tiempo, quedan las sábanas", b]]);
+  assert.equal((await db.query("select count(*)::int n from public.notifications where kind='task_postponed' and recipient_id=$1", [a])).rows[0].n, 1);
+  // A reason is required, the day must move forward, outsiders are refused.
+  await assert.rejects(() => as(a, () => db.query("select public.postpone_task($1,'2026-11-15','')", [id])), /motivo/);
+  await assert.rejects(() => as(a, () => db.query("select public.postpone_task($1,'2026-11-14','Otra vez sin tiempo')", [id])), /posterior/);
+  await assert.rejects(() => as(c, () => db.query("select public.postpone_task($1,'2026-11-20','No soy del espacio')", [id])), /disponible/);
+  // B edits A's task (title and owner); progress stays and the change is recorded.
+  await as(b, () => db.query("select public.edit_task($1,'Lavar y doblar la ropa','',$2,'2026-11-14')", [id, b]));
+  t = (await db.query("select title,assignee_id,verified_percent v from public.tasks where id=$1", [id])).rows[0];
+  assert.deepEqual([t.title, t.assignee_id, t.v], ["Lavar y doblar la ropa", b, 60]);
+  const edit = (await events()).at(-1);
+  assert.equal(edit.kind, "edit");
+  assert.deepEqual(edit.changes.title, ["Lavar la ropa", "Lavar y doblar la ropa"]);
+  assert.deepEqual(edit.changes.assignee_id, [a, b]);
+  // Saving without changes records nothing; clients cannot write the log directly.
+  await as(b, () => db.query("select public.edit_task($1,'Lavar y doblar la ropa','',$2,'2026-11-14')", [id, b]));
+  assert.equal((await events()).length, 2);
+  await assert.rejects(() => as(a, () => db.query("insert into public.task_events(task_id,actor_id,kind) values($1,$2,'edit')", [id, a])), /permission denied/);
+  // Finishing it (100 % verified) stamps completed_at; history can no longer be edited or moved.
+  const p2 = (await as(b, () => db.query("select public.report_task_progress($1,100,'listo') id", [id]))).rows[0].id;
+  await as(a, () => db.query("select public.verify_task_progress($1,'approve')", [p2]));
+  t = (await db.query("select status,completed_at from public.tasks where id=$1", [id])).rows[0];
+  assert.equal(t.status, "done");
+  assert.ok(t.completed_at);
+  await assert.rejects(() => as(a, () => db.query("select public.edit_task($1,'Otra cosa','',null,'2026-11-20')", [id])), /historial/);
+  await assert.rejects(() => as(a, () => db.query("select public.postpone_task($1,'2026-11-20','Ya no aplica')", [id])), /completada/);
 });

@@ -2947,3 +2947,14 @@ a.push-pill:hover {
     width: 100%;
   }
 }
+
+/* Tasks: overdue dates and the recorded edits in a task's history. */
+.overdue {
+  color: var(--color-st-rejected);
+  font-weight: 700;
+}
+.task-changes {
+  margin: 6px 0 0;
+  padding-left: 18px;
+  font-size: 13px;
+}
