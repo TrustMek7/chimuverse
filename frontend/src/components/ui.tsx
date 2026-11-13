@@ -60,6 +60,8 @@ export function Loading() {
   );
 }
 export function VisibilityPill({ value }: { value: Visibility }) {
+  // Everything in the space is shared; only time capsules need a label.
+  if (value !== "capsule") return null;
   const Icon = value === "capsule" ? Hourglass : Users;
   return (
     <span className={`pill visibility ${value}`}>

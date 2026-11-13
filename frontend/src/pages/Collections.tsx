@@ -418,8 +418,8 @@ export default function Collections() {
               <strong>{money(budget)}</strong>
             </div>
           </div>
-          <p className="small muted">
-            <Lock size={14} /> Se suman los ingresos, gastos y presupuestos de
+          <p className="small muted inline-note">
+            <Lock size={14} aria-hidden /> Se suman los ingresos, gastos y presupuestos de
             los dos.
           </p>
           <div className="segments">
@@ -491,12 +491,11 @@ export default function Collections() {
         </div>
       )}
       <div className="toolbar">
+        {(kind === "date" || kind === "watch") && (
         <div className="segments">
           {(kind === "date"
             ? ["Todas", "Pendientes", "Historial", "Sin foto"]
-            : kind === "watch"
-              ? ["Todas", "Pendientes", "Historial"]
-              : ["Todas"]
+            : ["Todas", "Pendientes", "Historial"]
           ).map((f) => (
             <button
               key={f}
@@ -507,10 +506,11 @@ export default function Collections() {
             </button>
           ))}
         </div>
+        )}
         <input
           aria-label="Buscar"
           className="search-input"
-          placeholder="Buscar en nuestros momentos…"
+          placeholder={kind === "date" ? "Buscar citas…" : "Buscar…"}
           value={search}
           onChange={(e) => {
             setSearch(e.target.value);
@@ -518,16 +518,16 @@ export default function Collections() {
           }}
         />
         {kind === "date" && (
-          <label>
-            Categoría de cita
-            <select
+          <select
+              aria-label="Categoría de cita"
+              className="toolbar-select"
               value={dateCategory}
               onChange={(e) => {
                 setDateCategory(e.target.value);
                 setDateLimit(24);
               }}
             >
-              <option>Todas</option>
+              <option value="Todas">Todas las categorías</option>
               {[
                 ...new Set(
                   data!.entries
@@ -540,7 +540,6 @@ export default function Collections() {
                   <option key={c}>{c}</option>
                 ))}
             </select>
-          </label>
         )}
         {["date", "watch"].includes(kind) && (
           <Button
@@ -750,12 +749,17 @@ export default function Collections() {
                   )}
                   <div className="row between card-meta">
                     <small>
-                      {formatDate(e.occurred_on)} ·{" "}
-                      {e.owner_id === me.id
-                        ? "Tú"
-                        : data!.profiles
-                            .find((p) => p.id === e.owner_id)
-                            ?.display_name.split(" ")[0]}
+                      {kind === "date"
+                        ? e.status === "done"
+                          ? `Vivida el ${formatDate(e.occurred_on)}`
+                          : ""
+                        : `${formatDate(e.occurred_on)} · `}
+                      {kind !== "date" &&
+                        (e.owner_id === me.id
+                          ? "Tú"
+                          : data!.profiles
+                              .find((p) => p.id === e.owner_id)
+                              ?.display_name.split(" ")[0])}
                     </small>
                     {e.owner_id === me.id && !sealed && (
                       <div className="row gap-sm">
@@ -785,25 +789,19 @@ export default function Collections() {
                       </div>
                     )}
                   </div>
-                  {(e.owner_id === me.id || kind === "date") &&
-                    ["watch", "date", "wish"].includes(kind) &&
+                  {e.owner_id === me.id &&
+                    ["watch", "wish"].includes(kind) &&
                     e.status !== "done" && (
                       <div className="row gap-sm">
                         <Button
                           variant="secondary"
                           busy={action.busy}
-                          onClick={() =>
-                            kind === "date"
-                              ? setLiving(e)
-                              : setStatus(e, "done")
-                          }
+                          onClick={() => setStatus(e, "done")}
                         >
                           <Check size={16} />
                           {kind === "wish"
                             ? "¡Deseo cumplido!"
-                            : kind === "date"
-                              ? "Ya la vivimos"
-                              : "Marcar como completado"}
+                            : "Marcar como completado"}
                         </Button>
                         {kind === "watch" && e.status === "pending" && (
                           <Button
@@ -817,7 +815,13 @@ export default function Collections() {
                       </div>
                     )}
                   {kind === "date" && (
-                    <div className="row gap wrap">
+                    <div className="row gap-sm wrap card-actions">
+                      {e.status !== "done" && (
+                        <Button variant="secondary" onClick={() => setLiving(e)}>
+                          <Check size={16} />
+                          Ya la vivimos
+                        </Button>
+                      )}
                       {e.status === "done" ? (
                         <Button
                           variant="secondary"

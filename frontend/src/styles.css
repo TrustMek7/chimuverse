@@ -2922,3 +2922,20 @@ a.push-pill:hover {
     transition: none;
   }
 }
+
+/* Toolbar: search and filters keep a readable width; inline notes keep their icon on the line. */
+.toolbar .search-input {
+  min-width: 220px;
+}
+.toolbar .toolbar-select {
+  width: auto;
+  min-width: 200px;
+}
+.inline-note svg {
+  display: inline-block;
+  vertical-align: -2px;
+  margin-right: 4px;
+}
+.card-actions {
+  align-items: center;
+}
