@@ -34,8 +34,8 @@ const nav = [
     group: "Nuestro día",
     color: "coral",
     items: [
-      ["/dia/quests", "Daily Quests", ListChecks],
-      ["/dia/calendario", "Our Calendar", CalendarDays],
+      ["/dia/quests", "Tareas del día", ListChecks],
+      ["/dia/calendario", "Nuestro calendario", CalendarDays],
     ],
   },
   {
@@ -43,37 +43,37 @@ const nav = [
     color: "pink",
     items: [
       ["/nosotros/universo", "Nuestro Universo", Orbit],
-      ["/nosotros/animo", "Mood Tracker", Smile],
+      ["/nosotros/animo", "Nuestro ánimo", Smile],
     ],
   },
   {
     group: "Recuerdos",
     color: "purple",
     items: [
-      ["/recuerdos/vault", "Memory Vault", Images],
-      ["/recuerdos/devlog", "DevLog of Us", BookOpen],
-      ["/recuerdos/wrapped", "Our Wrapped", Sparkles],
+      ["/recuerdos/vault", "Álbum de recuerdos", Images],
+      ["/recuerdos/devlog", "Nuestro diario", BookOpen],
+      ["/recuerdos/wrapped", "Nuestro año", Sparkles],
     ],
   },
   {
     group: "Experiencias",
     color: "teal",
-    items: [["/experiencias/citas", "Date Planner", Heart]],
+    items: [["/experiencias/citas", "Planes y citas", Heart]],
   },
   {
     group: "Entretenimiento",
     color: "sky",
     items: [
-      ["/ocio/watchlist", "Watchlist", Clapperboard],
-      ["/ocio/deseos", "Wishlist & Soundtrack", Music],
+      ["/ocio/watchlist", "Películas y series", Clapperboard],
+      ["/ocio/deseos", "Deseos y canciones", Music],
     ],
   },
   {
     group: "Creciendo",
     color: "lime",
     items: [
-      ["/creciendo/metas", "Goals & Dreams", Target],
-      ["/creciendo/finanzas", "Our Finances", Wallet],
+      ["/creciendo/metas", "Metas y sueños", Target],
+      ["/creciendo/finanzas", "Nuestras finanzas", Wallet],
     ],
   },
 ] as const;
