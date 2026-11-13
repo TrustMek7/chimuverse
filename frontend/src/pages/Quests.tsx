@@ -79,7 +79,7 @@ export default function Quests() {
       : "Los dos";
   const moves = (taskId: string) =>
     data!.task_events.filter(
-      (e) => e.task_id === taskId && e.kind === "postpone",
+      (e) => e.task_id === taskId && e.kind !== "edit",
     ).length;
   // Finished tasks leave the daily list and live in the history.
   const tasks = data!.tasks
@@ -387,18 +387,22 @@ export default function Quests() {
                     if (ev)
                       return (
                         <li key={ev.id}>
-                          <Avatar
-                            name={name(ev.actor_id)}
-                            partner={ev.actor_id !== me.id}
-                          />
+                          {ev.actor_id ? (
+                            <Avatar
+                              name={name(ev.actor_id)}
+                              partner={ev.actor_id !== me.id}
+                            />
+                          ) : (
+                            <span aria-hidden>↻</span>
+                          )}
                           <div>
                             <strong>
-                              {ev.kind === "postpone"
-                                ? `Pasó del ${formatDate(ev.from_date!)} al ${formatDate(ev.to_date!)}`
-                                : "Editó la tarea"}
+                              {ev.kind === "edit"
+                                ? "Editó la tarea"
+                                : `${ev.kind === "carry" ? "Pasó sola" : "Pasó"} del ${formatDate(ev.from_date!)} al ${formatDate(ev.to_date!)}`}
                             </strong>
                             <small>
-                              {name(ev.actor_id)} ·{" "}
+                              {ev.actor_id ? name(ev.actor_id) : "Automático"} ·{" "}
                               {formatDate(ev.created_at, {
                                 hour: "2-digit",
                                 minute: "2-digit",
@@ -406,6 +410,8 @@ export default function Quests() {
                             </small>
                             {ev.kind === "postpone" ? (
                               <p>Motivo: {ev.reason}</p>
+                            ) : ev.kind === "carry" ? (
+                              <p>{ev.reason}</p>
                             ) : (
                               <ul className="task-changes">
                                 {describeChanges(ev, name).map((c) => (

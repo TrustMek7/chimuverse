@@ -1018,7 +1018,10 @@ test("unfinished tasks move to another day with a reason, can be edited, and fin
     created_at: new Date().toISOString(),
     completed_at: new Date().toISOString(),
   });
-  rows.task_events = [];
+  // Nobody reviewed it yesterday: the scheduler carried it to today by itself.
+  rows.task_events = [
+    { id: crypto.randomUUID(), task_id: tid, actor_id: null, kind: "carry", from_date: "2026-11-12", to_date: today, reason: "No se completó ni se movió ese día; pasó sola al siguiente.", changes: {}, created_at: new Date(Date.now() - 3600e3).toISOString() },
+  ];
   const calls: Record<string, any[]> = { postpone_task: [], edit_task: [] };
   await page.route(/rest\/v1\/rpc\/(postpone_task|edit_task)/, async (route) => {
     const fn = new URL(route.request().url()).pathname.split("/").pop()!;
@@ -1043,6 +1046,8 @@ test("unfinished tasks move to another day with a reason, can be edited, and fin
   await expect(page.getByText(/Completada el/)).toBeVisible();
   // An unfinished task moves to another day, with its reason on record.
   await page.goto(`/dia/quests/${tid}`);
+  await expect(page.getByText(/^Pasó sola del 12 de noviembre/)).toBeVisible();
+  await expect(page.getByText("Automático", { exact: false })).toBeVisible();
   await page.getByRole("button", { name: "Pasar a otro día" }).click();
   const dialog = page.getByRole("dialog");
   const save = dialog.getByRole("button", { name: /^Pasar al/ });
@@ -1064,5 +1069,5 @@ test("unfinished tasks move to another day with a reason, can be edited, and fin
   await expect(page.getByRole("heading", { name: "Preparar la escapada a Paracas" })).toBeVisible();
   await expect(page.getByText("Título: «Preparar una escapada» → «Preparar la escapada a Paracas»")).toBeVisible();
   await page.goto("/dia/quests");
-  await expect(page.getByText(/Movida 1 vez/)).toBeVisible();
+  await expect(page.getByText(/Movida 2 veces/)).toBeVisible();
 });

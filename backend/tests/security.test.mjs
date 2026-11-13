@@ -1216,3 +1216,22 @@ test("unfinished tasks move to another day with a reason, either member edits th
   await assert.rejects(() => as(a, () => db.query("select public.edit_task($1,'Otra cosa','',null,'2026-11-20')", [id])), /historial/);
   await assert.rejects(() => as(a, () => db.query("select public.postpone_task($1,'2026-11-20','Ya no aplica')", [id])), /completada/);
 });
+
+test("an unfinished task whose day ended carries itself to today; finished ones stay where they are", async () => {
+  const mk = async (title, status) =>
+    (await db.query("insert into public.tasks(space_id,created_by,title,due_on,status) values($1,$2,$3,'2020-01-01',$4) returning id", [sid, a, title, status])).rows[0].id;
+  const open = await mk("Ordenar el cuarto", "progress");
+  const done = await mk("Cocinar juntos", "done");
+  const today = (await db.query("select min((now() at time zone coalesce(p.timezone,'America/Lima'))::date)::text d from public.space_members m join public.profiles p on p.id=m.user_id where m.space_id=$1", [sid])).rows[0].d;
+  assert.ok((await db.query("select public.carry_over_tasks() n")).rows[0].n >= 1);
+  const due = async (id) => (await db.query("select due_on::text d from public.tasks where id=$1", [id])).rows[0].d;
+  assert.equal(await due(open), today);
+  assert.equal(await due(done), "2020-01-01");
+  const ev = (await as(b, () => db.query("select kind,actor_id,from_date::text f,to_date::text t,reason from public.task_events where task_id=$1", [open]))).rows;
+  assert.deepEqual(ev.map((e) => [e.kind, e.actor_id, e.f, e.t]), [["carry", null, "2020-01-01", today]]);
+  assert.match(ev[0].reason, /pasó sola/);
+  // Running again the same day changes nothing; members cannot trigger it.
+  await db.query("select public.carry_over_tasks()");
+  assert.equal((await db.query("select count(*)::int n from public.task_events where task_id=$1", [open])).rows[0].n, 1);
+  await assert.rejects(() => as(a, () => db.query("select public.carry_over_tasks()")), /permission denied/);
+});

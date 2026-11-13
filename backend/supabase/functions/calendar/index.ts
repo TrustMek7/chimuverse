@@ -535,11 +535,14 @@ export async function handler(req: Request) {
           results.push({ ok: false });
         }
       }
+      // Unfinished tasks whose day ended move to today by themselves (recorded as "carry").
+      const carried = await rpc("carry_over_tasks").catch(() => null);
       await rpc("enqueue_reminders");
       return Response.json(
         {
           processed: results.length,
           failed: results.filter((r) => !r.ok).length,
+          carried,
         },
         { headers },
       );
