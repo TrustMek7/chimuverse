@@ -832,6 +832,19 @@ test("dashboard offers one-tap notifications, shows their status and lists devic
   await expect(page.getByRole("heading", { name: "Notificaciones en tus dispositivos" })).toBeVisible();
   await expect(page.getByText("Este dispositivo", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Desactivar aquí" })).toBeVisible();
+  // Blocking the permission later removes the dead subscription from the server.
+  const removed: string[] = [];
+  await page.route("**/rest/v1/rpc/remove_push_subscription", async (route) => {
+    removed.push(route.request().postDataJSON().p_endpoint);
+    await route.fulfill({ json: null });
+  });
+  await page.evaluate(() => {
+    sessionStorage.setItem("push-permission", "denied");
+    sessionStorage.removeItem("push-sub");
+  });
+  await page.goto("/");
+  await expect(page.getByRole("heading", { name: "Las notificaciones están bloqueadas" })).toBeVisible();
+  await expect.poll(() => removed).toEqual(["https://push.example.test/device-1"]);
 });
 test("Gmail connection is send-only, explains the email fallback and reports the OAuth result", async ({
   page,

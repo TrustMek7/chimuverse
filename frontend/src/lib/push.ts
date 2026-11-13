@@ -66,7 +66,33 @@ async function registration() {
     (await navigator.serviceWorker.register("/sw.js", { scope: "/" }))
   );
 }
+// The endpoint this browser last saved, so a dead subscription can be removed from the server
+// after the permission is blocked or reset (otherwise the email fallback would never kick in).
+const SAVED_ENDPOINT = "chimu-push-endpoint";
+const remember = (endpoint: string | null) => {
+  try {
+    if (endpoint) localStorage.setItem(SAVED_ENDPOINT, endpoint);
+    else localStorage.removeItem(SAVED_ENDPOINT);
+  } catch {
+    // Storage unavailable: the push service will report the device as gone later.
+  }
+};
+const remembered = () => {
+  try {
+    return localStorage.getItem(SAVED_ENDPOINT);
+  } catch {
+    return null;
+  }
+};
+async function forgetStale(current: string | null = null) {
+  const old = remembered();
+  if (!old || old === current) return;
+  await supabase.rpc("remove_push_subscription", { p_endpoint: old });
+  remember(current);
+}
+
 async function save(sub: PushSubscription) {
+  await forgetStale(sub.endpoint);
   check(
     await supabase.rpc("save_push_subscription", {
       p_endpoint: sub.endpoint,
@@ -75,14 +101,17 @@ async function save(sub: PushSubscription) {
       p_label: deviceLabel(),
     }),
   );
+  remember(sub.endpoint);
 }
 
 /** Reads the state and, when permission already exists, silently re-links this device. */
 export async function readPushState(): Promise<PushState> {
   if (isAppleMobile() && !isStandalone()) return "install";
   if (!supported()) return "unsupported";
-  if (Notification.permission === "denied") return "denied";
-  if (Notification.permission !== "granted") return "off";
+  if (Notification.permission !== "granted") {
+    await forgetStale();
+    return Notification.permission === "denied" ? "denied" : "off";
+  }
   const reg = await registration();
   let sub = await reg.pushManager.getSubscription();
   if (!sub) {
@@ -90,6 +119,7 @@ export async function readPushState(): Promise<PushState> {
     try {
       sub = await subscribe(reg);
     } catch {
+      await forgetStale();
       return "off";
     }
   }
@@ -123,8 +153,9 @@ export async function disablePush() {
   if (!supported()) return;
   const reg = await navigator.serviceWorker.getRegistration("/");
   const sub = await reg?.pushManager.getSubscription();
-  if (!sub) return;
+  if (!sub) return forgetStale();
   await supabase.rpc("remove_push_subscription", { p_endpoint: sub.endpoint });
+  remember(null);
   await sub.unsubscribe().catch(() => undefined);
 }
 
