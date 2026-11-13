@@ -9,7 +9,8 @@ El código implementado se detalla en [estado de implementación](implementation
 - [x] Lista de dos cuentas autorizadas, máximo dos miembros.
 - [x] CI, build, typecheck, pruebas SQL, Calendar y navegador.
 - [x] Aplicar migraciones en Supabase remoto.
-- [ ] Habilitar Google Auth con credenciales OAuth y probar ambas cuentas.
+- [x] Habilitar Google Auth con credenciales OAuth.
+- [ ] Probar acceso y consentimiento real con ambas cuentas.
 
 ## Nuestro día y nosotros
 

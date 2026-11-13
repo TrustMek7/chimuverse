@@ -23,13 +23,13 @@ Validación local ejecutada: build de producción y typecheck correctos; 11 test
 
 El token de administración ya está configurado. Se aplicaron las cinco migraciones al proyecto remoto, se desplegó la función Calendar y se programaron sincronización/recordatorios cada 15 minutos. Antes del despliegue se guardó una instantánea cifrada del catálogo y datos públicos: el proyecto tenía cero tablas públicas y cero usuarios. La copia está fuera de Git y no incluye Auth ni objetos Storage.
 
-Google Auth sigue deshabilitado porque faltan `GOOGLE_OAUTH_CLIENT_ID` y `GOOGLE_OAUTH_CLIENT_SECRET`. Deben configurarse el cliente OAuth y sus redirecciones, habilitar el proveedor y autorizar las dos cuentas. Ver `getting-started.md`.
+Cliente OAuth importado desde JSON y ambas redirecciones validadas. Google Auth ya está habilitado; las credenciales también están desplegadas para Calendar. Pendiente que las dos personas inicien sesión y autoricen sus conexiones en el navegador. Ver `getting-started.md`.
 
 No se declara listo para producción ni validada la sincronización real hasta completar esa configuración y probar ambos usuarios con Google.
 
 ## Límites explícitos
 
-- Correo y push desactivados, como en el diseño. Integración Spotify/YouTube solo por enlaces.
+- Correo y push desactivados. Spotify continúa por enlaces. El usuario amplió YouTube a conexión individual e importación/exportación y sincronización de playlists; esa integración aún está pendiente de implementar.
 - Papelera restaurable, sin purga automática activada; nada se elimina definitivamente sin esa configuración.
 - Calendar externo admite eventos simples y recurrencia anual. Otras reglas de recurrencia se rechazan con un mensaje, evitando importarlas incorrectamente.
 - No se ha publicado el frontend en Vercel ni se han enviado commits al remoto.

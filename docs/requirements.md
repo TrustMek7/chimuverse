@@ -58,3 +58,8 @@ Documento de guía de implementación, **no especificación formal cerrada**. Do
 - Eventos se pueden crear, editar y visualizar; integración Calendar bidireccional probada con las dos cuentas antes de declarar completo el módulo.
 - Fotos privadas con fecha del recuerdo y álbum por viaje; diario con entradas persistentes.
 - Se registran errores de sincronización y hay reintentos controlados.
+
+
+## Ampliación confirmada: YouTube
+
+Conectar individualmente las cuentas de YouTube, importar/exportar playlists y sincronizar sus modificaciones entre Chimuverse y YouTube. Esta ampliación sustituye el alcance previo de solo enlaces; los permisos OAuth deben solicitarse por separado al login y a Calendar. Implementación pendiente.
