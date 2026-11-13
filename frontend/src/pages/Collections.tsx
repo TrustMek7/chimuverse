@@ -5,6 +5,7 @@ import {
   datePhoto,
 } from "../components/DateMemory";
 import { YouTubePlaylist } from "../components/YouTubePlaylist";
+import { FinanceRecurring } from "../components/FinanceRecurring";
 import { useState } from "react";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
 import {
@@ -203,6 +204,8 @@ export default function Collections() {
   const [living, setLiving] = useState<Entry | null>(null);
   const action = useAction();
   const [selectedKind, setSelectedKind] = useState<EntryKind>(cfg.kind);
+  const [month, setMonth] = useState(localDay().slice(0, 7));
+  const financeKind = (k: string) => k === "transaction" || k === "budget";
   const kind =
     pathname === "/ocio/deseos"
       ? selectedKind
@@ -219,6 +222,7 @@ export default function Collections() {
         (filter !== "Historial" || e.status === "done") &&
         (filter !== "Sin foto" ||
           (e.status === "done" && !datePhoto(e, data!.photos))) &&
+        (!financeKind(kind) || e.occurred_on.startsWith(month)) &&
         (kind !== "date" ||
           dateCategory === "Todas" ||
           String(e.details.category || "Sin categoría") === dateCategory) &&
@@ -238,9 +242,8 @@ export default function Collections() {
   const allTransactions = data!.entries.filter(
     (e) => !e.deleted_at && e.kind === "transaction",
   );
-  const thisMonth = localDay().slice(0, 7);
   const monthTransactions = allTransactions.filter((e) =>
-    e.occurred_on.startsWith(thisMonth),
+    e.occurred_on.startsWith(month),
   );
   const totals = (direction: string) =>
     monthTransactions
@@ -249,9 +252,7 @@ export default function Collections() {
   const budget = data!.entries
     .filter(
       (e) =>
-        e.kind === "budget" &&
-        !e.deleted_at &&
-        e.occurred_on.startsWith(thisMonth),
+        e.kind === "budget" && !e.deleted_at && e.occurred_on.startsWith(month),
     )
     .reduce((s, e) => s + Number(e.amount ?? 0), 0);
   function change<K extends keyof Draft>(key: K, value: Draft[K]) {
@@ -400,27 +401,73 @@ export default function Collections() {
       )}
       {isFinance && (
         <>
+          <label className="field inline-field finance-month">
+            Mes
+            <input
+              type="month"
+              value={month}
+              onChange={(e) => e.target.value && setMonth(e.target.value)}
+            />
+          </label>
           <div className="metrics-grid">
             <div className="card metric">
-              <small>Ingresos visibles · este mes</small>
+              <small>Ingresos del mes</small>
               <strong>{money(totals("income"))}</strong>
             </div>
             <div className="card metric">
-              <small>Gastos visibles · este mes</small>
+              <small>Gastos del mes</small>
               <strong>{money(totals("expense"))}</strong>
             </div>
             <div className="card metric">
-              <small>Balance</small>
-              <strong>{money(totals("income") - totals("expense"))}</strong>
+              <small>Ahorro del mes</small>
+              <strong>{money(totals("saving"))}</strong>
             </div>
             <div className="card metric">
-              <small>Nuestro presupuesto · este mes</small>
-              <strong>{money(budget)}</strong>
+              <small>Disponible</small>
+              <strong>
+                {money(totals("income") - totals("expense") - totals("saving"))}
+              </strong>
+              <small className="muted">Ingresos − gastos − ahorro</small>
             </div>
           </div>
+          {budget > 0 && (
+            <div className="card budget-meter">
+              <div className="row between wrap">
+                <span>
+                  Presupuesto: gastado{" "}
+                  <strong>{money(totals("expense"))}</strong> de {money(budget)}
+                </span>
+                <strong
+                  className={totals("expense") > budget ? "over-budget" : ""}
+                >
+                  {totals("expense") > budget
+                    ? `Te pasaste ${money(totals("expense") - budget)}`
+                    : `Quedan ${money(budget - totals("expense"))}`}
+                </strong>
+              </div>
+              <div
+                className="track"
+                role="meter"
+                aria-label="Presupuesto gastado"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={Math.min(
+                  100,
+                  Math.round((totals("expense") / budget) * 100),
+                )}
+              >
+                <span
+                  className={`fill ${totals("expense") > budget ? "over" : "verified"}`}
+                  style={{
+                    width: `${Math.min(100, (totals("expense") / budget) * 100)}%`,
+                  }}
+                />
+              </div>
+            </div>
+          )}
           <p className="small muted inline-note">
-            <Lock size={14} aria-hidden /> Se suman los ingresos, gastos y presupuestos de
-            los dos.
+            <Lock size={14} aria-hidden /> Las finanzas son de los dos:
+            cualquiera puede añadir, corregir o quitar un movimiento.
           </p>
           <div className="segments">
             {[
@@ -439,6 +486,7 @@ export default function Collections() {
               </button>
             ))}
           </div>
+          {kind === "transaction" && <FinanceRecurring />}
         </>
       )}
       {kind === "mood" && (
@@ -492,20 +540,20 @@ export default function Collections() {
       )}
       <div className="toolbar">
         {(kind === "date" || kind === "watch") && (
-        <div className="segments">
-          {(kind === "date"
-            ? ["Todas", "Pendientes", "Historial", "Sin foto"]
-            : ["Todas", "Pendientes", "Historial"]
-          ).map((f) => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              aria-pressed={filter === f}
-            >
-              {f}
-            </button>
-          ))}
-        </div>
+          <div className="segments">
+            {(kind === "date"
+              ? ["Todas", "Pendientes", "Historial", "Sin foto"]
+              : ["Todas", "Pendientes", "Historial"]
+            ).map((f) => (
+              <button
+                key={f}
+                onClick={() => setFilter(f)}
+                aria-pressed={filter === f}
+              >
+                {f}
+              </button>
+            ))}
+          </div>
         )}
         <input
           aria-label="Buscar"
@@ -519,27 +567,27 @@ export default function Collections() {
         />
         {kind === "date" && (
           <select
-              aria-label="Categoría de cita"
-              className="toolbar-select"
-              value={dateCategory}
-              onChange={(e) => {
-                setDateCategory(e.target.value);
-                setDateLimit(24);
-              }}
-            >
-              <option value="Todas">Todas las categorías</option>
-              {[
-                ...new Set(
-                  data!.entries
-                    .filter((e) => e.kind === "date" && !e.deleted_at)
-                    .map((e) => String(e.details.category || "Sin categoría")),
-                ),
-              ]
-                .sort()
-                .map((c) => (
-                  <option key={c}>{c}</option>
-                ))}
-            </select>
+            aria-label="Categoría de cita"
+            className="toolbar-select"
+            value={dateCategory}
+            onChange={(e) => {
+              setDateCategory(e.target.value);
+              setDateLimit(24);
+            }}
+          >
+            <option value="Todas">Todas las categorías</option>
+            {[
+              ...new Set(
+                data!.entries
+                  .filter((e) => e.kind === "date" && !e.deleted_at)
+                  .map((e) => String(e.details.category || "Sin categoría")),
+              ),
+            ]
+              .sort()
+              .map((c) => (
+                <option key={c}>{c}</option>
+              ))}
+          </select>
         )}
         {["date", "watch"].includes(kind) && (
           <Button
@@ -733,6 +781,26 @@ export default function Collections() {
                       {money(Number(e.amount))}
                     </strong>
                   )}
+                  {financeKind(kind) &&
+                    (e.details.recurring_id || e.details.edited_by) && (
+                      <p className="small muted">
+                        {e.details.recurring_id
+                          ? "Fijo · se registró solo"
+                          : ""}
+                        {e.details.recurring_id && e.details.edited_by
+                          ? " · "
+                          : ""}
+                        {e.details.edited_by
+                          ? `Corregido por ${
+                              e.details.edited_by === me.id
+                                ? "ti"
+                                : data!.profiles
+                                    .find((p) => p.id === e.details.edited_by)
+                                    ?.display_name.split(" ")[0]
+                            }`
+                          : ""}
+                      </p>
+                    )}
                   {e.details.location && (
                     <p className="muted">⌖ {e.details.location}</p>
                   )}
@@ -761,7 +829,7 @@ export default function Collections() {
                               .find((p) => p.id === e.owner_id)
                               ?.display_name.split(" ")[0])}
                     </small>
-                    {e.owner_id === me.id && !sealed && (
+                    {(e.owner_id === me.id || financeKind(kind)) && !sealed && (
                       <div className="row gap-sm">
                         <button
                           className="icon-button"
@@ -817,7 +885,10 @@ export default function Collections() {
                   {kind === "date" && (
                     <div className="row gap-sm wrap card-actions">
                       {e.status !== "done" && (
-                        <Button variant="secondary" onClick={() => setLiving(e)}>
+                        <Button
+                          variant="secondary"
+                          onClick={() => setLiving(e)}
+                        >
                           <Check size={16} />
                           Ya la vivimos
                         </Button>

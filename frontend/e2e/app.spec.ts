@@ -1146,3 +1146,61 @@ test("tasks are discarded with a reason and recovered, the reviewer adjusts prog
   await expect(dialog).toHaveCount(0);
   expect(rows.task_verifications.at(-1)).toMatchObject({ decision: "approve" });
 });
+
+test("finances are shared, filtered by month, measured against the budget, and fixed movements register themselves", async ({
+  page,
+}) => {
+  const rows = await fixture(page);
+  const month = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Lima" }).format(new Date()).slice(0, 7);
+  const entry = (id: string, kind: string, title: string, amount: number, day: string, details: any) => ({
+    id, owner_id: b, space_id: sid, kind, title, amount, details, visibility: "shared", status: "pending",
+    occurred_on: day, created_at: new Date().toISOString(), deleted_at: null, entry_bodies: null,
+  });
+  rows.entries.push(
+    entry("f1111111-1111-4111-8111-111111111111", "transaction", "Sueldo", 3000, `${month}-01`, { direction: "income", category: "Trabajo" }),
+    entry("f2222222-2222-4222-8222-222222222222", "transaction", "Mercado", 400, `${month}-05`, { direction: "expense", category: "Comida" }),
+    entry("f3333333-3333-4333-8333-333333333333", "transaction", "Fondo de viaje", 500, `${month}-06`, { direction: "saving" }),
+    entry("f4444444-4444-4444-8444-444444444444", "transaction", "Cena del mes pasado", 99, "2020-01-10", { direction: "expense" }),
+    entry("f5555555-5555-4555-8555-555555555555", "budget", "Presupuesto del mes", 1000, `${month}-01`, {}),
+  );
+  rows.finance_recurring = [];
+  const saved: any[] = [];
+  await page.route("**/rest/v1/rpc/save_recurring", async (route) => {
+    const body = route.request().postDataJSON();
+    saved.push(body);
+    const d = body.p_data;
+    if (!body.p_id) {
+      const id = crypto.randomUUID();
+      rows.finance_recurring.push({ id, space_id: sid, created_by: a, title: d.title, amount: d.amount, direction: d.direction, category: d.category, frequency: d.frequency, start_on: d.start_on, end_on: null, next_on: "2999-01-01", active: true, deleted_at: null });
+      rows.entries.push(entry(crypto.randomUUID(), "transaction", d.title, d.amount, d.start_on, { direction: d.direction, recurring_id: id }));
+    } else Object.assign(rows.finance_recurring.find((r) => r.id === body.p_id), { active: d.active });
+    await route.fulfill({ json: null });
+  });
+  await page.goto("/creciendo/finanzas");
+  // The chosen month's totals count savings, and the budget shows what is left.
+  await expect(page.getByText("Disponible")).toBeVisible();
+  await expect(page.locator(".metric").filter({ hasText: "Disponible" })).toContainText("2,100");
+  await expect(page.getByText(/Quedan S\/\s?600/)).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Cena del mes pasado" })).toHaveCount(0);
+  // The partner's movements can be corrected and trashed by either of us.
+  await expect(page.getByRole("button", { name: "Editar Mercado" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Enviar Mercado a la papelera" })).toBeVisible();
+  // A fixed expense registers itself on its date and can be paused.
+  await page.getByRole("button", { name: "Añadir fijo" }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByLabel("Nombre").fill("Internet");
+  await dialog.getByLabel("Importe (S/)").fill("120");
+  await dialog.getByLabel("Primera fecha").fill(`${month}-02`);
+  const axe = await new AxeBuilder({ page }).include(".dialog").analyze();
+  expect(axe.violations).toEqual([]);
+  await dialog.getByRole("button", { name: "Guardar movimiento fijo" }).click();
+  await expect(dialog).toHaveCount(0);
+  expect(saved[0].p_data).toMatchObject({ title: "Internet", amount: 120, direction: "expense", frequency: "monthly", start_on: `${month}-02` });
+  await expect(page.getByRole("heading", { name: "Internet" })).toBeVisible();
+  await expect(page.getByText("Fijo · se registró solo")).toBeVisible();
+  await page.getByRole("button", { name: "Pausar Internet" }).click();
+  await expect(page.getByText(/en pausa/)).toBeVisible();
+  expect(saved[1]).toMatchObject({ p_data: { active: false } });
+  const page2 = await new AxeBuilder({ page }).include(".finance-fixed").analyze();
+  expect(page2.violations).toEqual([]);
+});

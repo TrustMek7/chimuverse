@@ -128,3 +128,16 @@ Migración 016 (`postpone_task`, `edit_task`, `discard_task`, `restore_task`, `a
 - **Descartar:** una tarea que dejó de tener sentido se descarta con motivo. Sale de la lista, no se pasa sola de día ni admite reportes, y queda en «Descartadas» (no en el Historial) para recuperarla.
 - **Ajustar avance:** quien revisa la tarea (nunca la persona a la que está asignada) puede subir, bajar o reiniciar el avance verificado (0–99 %) con motivo. El 100 % solo se alcanza aprobando un reporte, y la app pide confirmación antes de mandarlo al Historial.
 - **Registro:** cada paso a otro día y cada edición quedan en `task_events` (solo lectura para los clientes) y en «La historia de esta tarea». La otra persona recibe un aviso.
+
+## Finanzas compartidas y movimientos fijos
+
+Migración 017 (`save_recurring`, `delete_recurring`, `generate_recurring`, tabla `finance_recurring`; `save_entry` y `trash_item` amplían la edición a los dos):
+
+- **De los dos:** cualquiera de los dos puede corregir o mandar a la papelera un movimiento o un presupuesto. El resto de los módulos sigue siendo solo de su autor. El movimiento corregido muestra «Corregido por …».
+- **Movimientos fijos** (sueldo, alquiler, suscripciones): ingreso, gasto o ahorro que se repite cada semana, cada dos semanas, cada mes o cada año.
+  - Cada uno se registra solo en su fecha. Lo hace el proceso programado cada 15 minutos y también se hace al guardar, una sola vez por fecha.
+  - Si la primera fecha ya pasó (hasta un año atrás), se registran también las fechas entre esa y hoy.
+  - Los fijos mensuales respetan el fin de mes: uno del día 31 cae el 28 en febrero y vuelve al 31 en marzo.
+- **Editar un fijo:** cambia el nombre, el importe, la categoría y el final solo desde el próximo movimiento. Los ya registrados se corrigen uno por uno. El tipo, la frecuencia y la primera fecha no se cambian: para eso se crea uno nuevo.
+- **Pausar, reanudar y quitar:** al reanudar se saltan las fechas de la pausa. Quitar un fijo detiene los próximos movimientos y conserva los registrados.
+- **Mes:** todo se ve por mes (selector «Mes»). Las cifras son ingresos, gastos, ahorro y disponible (ingresos − gastos − ahorro). Antes el ahorro no se restaba. Si hay presupuesto, una barra muestra lo gastado y cuánto queda o cuánto se pasaron.

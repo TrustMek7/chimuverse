@@ -537,12 +537,15 @@ export async function handler(req: Request) {
       }
       // Unfinished tasks whose day ended move to today by themselves (recorded as "carry").
       const carried = await rpc("carry_over_tasks").catch(() => null);
+      // Fixed income, expenses and savings create the movements that are due today.
+      const recurring = await rpc("generate_recurring").catch(() => null);
       await rpc("enqueue_reminders");
       return Response.json(
         {
           processed: results.length,
           failed: results.filter((r) => !r.ok).length,
           carried,
+          recurring,
         },
         { headers },
       );

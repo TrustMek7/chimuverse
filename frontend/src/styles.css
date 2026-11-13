@@ -2965,3 +2965,55 @@ a.push-pill:hover {
 .discarded-banner > span {
   flex: 1 1 220px;
 }
+
+/* Finances: month picker, budget meter and fixed movements. */
+.finance-month {
+  align-self: flex-start;
+}
+.budget-meter {
+  display: grid;
+  gap: 10px;
+}
+.over-budget {
+  color: var(--color-st-rejected);
+}
+.track .fill.over {
+  background: var(--color-st-rejected);
+}
+.finance-fixed {
+  display: grid;
+  gap: 14px;
+}
+.fixed-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.fixed-list li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--color-line);
+  border-radius: 14px;
+}
+.fixed-list li.paused {
+  background: var(--color-bg-sunk);
+}
+.fixed-list li > div:first-of-type {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+@media (max-width: 520px) {
+  .fixed-list li {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+  .fixed-list li > .row {
+    grid-column: 2 / -1;
+    justify-self: end;
+  }
+}

@@ -135,6 +135,7 @@ before(async () => {
     "202611130014_gmail_notifications.sql",
     "202611130015_lived_dates.sql",
     "202611130016_task_carryover.sql",
+    "202611130017_finances.sql",
   ]) {
     await db.exec(
       readFileSync(
@@ -1267,4 +1268,41 @@ test("a task's day changes only with a reason; discarding needs a reason and is 
   assert.ok(t.recent);
   const kinds = (await as(a, () => db.query("select kind from public.task_events where task_id=$1 order by created_at", [id]))).rows.map((r) => r.kind);
   assert.deepEqual(kinds, ["edit", "progress", "discard", "restore"]);
+});
+
+test("both members edit and trash finances; fixed movements create each date once, catch up, pause and stop", async () => {
+  // A's expense is corrected and trashed by B; other kinds stay author-only.
+  const exp = (await as(a, () => db.query("select public.save_entry($1) id", [JSON.stringify({ kind: "transaction", title: "Mercado", amount: 120, occurred_on: "2026-11-10", details: { direction: "expense", category: "Comida" } })]))).rows[0].id;
+  await as(b, () => db.query("select public.save_entry($1,'',$2)", [JSON.stringify({ kind: "transaction", title: "Mercado", amount: 135.5, occurred_on: "2026-11-10", details: { direction: "expense", category: "Comida" } }), exp]));
+  let e = (await db.query("select amount::float a,owner_id,details from public.entries where id=$1", [exp])).rows[0];
+  assert.deepEqual([e.a, e.owner_id, e.details.edited_by], [135.5, a, b]);
+  await assert.rejects(() => as(b, () => db.query("select public.save_entry($1,'',$2)", [JSON.stringify({ kind: "budget", title: "x", amount: 1, details: {} }), exp])), /tipo/);
+  await as(b, () => db.query("select public.trash_item('entries',$1)", [exp]));
+  const diary = (await as(a, () => db.query("select public.save_entry($1,'Hoy') id", [JSON.stringify({ kind: "journal", title: "Mi nota" })]))).rows[0].id;
+  await assert.rejects(() => as(b, () => db.query("select public.save_entry($1,'cambio',$2)", [JSON.stringify({ kind: "journal", title: "Otra" }), diary])), /No puedes editar/);
+  await assert.rejects(() => as(b, () => db.query("select public.trash_item('entries',$1)", [diary])), /Sin acceso/);
+  // A monthly rent that started three months ago fills in its past dates, once.
+  const today = (await db.query("select min((now() at time zone coalesce(p.timezone,'America/Lima'))::date) d from public.space_members m join public.profiles p on p.id=m.user_id")).rows[0].d;
+  const start = new Date(today); start.setUTCMonth(start.getUTCMonth() - 3);
+  const rule = (await as(a, () => db.query("select public.save_recurring(null,$1) id", [JSON.stringify({ title: "Alquiler", amount: 900, direction: "expense", category: "Hogar", frequency: "monthly", start_on: start.toISOString().slice(0, 10) })]))).rows[0].id;
+  const made = async () => (await db.query("select occurred_on::text d,amount::float a,details->>'direction' dir from public.entries where details->>'recurring_id'=$1 order by occurred_on", [rule])).rows;
+  assert.equal((await made()).length, 4);
+  assert.ok((await made()).every((m) => m.a === 900 && m.dir === "expense"));
+  await db.query("select public.generate_recurring()");
+  assert.equal((await made()).length, 4);
+  // B raises the amount: only future movements change. Pausing and resuming skips the gap.
+  await as(b, () => db.query("select public.save_recurring($1,$2)", [rule, JSON.stringify({ title: "Alquiler", amount: 950, category: "Hogar", active: false })]));
+  assert.ok((await made()).every((m) => m.a === 900));
+  await db.query("update public.finance_recurring set next_on=next_on-interval '2 months' where id=$1", [rule]);
+  await as(a, () => db.query("select public.save_recurring($1,$2)", [rule, JSON.stringify({ title: "Alquiler", amount: 950, category: "Hogar", active: true })]));
+  assert.equal((await made()).length, 4);
+  const r = (await db.query("select next_on>$2::date future from public.finance_recurring where id=$1", [rule, today])).rows[0];
+  assert.ok(r.future);
+  // Validation, outsiders, and stopping a rule keeps what it created.
+  await assert.rejects(() => as(a, () => db.query("select public.save_recurring(null,$1)", [JSON.stringify({ title: "Sueldo", amount: 0, direction: "income", frequency: "monthly", start_on: today })])), /importe/);
+  await assert.rejects(() => as(c, () => db.query("select public.save_recurring(null,$1)", [JSON.stringify({ title: "x", amount: 1, direction: "income", frequency: "monthly", start_on: today })])), /Sin acceso/);
+  await assert.rejects(() => as(a, () => db.query("insert into public.finance_recurring(space_id,title,amount,direction,frequency,start_on,next_on) values($1,'x',1,'income','monthly',now(),now())", [sid])), /permission denied/);
+  await as(b, () => db.query("select public.delete_recurring($1)", [rule]));
+  assert.equal((await made()).length, 4);
+  await assert.rejects(() => as(a, () => db.query("select public.generate_recurring()")), /permission denied/);
 });

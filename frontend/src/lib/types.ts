@@ -33,6 +33,22 @@ export type TaskEvent = {
   changes: Record<string, unknown>;
   created_at: string;
 };
+/** A fixed income, expense or saving that creates its movement on each date. */
+export type FinanceRecurring = {
+  id: string;
+  space_id: string;
+  created_by: string;
+  title: string;
+  amount: number;
+  direction: "income" | "expense" | "saving";
+  category: string;
+  frequency: "weekly" | "biweekly" | "monthly" | "yearly";
+  start_on: string;
+  end_on: string | null;
+  next_on: string;
+  active: boolean;
+  deleted_at: string | null;
+};
 export type Progress = {
   id: string;
   task_id: string;
@@ -151,6 +167,7 @@ export type Snapshot = {
   task_progress: Progress[];
   task_verifications: Verification[];
   task_events: TaskEvent[];
+  finance_recurring: FinanceRecurring[];
   entries: Entry[];
   calendar_events: CalendarEvent[];
   photos: Photo[];
