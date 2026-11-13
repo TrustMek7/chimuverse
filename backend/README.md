@@ -1,13 +1,21 @@
 # Backend de Chimuverse
 
-Supabase es el backend administrado. No se añade un servidor NestJS o Django.
+Supabase PostgreSQL + RLS, Auth Google, Storage privado y Edge Function `calendar` con OAuth, sincronización bidireccional y recordatorios programables.
 
-- `supabase/migrations/`: esquema, restricciones y políticas RLS.
-- `supabase/functions/`: operaciones privilegiadas, integraciones Google y notificaciones.
-- `.env`: configuración local exclusiva del servidor; plantilla sin credenciales en `.env.example`.
+```powershell
+npm ci
+npm test
+npm run typecheck
+npm run test:calendar
+```
 
-Ejecutar el CLI de Supabase desde esta carpeta. Configurar cada secreto de producción en el entorno de las Edge Functions cuando se implementen; el archivo `.env` local no se sube como parte del frontend.
+Los tests SQL ejecutan migraciones reales con roles y RLS en PostgreSQL embebido (PGlite). No requieren Docker ni tocan el proyecto remoto. Los tests de Calendar sustituyen el transporte externo.
 
-Toda operación privilegiada debe validar identidad y permisos. Nunca devolver claves de servidor en respuestas ni registrarlas en logs. El frontend puede usar directamente Supabase Auth y las tablas protegidas por RLS con su clave publicable.
+Completar `.env` desde `.env.example` y seguir [la guía de arranque](../docs/getting-started.md):
 
-Todavía no hay migraciones ni funciones implementadas. Ver [configuración de Supabase](../docs/supabase-setup.md) y [arquitectura](../docs/architecture.md).
+```powershell
+npm run deploy
+npm run deploy -- --functions --schedule
+```
+
+El script requiere un Personal Access Token `SUPABASE_ACCESS_TOKEN`. La clave `SUPABASE_SECRET_KEY` permite usar la API, pero no aplicar migraciones. Cada migración se aplica y registra dentro de una transacción, sin recrear tablas ni borrar datos. Los secretos de funciones se configuran mediante Management API, sin incluirlos en React ni en argumentos de shell. No cambiar la clave de cifrado de tokens con conexiones activas.
