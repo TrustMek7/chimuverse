@@ -71,5 +71,6 @@ export const statusNames: Record<string, string> = {
   rejected: "Rechazada",
   in_talk: "Lo hablamos",
   archived: "Archivada",
+  discarded: "Descartada",
 };
 export { nextSeriesOccurrence as nextOccurrence } from "./recurrence";

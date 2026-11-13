@@ -86,7 +86,9 @@ export function Constellation({
 export default function Home() {
   const { data, me, partner } = useSpace();
   const today = localDay(new Date(), me.timezone);
-  const tasks = data!.tasks.filter((t) => t.due_on === today);
+  const tasks = data!.tasks.filter(
+    (t) => t.due_on === today && t.status !== "discarded",
+  );
   const pending = data!.task_progress.filter(
     (p) => p.state === "pending" && p.reported_by !== me.id,
   );

@@ -1235,3 +1235,36 @@ test("an unfinished task whose day ended carries itself to today; finished ones 
   assert.equal((await db.query("select count(*)::int n from public.task_events where task_id=$1", [open])).rows[0].n, 1);
   await assert.rejects(() => as(a, () => db.query("select public.carry_over_tasks()")), /permission denied/);
 });
+
+test("a task's day changes only with a reason; discarding needs a reason and is recoverable; the reviewer adjusts progress", async () => {
+  const id = (await as(a, () => db.query("insert into public.tasks(space_id,title,assignee_id,due_on) values($1,'Comprar el regalo',$2,'2026-11-20') returning id", [sid, a]))).rows[0].id;
+  const edit = (uid, day) => as(uid, () => db.query("select public.edit_task($1,'Comprar el regalo','',$2,$3)", [id, a, day]));
+  // Created today without progress: its date can still be fixed in place.
+  await edit(a, "2026-11-21");
+  // Once it has progress, the day only moves through "Pasar a otro día".
+  const pid = (await as(a, () => db.query("select public.report_task_progress($1,40,'') id", [id]))).rows[0].id;
+  await as(b, () => db.query("select public.verify_task_progress($1,'approve')", [pid]));
+  await assert.rejects(() => edit(b, "2026-11-25"), /Pasar a otro día/);
+  // The assignee cannot grade themself; the reviewer adjusts or resets with a reason, never to 100.
+  await assert.rejects(() => as(a, () => db.query("select public.adjust_task_progress($1,80,'Ya avancé más')", [id])), /pareja/);
+  await assert.rejects(() => as(b, () => db.query("select public.adjust_task_progress($1,100,'Está listo')", [id])), /100 %/);
+  await assert.rejects(() => as(b, () => db.query("select public.adjust_task_progress($1,10,'')", [id])), /motivo/);
+  await as(b, () => db.query("select public.adjust_task_progress($1,0,'Cambiamos de regalo, empezamos de cero')", [id]));
+  let t = (await db.query("select verified_percent v,reported_percent r,status from public.tasks where id=$1", [id])).rows[0];
+  assert.deepEqual([t.v, t.r, t.status], [0, 0, "pending"]);
+  // Discard: reason required, leaves the open flow, takes no reports, is not carried, and can be recovered.
+  await assert.rejects(() => as(a, () => db.query("select public.discard_task($1,'no')", [id])), /motivo/);
+  await as(a, () => db.query("select public.discard_task($1,'Ya no hace falta, lo compró su mamá')", [id]));
+  assert.equal((await db.query("select status from public.tasks where id=$1", [id])).rows[0].status, "discarded");
+  await assert.rejects(() => as(a, () => db.query("select public.report_task_progress($1,50,'')", [id])), /reportes/);
+  await assert.rejects(() => as(a, () => db.query("select public.postpone_task($1,'2026-12-01','Más adelante')", [id])), /descartada/);
+  await db.query("update public.tasks set due_on='2020-01-01' where id=$1", [id]);
+  await db.query("select public.carry_over_tasks()");
+  assert.equal((await db.query("select due_on::text d from public.tasks where id=$1", [id])).rows[0].d, "2020-01-01");
+  await as(b, () => db.query("select public.restore_task($1)", [id]));
+  t = (await db.query("select status,due_on>=current_date-1 recent from public.tasks where id=$1", [id])).rows[0];
+  assert.equal(t.status, "pending");
+  assert.ok(t.recent);
+  const kinds = (await as(a, () => db.query("select kind from public.task_events where task_id=$1 order by created_at", [id]))).rows.map((r) => r.kind);
+  assert.deepEqual(kinds, ["edit", "progress", "discard", "restore"]);
+});

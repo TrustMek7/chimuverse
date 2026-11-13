@@ -2958,3 +2958,10 @@ a.push-pill:hover {
   padding-left: 18px;
   font-size: 13px;
 }
+.discarded-banner {
+  flex-wrap: wrap;
+  align-items: center;
+}
+.discarded-banner > span {
+  flex: 1 1 220px;
+}

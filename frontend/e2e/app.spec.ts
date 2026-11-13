@@ -1071,3 +1071,78 @@ test("unfinished tasks move to another day with a reason, can be edited, and fin
   await page.goto("/dia/quests");
   await expect(page.getByText(/Movida 2 veces/)).toBeVisible();
 });
+
+test("tasks are discarded with a reason and recovered, the reviewer adjusts progress, and 100 % needs confirmation", async ({
+  page,
+}) => {
+  const rows = await fixture(page);
+  rows.task_events = [];
+  const full = "dddddddd-0000-4ddd-8ddd-000000000002";
+  rows.tasks.push({
+    id: full, space_id: sid, created_by: b, assignee_id: b, title: "Imprimir las fotos",
+    description: "", due_on: rows.tasks[0].due_on, status: "review", reported_percent: 100,
+    verified_percent: 40, rejections: 0, created_at: new Date().toISOString(),
+  });
+  rows.task_progress.push({
+    id: "eeeeeeee-0000-4eee-8eee-000000000002", task_id: full, reported_by: b,
+    reported_percent: 100, note: "Listas", state: "pending", created_at: new Date().toISOString(),
+  });
+  const calls: Record<string, any[]> = {};
+  await page.route(/rest\/v1\/rpc\/(discard_task|restore_task|adjust_task_progress)/, async (route) => {
+    const fn = new URL(route.request().url()).pathname.split("/").pop()!;
+    const body = route.request().postDataJSON();
+    (calls[fn] ??= []).push(body);
+    const t = rows.tasks.find((t) => t.id === body.p_task_id);
+    const event = (kind: string, extra = {}) =>
+      rows.task_events.push({ id: crypto.randomUUID(), task_id: t.id, actor_id: a, kind, from_date: null, to_date: null, reason: body.p_reason ?? "", changes: {}, created_at: new Date().toISOString(), ...extra });
+    if (fn === "discard_task") { t.status = "discarded"; event("discard"); }
+    if (fn === "restore_task") { t.status = "progress"; event("restore"); }
+    if (fn === "adjust_task_progress") {
+      event("progress", { changes: { verified_percent: [t.verified_percent, body.p_percent] } });
+      t.verified_percent = body.p_percent;
+    }
+    await route.fulfill({ json: null });
+  });
+  // The reviewer (not the assignee) adjusts the verified progress, or restarts it, with a reason.
+  await page.goto(`/dia/quests/${tid}`);
+  await page.getByRole("button", { name: "Ajustar avance" }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByRole("button", { name: "Empezar de cero" }).click();
+  await dialog.getByLabel("Motivo").fill("Cambiamos el destino del viaje");
+  await dialog.getByRole("button", { name: "Guardar 0 %" }).click();
+  await expect(dialog).toHaveCount(0);
+  expect(calls.adjust_task_progress[0]).toMatchObject({ p_percent: 0, p_reason: "Cambiamos el destino del viaje" });
+  await expect(page.getByText("Reinició el avance (tenía 20 %)")).toBeVisible();
+  // The day can no longer be changed from "Editar" once a task has progress.
+  await page.getByRole("button", { name: "Editar", exact: true }).click();
+  await expect(dialog.getByText("Para cambiar el día, usa «Pasar a otro día» y cuenta el motivo.")).toBeVisible();
+  await expect(dialog.getByLabel("Fecha")).toHaveCount(0);
+  await page.keyboard.press("Escape");
+  // Discarding asks why, leaves the active list, and can be undone.
+  await page.getByRole("button", { name: "Descartar", exact: true }).click();
+  const discard = dialog.getByRole("button", { name: "Descartar", exact: true });
+  await expect(discard).toBeDisabled();
+  await dialog.getByLabel("¿Por qué la descartan?").fill("Ya no viajamos este mes");
+  const axe = await new AxeBuilder({ page }).include(".dialog").analyze();
+  expect(axe.violations).toEqual([]);
+  await discard.click();
+  await expect(page.getByText(/Descartada: Ya no viajamos este mes/)).toBeVisible();
+  await page.goto("/dia/quests");
+  await expect(page.getByRole("heading", { name: "Preparar una escapada" })).toHaveCount(0);
+  await page.getByRole("button", { name: "Descartadas", exact: true }).click();
+  await page.getByRole("heading", { name: "Preparar una escapada" }).click();
+  await page.getByRole("button", { name: "Recuperar" }).click();
+  await expect(page.getByRole("button", { name: "Pasar a otro día" })).toBeVisible();
+  expect(calls.restore_task).toHaveLength(1);
+  // Approving 100 % asks for confirmation before it becomes history.
+  await page.goto(`/dia/quests/${full}`);
+  await page.getByRole("button", { name: "Aprobar 100 %" }).click();
+  await expect(dialog.getByRole("heading", { name: "¿La damos por completada?" })).toBeVisible();
+  await dialog.getByRole("button", { name: "Todavía no" }).click();
+  await expect(dialog).toHaveCount(0);
+  expect(rows.tasks.find((t) => t.id === full).status).toBe("review");
+  await page.getByRole("button", { name: "Aprobar 100 %" }).click();
+  await dialog.getByRole("button", { name: "Sí, está completada" }).click();
+  await expect(dialog).toHaveCount(0);
+  expect(rows.task_verifications.at(-1)).toMatchObject({ decision: "approve" });
+});

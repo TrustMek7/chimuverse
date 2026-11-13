@@ -14,6 +14,9 @@ import {
   Pencil,
   CalendarClock,
   Check,
+  Ban,
+  SlidersHorizontal,
+  RotateCcw,
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -56,6 +59,11 @@ export default function Quests() {
   });
   const [moveTo, setMoveTo] = useState("");
   const [moveReason, setMoveReason] = useState("");
+  const [dialog, setDialog] = useState<"" | "discard" | "adjust" | "confirm">(
+    "",
+  );
+  const [dialogReason, setDialogReason] = useState("");
+  const [adjustTo, setAdjustTo] = useState(0);
   const [day, setDay] = useState("");
   const [percent, setPercent] = useState(100),
     [note, setNote] = useState(""),
@@ -78,14 +86,17 @@ export default function Quests() {
       ? (data!.profiles.find((p) => p.id === uid)?.display_name ?? "?")
       : "Los dos";
   const moves = (taskId: string) =>
-    data!.task_events.filter(
-      (e) => e.task_id === taskId && e.kind !== "edit",
-    ).length;
+    data!.task_events.filter((e) => e.task_id === taskId && e.kind !== "edit")
+      .length;
   // Finished tasks leave the daily list and live in the history.
   const tasks = data!.tasks
     .filter(
       (t) =>
-        (history ? t.status === "done" : t.status !== "done") &&
+        (history
+          ? t.status === "done"
+          : filter === "Descartadas"
+            ? t.status === "discarded"
+            : t.status !== "done" && t.status !== "discarded") &&
         (!day || t.due_on === day) &&
         (filter !== "Mías" || t.assignee_id === me.id) &&
         (filter !== "Compartidas" || !t.assignee_id) &&
@@ -114,6 +125,23 @@ export default function Quests() {
     ...reports.map((report) => ({ at: report.created_at, report })),
     ...events.map((event) => ({ at: event.created_at, event })),
   ].sort((a, b) => b.at.localeCompare(a.at));
+  const discarded = events
+    .filter((e) => e.kind === "discard")
+    .sort((a, b) => b.created_at.localeCompare(a.created_at))[0];
+  // The day is fixed in "Editar" only for a task created today, before any progress or move.
+  const dateEditable =
+    !!current &&
+    current.reported_percent === 0 &&
+    current.verified_percent === 0 &&
+    localDay(new Date(current.created_at), me.timezone) === today &&
+    !events.some((e) => e.kind === "postpone" || e.kind === "carry");
+  function openDialog(kind: "discard" | "adjust" | "confirm") {
+    setDialogReason("");
+    setAdjustTo(current?.verified_percent ?? 0);
+    action.setError("");
+    setDialog(kind);
+  }
+  const closeDialog = (v: boolean) => !v && !action.busy && setDialog("");
   const nextDay = (d: string) => {
     const base = new Date((d > today ? d : today) + "T12:00:00");
     base.setDate(base.getDate() + 1);
@@ -141,7 +169,8 @@ export default function Quests() {
   const canReport =
     current &&
     (!current.assignee_id || current.assignee_id === me.id) &&
-    current.status !== "done";
+    current.status !== "done" &&
+    current.status !== "discarded";
   function close(v: boolean) {
     setOpen(v);
     if (!v) {
@@ -219,6 +248,31 @@ export default function Quests() {
                       : ""}
                     . Ya es parte de nuestro historial.
                   </div>
+                ) : current.status === "discarded" ? (
+                  <div className="banner discarded-banner" role="status">
+                    <Ban size={18} aria-hidden />
+                    <span>
+                      Descartada
+                      {discarded ? `: ${discarded.reason}` : ""}. No se pasa
+                      sola de día ni admite reportes.
+                    </span>
+                    <Button
+                      variant="secondary"
+                      busy={action.busy}
+                      onClick={() =>
+                        action.run(async () =>
+                          check(
+                            await supabase.rpc("restore_task", {
+                              p_task_id: current.id,
+                            }),
+                          ),
+                        )
+                      }
+                    >
+                      <RotateCcw size={16} aria-hidden />
+                      Recuperar
+                    </Button>
+                  </div>
                 ) : (
                   <div className="row gap-sm wrap">
                     <Button variant="secondary" onClick={openEdit}>
@@ -228,6 +282,22 @@ export default function Quests() {
                     <Button variant="secondary" onClick={openMove}>
                       <CalendarClock size={16} aria-hidden />
                       Pasar a otro día
+                    </Button>
+                    {current.assignee_id !== me.id && (
+                      <Button
+                        variant="secondary"
+                        onClick={() => openDialog("adjust")}
+                      >
+                        <SlidersHorizontal size={16} aria-hidden />
+                        Ajustar avance
+                      </Button>
+                    )}
+                    <Button
+                      variant="ghost"
+                      onClick={() => openDialog("discard")}
+                    >
+                      <Ban size={16} aria-hidden />
+                      Descartar
                     </Button>
                   </div>
                 )}
@@ -256,14 +326,16 @@ export default function Quests() {
                       <Button
                         busy={action.busy}
                         onClick={() =>
-                          action.run(async () =>
-                            check(
-                              await supabase.rpc("verify_task_progress", {
-                                p_progress_id: latest.id,
-                                p_decision: "approve",
-                              }),
-                            ),
-                          )
+                          latest.reported_percent === 100
+                            ? openDialog("confirm")
+                            : action.run(async () =>
+                                check(
+                                  await supabase.rpc("verify_task_progress", {
+                                    p_progress_id: latest.id,
+                                    p_decision: "approve",
+                                  }),
+                                ),
+                              )
                         }
                       >
                         Aprobar {latest.reported_percent} %
@@ -396,11 +468,7 @@ export default function Quests() {
                             <span aria-hidden>↻</span>
                           )}
                           <div>
-                            <strong>
-                              {ev.kind === "edit"
-                                ? "Editó la tarea"
-                                : `${ev.kind === "carry" ? "Pasó sola" : "Pasó"} del ${formatDate(ev.from_date!)} al ${formatDate(ev.to_date!)}`}
-                            </strong>
+                            <strong>{eventTitle(ev)}</strong>
                             <small>
                               {ev.actor_id ? name(ev.actor_id) : "Automático"} ·{" "}
                               {formatDate(ev.created_at, {
@@ -408,11 +476,14 @@ export default function Quests() {
                                 minute: "2-digit",
                               })}
                             </small>
-                            {ev.kind === "postpone" ? (
-                              <p>Motivo: {ev.reason}</p>
-                            ) : ev.kind === "carry" ? (
-                              <p>{ev.reason}</p>
-                            ) : (
+                            {ev.reason && (
+                              <p>
+                                {ev.kind === "carry"
+                                  ? ev.reason
+                                  : `Motivo: ${ev.reason}`}
+                              </p>
+                            )}
+                            {ev.kind === "edit" && (
                               <ul className="task-changes">
                                 {describeChanges(ev, name).map((c) => (
                                   <li key={c}>{c}</li>
@@ -499,6 +570,7 @@ export default function Quests() {
                 "Compartidas",
                 "Por verificar",
                 "Historial",
+                "Descartadas",
               ].map((v) => (
                 <button
                   key={v}
@@ -636,15 +708,21 @@ export default function Quests() {
               <option value="">Los dos</option>
             </select>
           </label>
-          <label className="field">
-            Fecha
-            <input
-              type="date"
-              required
-              value={edit.due_on}
-              onChange={(e) => setEdit({ ...edit, due_on: e.target.value })}
-            />
-          </label>
+          {dateEditable ? (
+            <label className="field">
+              Fecha
+              <input
+                type="date"
+                required
+                value={edit.due_on}
+                onChange={(e) => setEdit({ ...edit, due_on: e.target.value })}
+              />
+            </label>
+          ) : (
+            <p className="small muted">
+              Para cambiar el día, usa «Pasar a otro día» y cuenta el motivo.
+            </p>
+          )}
           <p className="small muted">
             El avance se conserva. {partner?.display_name ?? "Tu pareja"}{" "}
             recibirá un aviso y el cambio queda en la historia de la tarea.
@@ -714,6 +792,161 @@ export default function Quests() {
             {moveTo ? `Pasar al ${formatDate(moveTo)}` : "Pasar al nuevo día"}
           </Button>
         </form>
+      </Modal>
+      <Modal
+        title="Descartar la tarea"
+        open={dialog === "discard"}
+        onOpenChange={closeDialog}
+      >
+        <form
+          className="form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!current) return;
+            void action.run(
+              async () =>
+                check(
+                  await supabase.rpc("discard_task", {
+                    p_task_id: current.id,
+                    p_reason: dialogReason,
+                  }),
+                ),
+              () => setDialog(""),
+            );
+          }}
+        >
+          <p className="muted">
+            Sale de la lista y deja de pasarse sola de día. No llega al
+            historial de completadas; queda en «Descartadas» y se puede
+            recuperar.
+          </p>
+          <label className="field">
+            ¿Por qué la descartan?
+            <textarea
+              required
+              minLength={5}
+              maxLength={500}
+              value={dialogReason}
+              onChange={(e) => setDialogReason(e.target.value)}
+            />
+          </label>
+          <ErrorMessage error={action.error} />
+          <Button
+            type="submit"
+            variant="danger"
+            busy={action.busy}
+            disabled={dialogReason.trim().length < 5}
+          >
+            Descartar
+          </Button>
+        </form>
+      </Modal>
+      <Modal
+        title="Ajustar el avance verificado"
+        open={dialog === "adjust"}
+        onOpenChange={closeDialog}
+      >
+        <form
+          className="form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!current) return;
+            void action.run(
+              async () =>
+                check(
+                  await supabase.rpc("adjust_task_progress", {
+                    p_task_id: current.id,
+                    p_percent: adjustTo,
+                    p_reason: dialogReason,
+                  }),
+                ),
+              () => setDialog(""),
+            );
+          }}
+        >
+          {current && (
+            <p className="muted">
+              Ahora: <strong>{current.verified_percent} %</strong> verificado.
+              El 100 % se aprueba desde un reporte.
+            </p>
+          )}
+          <label className="field">
+            Nuevo avance verificado: {adjustTo} %
+            <input
+              type="range"
+              min={0}
+              max={99}
+              value={adjustTo}
+              onChange={(e) => setAdjustTo(Number(e.target.value))}
+            />
+          </label>
+          <Button
+            variant="ghost"
+            onClick={() => setAdjustTo(0)}
+            disabled={adjustTo === 0}
+          >
+            <RotateCcw size={16} aria-hidden />
+            Empezar de cero
+          </Button>
+          <label className="field">
+            Motivo
+            <textarea
+              required
+              minLength={5}
+              maxLength={500}
+              value={dialogReason}
+              onChange={(e) => setDialogReason(e.target.value)}
+            />
+          </label>
+          <ErrorMessage error={action.error} />
+          <Button
+            type="submit"
+            busy={action.busy}
+            disabled={
+              dialogReason.trim().length < 5 ||
+              adjustTo === current?.verified_percent
+            }
+          >
+            Guardar {adjustTo} %
+          </Button>
+        </form>
+      </Modal>
+      <Modal
+        title="¿La damos por completada?"
+        open={dialog === "confirm"}
+        onOpenChange={closeDialog}
+      >
+        <div className="form">
+          <p>
+            Vas a aprobar el <strong>100 %</strong> de{" "}
+            <strong>{current?.title}</strong>. Pasará al historial de
+            completadas y ya no se podrá editar, mover ni descartar.
+          </p>
+          <ErrorMessage error={action.error} />
+          <div className="row gap wrap">
+            <Button variant="secondary" onClick={() => setDialog("")}>
+              Todavía no
+            </Button>
+            <Button
+              busy={action.busy}
+              onClick={() =>
+                latest &&
+                void action.run(
+                  async () =>
+                    check(
+                      await supabase.rpc("verify_task_progress", {
+                        p_progress_id: latest.id,
+                        p_decision: "approve",
+                      }),
+                    ),
+                  () => setDialog(""),
+                )
+              }
+            >
+              Sí, está completada
+            </Button>
+          </div>
+        </div>
       </Modal>
       <Modal title="Una nueva tarea" open={open} onOpenChange={close}>
         <form onSubmit={form.handleSubmit(create)} className="form">
@@ -786,4 +1019,25 @@ function describeChanges(
       return `Fecha: ${formatDate(String(from))} → ${formatDate(String(to))}`;
     return `${FIELD_NAMES[key] ?? key} actualizada`;
   });
+}
+/** The headline of a recorded change in a task's history. */
+function eventTitle(e: TaskEvent): string {
+  switch (e.kind) {
+    case "carry":
+      return `Pasó sola del ${formatDate(e.from_date!)} al ${formatDate(e.to_date!)}`;
+    case "postpone":
+      return `Pasó del ${formatDate(e.from_date!)} al ${formatDate(e.to_date!)}`;
+    case "discard":
+      return "Descartó la tarea";
+    case "restore":
+      return "Recuperó la tarea";
+    case "progress": {
+      const [from, to] = (e.changes.verified_percent as number[]) ?? [];
+      return to === 0
+        ? `Reinició el avance (tenía ${from} %)`
+        : `Ajustó el avance verificado: ${from} % → ${to} %`;
+    }
+    default:
+      return "Editó la tarea";
+  }
 }

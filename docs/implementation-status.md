@@ -119,10 +119,12 @@ Al editar una entrada se conservan sus `details` guardados, para que el editor g
 
 ## Tareas: pasar a otro día, editar e historial
 
-Migración 016 (`postpone_task`, `edit_task`, tabla `task_events`, columna `tasks.completed_at`). Pensado para la reunión en la que cada uno verifica las tareas del otro:
+Migración 016 (`postpone_task`, `edit_task`, `discard_task`, `restore_task`, `adjust_task_progress`, `carry_over_tasks`, tabla `task_events`, estado `discarded`, columna `tasks.completed_at`). Pensado para la reunión en la que cada uno verifica las tareas del otro:
 
 - **Completadas:** una tarea con el 100 % verificado sale de la lista del día y pasa a **Historial**, con la fecha en que se completó. No se borra, y ya no se puede editar ni mover.
 - **Pasar a otro día:** si una tarea no llegó al 100 %, cualquiera de los dos puede pasarla a un día posterior con un **motivo obligatorio** (5 a 500 caracteres). Conserva su avance. La lista muestra «Movida N veces» y las tareas vencidas en rojo.
 - **Paso automático:** si una tarea no se completó ni nadie la movió y su día terminó (en la zona horaria de ambos), el proceso programado (cada 15 minutos, dentro de la función `calendar`) la pasa sola al día actual con `carry_over_tasks()`. Queda registrada como «Pasó sola», sin persona.
-- **Editar:** desde la propia tarea, sin panel aparte, cualquiera de los dos puede cambiar el título, la descripción, para quién y la fecha. El avance se conserva.
+- **Editar:** desde la propia tarea, sin panel aparte, cualquiera de los dos puede cambiar el título, la descripción y para quién es. El día solo se corrige en «Editar» si la tarea se creó ese mismo día y no tiene avance ni movimientos; si no, se usa «Pasar a otro día» con motivo, para que no haya forma de saltárselo.
+- **Descartar:** una tarea que dejó de tener sentido se descarta con motivo. Sale de la lista, no se pasa sola de día ni admite reportes, y queda en «Descartadas» (no en el Historial) para recuperarla.
+- **Ajustar avance:** quien revisa la tarea (nunca la persona a la que está asignada) puede subir, bajar o reiniciar el avance verificado (0–99 %) con motivo. El 100 % solo se alcanza aprobando un reporte, y la app pide confirmación antes de mandarlo al Historial.
 - **Registro:** cada paso a otro día y cada edición quedan en `task_events` (solo lectura para los clientes) y en «La historia de esta tarea». La otra persona recibe un aviso.

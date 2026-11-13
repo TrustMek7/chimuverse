@@ -26,7 +26,7 @@ export type TaskEvent = {
   task_id: string;
   /** null when the scheduler carried the task by itself. */
   actor_id: string | null;
-  kind: "postpone" | "edit" | "carry";
+  kind: "postpone" | "edit" | "carry" | "discard" | "restore" | "progress";
   from_date: string | null;
   to_date: string | null;
   reason: string;
