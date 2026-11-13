@@ -118,3 +118,21 @@ El correo es el respaldo de las notificaciones push. Cada aviso se envía por co
 5. Con la app en modo *Testing* en Google, los permisos sensibles caducan a los 7 días. Si un envío falla, Ajustes muestra el error y el botón **Reconectar Gmail**. Para evitarlo, publicar la app OAuth «En producción» sin verificar (Google lo permite para pocos usuarios, mostrando la advertencia de app no verificada).
 
 Desconectar quita solo la credencial de Gmail guardada; Calendar y YouTube siguen igual.
+
+
+## Checklist para publicar en Vercel
+
+1. **Frontend en Vercel:** raíz `frontend`, build `npm run build`, salida `dist`. Variables: `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` y `VITE_APP_URL` (la URL de Vercel). `vercel.json` ya sirve `sw.js` sin caché y el manifiesto de la PWA.
+2. **`APP_URL` en `backend/.env`** con la URL de Vercel (por ejemplo `https://chimuverse.vercel.app`, sin `/` final). Hoy no está definida y se usa `http://localhost:5173`. De ella dependen:
+   - el `site_url` y las redirecciones de Auth;
+   - el CORS de las funciones `youtube` y `mail`;
+   - el regreso de los OAuth de Calendar, YouTube y Gmail;
+   - los enlaces «Abrir en Chimuverse» de los correos;
+   - el remitente VAPID del push.
+3. Desde `backend`: `npm run backup`, luego `npm run deploy:all` y `npm run verify:deployment`. La verificación debe mostrar las migraciones aplicadas y que `push` y `mail` rechazan envíos sin firma (401).
+4. **Google Cloud:**
+   - Origen JavaScript autorizado: la URL de Vercel.
+   - Las URI de redireccionamiento de Supabase (`/auth/v1/callback`, `/functions/v1/calendar`, `/functions/v1/youtube`, `/functions/v1/mail`) no cambian.
+   - Scopes en Acceso a los datos: Calendar, `youtube.force-ssl` y `gmail.send`.
+5. **En cada dispositivo:** abrir la URL de Vercel y activar las notificaciones desde Inicio. Los permisos son por sitio: lo activado en `localhost` no pasa a Vercel. Si el navegador tiene «No permitir» para todos los sitios, agregar la URL de Vercel a «Con permiso para enviar notificaciones» (ver README).
+6. **Gmail:** cada uno, en Ajustes → Conexiones → Conectar mi Gmail.
