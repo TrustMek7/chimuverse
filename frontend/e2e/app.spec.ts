@@ -833,3 +833,43 @@ test("dashboard offers one-tap notifications, shows their status and lists devic
   await expect(page.getByText("Este dispositivo", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Desactivar aquí" })).toBeVisible();
 });
+test("Gmail connection is send-only, explains the email fallback and reports the OAuth result", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await fixture(page);
+  let connected = false;
+  const actions: string[] = [];
+  await page.route("**/rest/v1/rpc/gmail_status", (route) =>
+    route.fulfill({
+      json: { connected, email: connected ? "test-a@example.test" : null, partner_connected: false, last_error: null },
+    }),
+  );
+  await page.route("**/functions/v1/mail", async (route) => {
+    const body = route.request().postDataJSON();
+    actions.push(body.action);
+    if (body.action === "connect") {
+      connected = true;
+      // Stand-in for Google's consent screen redirecting back to the app.
+      return route.fulfill({ json: { url: "/ajustes/conexiones?gmail=connected" } });
+    }
+    connected = false;
+    return route.fulfill({ json: { disconnected: true } });
+  });
+  await page.goto("/ajustes");
+  await expect(page.getByRole("heading", { name: "Notificaciones por correo" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Conectar Gmail" })).toBeVisible();
+  await page.goto("/ajustes/conexiones");
+  await expect(page.getByRole("heading", { name: "Gmail para avisos por correo" })).toBeVisible();
+  await expect(page.getByText("Chimuverse no puede leer, buscar ni borrar tu correo.")).toBeVisible();
+  await page.getByRole("button", { name: "Conectar mi Gmail" }).click();
+  await expect(page.getByText("Gmail conectado.")).toBeVisible();
+  await expect(page.getByText("Conectado como test-a@example.test")).toBeVisible();
+  const a11y = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]).analyze();
+  expect(a11y.violations).toEqual([]);
+  await page.getByRole("button", { name: "Desconectar Gmail" }).click();
+  await expect(page.getByRole("button", { name: "Conectar mi Gmail" })).toBeVisible();
+  expect(actions).toEqual(["connect", "disconnect"]);
+  await page.goto("/ajustes");
+  await expect(page.getByText("Conecta Gmail en Conexiones")).toBeVisible();
+});

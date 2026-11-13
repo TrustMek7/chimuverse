@@ -28,6 +28,8 @@
 
 ## D1. Proveedor de correo
 
+> **Actualización (13 nov 2026):** el usuario activó Gmail API y eligió que cada miembro conecte su Gmail con `gmail.send`. Los avisos se mandan del Gmail de uno al otro, uno por aviso y solo cuando el destinatario no tiene push. Sustituye al relé de Apps Script y al resumen diario descritos abajo. Ver implementation-status.md → «Notificaciones por correo».
+
 **Contexto:** `integrations.md` descarta asumir SMTP desde Edge Functions; las opciones son Gmail API o Apps Script.
 
 **Recomendación:**

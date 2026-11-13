@@ -79,7 +79,7 @@ Vercel: raíz `frontend`, build `npm run build`, salida `dist`. Configurar solo 
 - Ajustes → Datos exporta registros visibles en JSON y fotos en ZIP. No incluye datos privados de la pareja ni textos de cápsulas selladas.
 - Papelera restaura registros; la purga automática a 30 días está desactivada. Completar tareas, metas y títulos no elimina su historial.
 - `--schedule` configura pg_cron/pg_net cada 15 minutos, con secreto en Vault, para Calendar y recordatorios deduplicados de quests a 24/72 horas y eventos próximos.
-- El correo sigue desactivado. El push web se activa desde Inicio en cada dispositivo (en iPhone, instalando la app en el inicio). Spotify usa enlaces. YouTube cuenta con conexión OAuth y playlist común (ver la guía al final).
+- El correo de respaldo usa Gmail (ver al final). El push web se activa desde Inicio en cada dispositivo (en iPhone, instalando la app en el inicio). Spotify usa enlaces. YouTube cuenta con conexión OAuth y playlist común (ver la guía al final).
 - Guardar exportaciones en almacenamiento personal cifrado. No subir backups al repositorio ni a artifacts de CI.
 
 Referencias oficiales: [migraciones](https://supabase.com/docs/guides/deployment/database-migrations), [Google Auth](https://supabase.com/docs/guides/auth/social-sign-in/auth-google), [scopes de Calendar](https://developers.google.com/workspace/calendar/api/auth), [sincronización incremental](https://developers.google.com/workspace/calendar/api/guides/sync).
@@ -105,3 +105,16 @@ El scope permite más operaciones que las que usa la app; no existe un scope ofi
 
 
 Actualización de uso: todos los registros y fotos se comparten automáticamente entre los dos, incluidos los anteriores. Ya no hay opción «Solo yo». Las cápsulas esperan su apertura. Las nuevas playlists son no listadas y pueden verse con el enlace; queda eliminada la opción de creación privada de la guía anterior.
+
+
+## Conectar Gmail para avisos por correo
+
+El correo es el respaldo de las notificaciones push. Cada aviso se envía por correo solo a quien **no tenga ningún dispositivo con push activo**. Sale del Gmail de su pareja; si la pareja no conectó el suyo, sale de su propio Gmail hacia sí mismo. Si nadie conectó Gmail, no se envía nada.
+
+1. En el proyecto de Google Cloud habilitar **Gmail API**. En Google Auth Platform → Acceso a los datos añadir `https://www.googleapis.com/auth/gmail.send`. Mantener los dos correos como usuarios de prueba.
+2. En Clientes → cliente de aplicación web → URI de redireccionamiento autorizado añadir `https://xlzttaqjajnjukikvcyj.supabase.co/functions/v1/mail`. No quitar las URI existentes de login, Calendar y YouTube.
+3. Usa `GOOGLE_OAUTH_CLIENT_ID` y `GOOGLE_OAUTH_CLIENT_SECRET`. Desplegar con `npm run deploy:all` desde backend; eso aplica la migración 014, registra `mail_function_url` y publica la función `mail`.
+4. Cada persona: Ajustes → Conexiones → **Conectar mi Gmail**, con el mismo correo del login. Google mostrará el permiso «Enviar correo electrónico en tu nombre». Es el único que se pide: la app no puede leer, buscar ni borrar correo.
+5. Con la app en modo *Testing* en Google, los permisos sensibles caducan a los 7 días. Si un envío falla, Ajustes muestra el error y el botón **Reconectar Gmail**. Para evitarlo, publicar la app OAuth «En producción» sin verificar (Google lo permite para pocos usuarios, mostrando la advertencia de app no verificada).
+
+Desconectar quita solo la credencial de Gmail guardada; Calendar y YouTube siguen igual.

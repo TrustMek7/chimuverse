@@ -80,6 +80,9 @@ Los permisos son **por sitio**: permitir Chimuverse no permite a ninguna otra we
 1. Toca **Activar notificaciones** → **Permitir**.
 2. Si no aparecen: **Ajustes del Sistema → Notificaciones → Google Chrome / Safari** → permitir, y Modo Concentración apagado.
 
+### Por correo (respaldo)
+Si no tienes notificaciones activadas en ningún dispositivo, cada aviso te llega por correo desde el Gmail de tu pareja (o desde el tuyo, si solo tú lo conectaste). Se conecta en **Ajustes → Conexiones → Conectar mi Gmail**, con permiso solo para enviar. Configuración en Google: [guía de arranque](docs/getting-started.md#conectar-gmail-para-avisos-por-correo).
+
 Detalles técnicos y de seguridad: [implementación → Notificaciones push](docs/implementation-status.md#notificaciones-push).
 
 ## Reglas de colaboración

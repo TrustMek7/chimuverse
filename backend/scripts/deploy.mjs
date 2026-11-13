@@ -145,15 +145,17 @@ if (process.argv.includes("--functions")) {
   await sql(
     `insert into private.integration_settings(name,value) values('calendar_function_url','${calendarUrl}') on conflict(name) do update set value=excluded.value`,
   );
-  const pushUrl = (env.SUPABASE_URL + "/functions/v1/push").replaceAll("'", "''");
-  await sql(
-    `insert into private.integration_settings(name,value) values('push_function_url','${pushUrl}') on conflict(name) do update set value=excluded.value`,
-  );
+  for (const name of ["push", "mail"]) {
+    const url = (env.SUPABASE_URL + "/functions/v1/" + name).replaceAll("'", "''");
+    await sql(
+      `insert into private.integration_settings(name,value) values('${name}_function_url','${url}') on conflict(name) do update set value=excluded.value`,
+    );
+  }
   const cmd =
     process.platform === "win32"
       ? cliCommand
       : root + "node_modules/.bin/supabase";
-  for (const functionName of ["calendar", "youtube", "push"]) {
+  for (const functionName of ["calendar", "youtube", "push", "mail"]) {
     const result = spawnSync(
       cmd,
       [

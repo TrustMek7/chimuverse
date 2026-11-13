@@ -29,7 +29,7 @@ No se declara listo para producción ni validada la sincronización real hasta c
 
 ## Límites explícitos
 
-- Correo desactivado; push web activo (ver «Notificaciones push»). Spotify continúa por enlaces. El usuario amplió YouTube a conexión individual e importación/exportación y sincronización de playlists; implementada con OAuth separado, una playlist común por espacio, importación desde el canal propietario, exportación de canciones compartidas, altas/bajas directas en YouTube y lectura automática cada minuto. Las invitaciones nativas por correo no están disponibles en la API; se activa colaboración por enlace en YouTube. Pendiente consentimiento real y registrar el callback OAuth.
+- Push web activo y correo de respaldo por Gmail (ver «Notificaciones push» y «Notificaciones por correo»). Spotify continúa por enlaces. El usuario amplió YouTube a conexión individual e importación/exportación y sincronización de playlists; implementada con OAuth separado, una playlist común por espacio, importación desde el canal propietario, exportación de canciones compartidas, altas/bajas directas en YouTube y lectura automática cada minuto. Las invitaciones nativas por correo no están disponibles en la API; se activa colaboración por enlace en YouTube. Pendiente consentimiento real y registrar el callback OAuth.
 - Papelera restaurable, sin purga automática activada; nada se elimina definitivamente sin esa configuración.
 - Calendar admite recurrencia diaria, semanal, mensual y anual; conserva reglas personalizadas de Google y sus excepciones. La edición de una única ocurrencia desde la app no está disponible: las acciones indican claramente que afectan a la serie.
 - No se ha publicado el frontend en Vercel ni se han enviado commits al remoto.
@@ -92,3 +92,14 @@ Migración 013 y Edge Function `push`. Cada notificación de la app (`notificati
 - **Configuración:** `npm run deploy:all` genera una sola vez `VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY` en `backend/.env`, los sube como secretos, registra `push_function_url` y despliega `push`. No requiere Firebase.
 - **PWA:** `manifest.webmanifest`, íconos en `public/icons` y `sw.js`, que solo maneja push y no guarda páginas ni datos en caché. `vercel.json` sirve `sw.js` sin caché.
 - **Pendiente:** preferencias por tipo de aviso y horario de silencio, y probar en dispositivos reales (iPhone instalado, Android, Windows/macOS).
+
+## Notificaciones por correo (Gmail)
+
+Migración 014 y Edge Function `mail`. Es el respaldo del push: un correo por aviso, solo para quien no tiene ningún dispositivo con push activo.
+
+- **Remitente:** el Gmail de la pareja; si no lo conectó, el propio (a sí mismo). Lo decide `mail_plan` en la base de datos. Omite avisos ya leídos, ya enviados o sin remitente.
+- **Permiso:** solo `gmail.send` (más `openid email` para comprobar que la cuenta conectada es la del login). OAuth con PKCE y estado de un uso. El refresh token se guarda cifrado (AES-GCM) en `private.gmail_connections`; el navegador solo ve `gmail_status()`, sin tokens.
+- **Envío:** el trigger `dispatch_mail` llama a `mail` con el secreto del cron por `pg_net`, solo si el destinatario no tiene push y alguien del espacio conectó Gmail. Cada aviso se registra en `private.email_deliveries` para no enviarse dos veces. Un permiso revocado se registra una vez como error visible en Ajustes, sin reintentos en bucle.
+- **Contenido:** el título breve de la notificación y un botón «Abrir en Chimuverse» (`APP_URL` + ruta interna). Cabeceras codificadas (sin inyección de cabeceras) y HTML escapado.
+- **Interfaz:** Ajustes → Conexiones → «Gmail para avisos por correo» (conectar, reconectar, desconectar, estado propio y de la pareja). Ajustes → Perfil resume si el respaldo por correo está activo.
+- **Configuración en Google:** ver «Conectar Gmail para avisos por correo» en getting-started.md.

@@ -132,6 +132,7 @@ before(async () => {
     "202611130011_date_ideas.sql",
     "202611130012_schedule_dates.sql",
     "202611130013_web_push.sql",
+    "202611130014_gmail_notifications.sql",
   ]) {
     await db.exec(
       readFileSync(
@@ -1093,4 +1094,47 @@ test("push subscriptions belong to one member, move with the browser and never l
   assert.equal((await as(b, () => db.query("select id from public.notifications where kind='test'"))).rows.length, 1);
   await as(b, () => db.query("select public.remove_push_subscription($1)", [ep]));
   assert.equal((await db.query("select count(*)::int n from public.push_subscriptions")).rows[0].n, 0);
+});
+test("email fallback goes from the partner's Gmail, only without push, once, and never exposes tokens", async () => {
+  const note = async (to, title) =>
+    (await db.query("insert into public.notifications(recipient_id,kind,title,path) values($1,'mail_test',$2,'/dia/quests') returning id", [to, title])).rows[0].id;
+  // Nobody connected Gmail: nothing to send.
+  let n = await note(a, "Sin remitente");
+  assert.equal((await db.query("select public.mail_plan($1) p", [n])).rows[0].p, null);
+  await db.query("select public.gmail_service('connect',$1,$2)", [b, { email: "b@example.test", token: "enc-b" }]);
+  await db.query("select public.gmail_service('connect',$1,$2)", [a, { email: "a@example.test", token: "enc-a" }]);
+  // A notification for A is sent from B's Gmail (the partner), to A's account email.
+  n = await note(a, "Te toca verificar");
+  let plan = (await db.query("select public.mail_plan($1) p", [n])).rows[0].p;
+  assert.equal(plan.sender_id, b);
+  assert.equal(plan.token, "enc-b");
+  assert.equal(plan.self, false);
+  assert.equal(plan.to, (await db.query("select email from auth.users where id=$1", [a])).rows[0].email);
+  await db.query("select public.mail_delivered($1,$2,'sent')", [n, b]);
+  assert.equal((await db.query("select public.mail_plan($1) p", [n])).rows[0].p, null, "never twice");
+  // Without the partner's connection, A's own Gmail mails A.
+  await db.query("select public.gmail_service('disconnect',$1)", [b]);
+  plan = (await db.query("select public.mail_plan($1) p", [await note(a, "Recordatorio")])).rows[0].p;
+  assert.equal(plan.sender_id, a);
+  assert.equal(plan.self, true);
+  // Push is the primary channel: with an active device, no email.
+  await as(a, () => db.query("select public.save_push_subscription('https://push.example.test/a',$1,$2,'X')", ["B".repeat(87), "a".repeat(22)]));
+  assert.equal((await db.query("select public.mail_plan($1) p", [await note(a, "Con push")])).rows[0].p, null);
+  await as(a, () => db.query("select public.remove_push_subscription('https://push.example.test/a')"));
+  // Read notifications are not mailed.
+  n = await note(a, "Leída");
+  await db.query("update public.notifications set read_at=now() where id=$1", [n]);
+  assert.equal((await db.query("select public.mail_plan($1) p", [n])).rows[0].p, null);
+  // Members see only their own status, never tokens; outsiders and clients cannot reach the service.
+  const status = (await as(a, () => db.query("select public.gmail_status() s"))).rows[0].s;
+  assert.equal(status.connected, true);
+  assert.equal(status.email, "a@example.test");
+  assert.equal(status.partner_connected, false);
+  assert.ok(!JSON.stringify(status).includes("enc-"));
+  assert.equal((await as(c, () => db.query("select public.gmail_status() s"))).rows[0].s, null);
+  await as(a, () => assert.rejects(db.query("select public.mail_plan($1)", [n]), /permission denied/));
+  await as(a, () => assert.rejects(db.query("select public.gmail_service('disconnect',$1)", [b]), /permission denied/));
+  await as(a, () => assert.rejects(db.query("select * from private.gmail_connections"), /permission denied/));
+  await db.query("select public.gmail_service('disconnect',$1)", [a]);
+  await db.query("delete from public.notifications where kind='mail_test'");
 });

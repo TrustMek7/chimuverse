@@ -24,7 +24,7 @@ El código implementado se detalla en [estado de implementación](implementation
 - [x] Desplegar función/scheduler.
 - [ ] Validar sincronización real con las dos cuentas tras configurar OAuth.
 - [x] Push web (PWA) en celular y escritorio, con estado en Inicio y dispositivos en Ajustes.
-- [ ] Correo: pendiente por decisión de producto.
+- [x] Correo de respaldo por Gmail (gmail.send) cuando no hay push.
 - [ ] Push: preferencias por tipo de aviso y horario de silencio.
 
 ## Recuerdos y expansión

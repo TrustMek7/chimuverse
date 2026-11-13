@@ -48,4 +48,5 @@ jobs:
       - run: npm run test:calendar
       - run: npm run test:youtube
       - run: npm run test:push
+      - run: npm run test:mail
       - run: npm run content:check

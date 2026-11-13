@@ -17,6 +17,7 @@ import { useSpace, useAction } from "../lib/store";
 import { check, supabase } from "../lib/supabase";
 import { signOut } from "../lib/push";
 import { PushSettings } from "../components/PushStatus";
+import { GmailConnection, EmailSummary } from "../components/GmailConnection";
 import { download, localDay, formatDate } from "../lib/utils";
 import {
   Button,
@@ -228,15 +229,7 @@ export default function Settings() {
           <hr />
           <PushSettings />
           <hr />
-          <div className="row between wrap">
-            <div>
-              <h3>Notificaciones por correo</h3>
-              <p className="muted">
-                Próximamente. Las notificaciones internas ya tienen su espacio.
-              </p>
-            </div>
-            <span className="pill">No disponible</span>
-          </div>
+          <EmailSummary />
           <hr />
           <Button
             variant="secondary"
@@ -249,6 +242,7 @@ export default function Settings() {
       ) : tab === "Conexiones" ? (
         <>
           <YouTubePlaylist manageConnection />
+          <GmailConnection />
           <section className="card settings-card">
             <div className="row gap">
               {connection.data?.status === "connected" ? (

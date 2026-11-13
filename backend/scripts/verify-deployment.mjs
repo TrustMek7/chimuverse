@@ -57,3 +57,16 @@ console.log(
   "YouTube function deployed; anonymous access denied:",
   youtube.status,
 );
+for (const name of ["push", "mail"]) {
+  const res = await fetch(env.SUPABASE_URL + "/functions/v1/" + name, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      action: "send",
+      notification_id: "00000000-0000-4000-8000-000000000000",
+    }),
+  });
+  if (res.status !== 401)
+    throw new Error(`${name} function must reject unsigned sends: ${res.status}`);
+  console.log(`${name} function deployed; unsigned sends denied:`, res.status);
+}
