@@ -98,8 +98,78 @@ before(async () => {
     `insert into auth.users(id,email) values ($1,'jcusilaymeg@gmail.com'),($2,'032azq@gmail.com'),($3,'stranger@example.com')`,
     [a, b, c],
   );
+  await as(a, () =>
+    db.query("select public.save_entry($1,'Antes de compartir')", [
+      JSON.stringify({
+        kind: "mood",
+        title: "Registro existente",
+        visibility: "private",
+        details: { mood: "bien" },
+      }),
+    ]),
+  );
+  await as(a, () =>
+    db.query(
+      "insert into public.photos(id,space_id,title,storage_path,thumb_path,captured_at,captured_at_source,size_bytes,width,height) values('99999999-9999-4999-8999-999999999999',$1,'Foto existente',$2,$3,now(),'manual',100,10,10)",
+      [
+        sid,
+        sid + "/99999999-9999-4999-8999-999999999999/full.webp",
+        sid + "/99999999-9999-4999-8999-999999999999/thumb.webp",
+      ],
+    ),
+  );
+  await db.exec(
+    readFileSync(
+      new URL(
+        "../supabase/migrations/202611130009_shared_space.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    ),
+  );
 });
 after(() => db.close());
+
+test("migration shares existing mood notes and photos and forces shared writes", async () => {
+  await as(b, async () => {
+    const e = (
+      await db.query(
+        "select id,visibility from public.entries where title='Registro existente'",
+      )
+    ).rows[0];
+    assert.equal(e.visibility, "shared");
+    assert.equal(
+      (
+        await db.query(
+          "select content from public.entry_bodies where entry_id=$1",
+          [e.id],
+        )
+      ).rows[0].content,
+      "Antes de compartir",
+    );
+    assert.equal(
+      (
+        await db.query(
+          "select visibility from public.photos where title='Foto existente'",
+        )
+      ).rows[0].visibility,
+      "shared",
+    );
+  });
+  await as(a, async () => {
+    await db.query(
+      "update public.photos set visibility='private' where title='Foto existente'",
+    );
+    assert.equal(
+      (
+        await db.query(
+          "select visibility from public.photos where title='Foto existente'",
+        )
+      ).rows[0].visibility,
+      "shared",
+    );
+  });
+});
 
 test("YouTube credentials are service-only, state single-use, and both members share one locked playlist", async () => {
   await assert.rejects(() =>
@@ -457,26 +527,47 @@ test("scheduled reminders are deduplicated and calendar events notify both membe
   assert.equal(events.length, 2);
   assert.deepEqual(events.map((e) => e.recipient_id).sort(), [a, b].sort());
 });
-test("shared mood exposes state but never the note; personal finances stay private", async () => {
-  const mood = (
-    await as(a, () =>
-      db.query("select public.save_entry($1,$2) as id", [
-        JSON.stringify({
-          kind: "mood",
-          title: "Me siento bien",
-          visibility: "shared",
-          details: { mood: "bien" },
-        }),
-        "Una nota privada",
-      ]),
-    )
-  ).rows[0].id;
-  await as(b, async () => {
-    assert.equal(
-      (await db.query("select id from public.entries where id=$1", [mood])).rows
-        .length,
-      1,
-    );
+test("both members read mood notes and finances, including legacy private submissions", async () => {
+  const create = async (kind, extra = {}) =>
+    (
+      await as(a, () =>
+        db.query("select public.save_entry($1,$2) id", [
+          JSON.stringify({
+            kind,
+            title: "Nuestro registro",
+            visibility: "private",
+            ...extra,
+          }),
+          "Nuestra nota",
+        ]),
+      )
+    ).rows[0].id;
+  const mood = await create("mood", { details: { mood: "bien" } });
+  const tx = await create("transaction", {
+    amount: 500,
+    details: { direction: "income" },
+  });
+  for (const id of [mood, tx])
+    await as(b, async () => {
+      assert.equal(
+        (
+          await db.query("select visibility from public.entries where id=$1", [
+            id,
+          ])
+        ).rows[0].visibility,
+        "shared",
+      );
+      assert.equal(
+        (
+          await db.query(
+            "select content from public.entry_bodies where entry_id=$1",
+            [id],
+          )
+        ).rows[0].content,
+        "Nuestra nota",
+      );
+    });
+  await as(c, async () =>
     assert.equal(
       (
         await db.query("select * from public.entry_bodies where entry_id=$1", [
@@ -484,39 +575,10 @@ test("shared mood exposes state but never the note; personal finances stay priva
         ])
       ).rows.length,
       0,
-    );
-  });
-  const tx = (
-    await as(a, () =>
-      db.query("select public.save_entry($1) as id", [
-        JSON.stringify({
-          kind: "transaction",
-          title: "Mi ingreso",
-          amount: 500,
-          details: { direction: "income" },
-        }),
-      ]),
-    )
-  ).rows[0].id;
-  await as(b, async () =>
-    assert.equal(
-      (await db.query("select * from public.entries where id=$1", [tx])).rows
-        .length,
-      0,
-    ),
-  );
-  await as(a, async () =>
-    assert.equal(
-      (
-        await db.query(
-          "select content from public.entry_bodies where entry_id=$1",
-          [mood],
-        )
-      ).rows[0].content,
-      "Una nota privada",
     ),
   );
 });
+
 test("photo object access follows metadata visibility and ignores guessed storage paths", async () => {
   const pid = "77777777-7777-4777-8777-777777777777";
   const path = sid + "/" + pid + "/full.webp";
@@ -528,7 +590,7 @@ test("photo object access follows metadata visibility and ignores guessed storag
   );
   await as(a, () =>
     db.query(
-      `insert into public.photos(id,space_id,title,storage_path,thumb_path,captured_at,captured_at_source,size_bytes,width,height) values($1,$2,'Privada',$3,$4,now(),'manual',1000,100,100)`,
+      `insert into public.photos(id,space_id,title,storage_path,thumb_path,captured_at,captured_at_source,size_bytes,width,height) values($1,$2,'Nuestra foto',$3,$4,now(),'manual',1000,100,100)`,
       [pid, sid, path, sid + "/" + pid + "/thumb.webp"],
     ),
   );
@@ -543,7 +605,7 @@ test("photo object access follows metadata visibility and ignores guessed storag
     assert.equal(
       (await db.query("select * from storage.objects where name=$1", [path]))
         .rows.length,
-      0,
+      1,
     ),
   );
   await as(a, () =>
@@ -745,7 +807,7 @@ test("superseded reports cannot be verified; latest completion retains history",
     "done",
   );
 });
-test("private records stay private and capsules cannot be read or changed before opening", async () => {
+test("records are shared and capsules cannot be read or changed before opening", async () => {
   const create = async (data, body) =>
     as(a, () =>
       db.query("select public.save_entry($1,$2) as id", [
@@ -754,7 +816,7 @@ test("private records stay private and capsules cannot be read or changed before
       ]),
     );
   const privateId = (
-    await create({ kind: "journal", title: "Privado" }, "Mi nota privada")
+    await create({ kind: "journal", title: "Nuestro diario" }, "Nuestra nota")
   ).rows[0].id;
   const capsuleId = (
     await create(
@@ -771,7 +833,7 @@ test("private records stay private and capsules cannot be read or changed before
     assert.equal(
       (await db.query("select * from public.entries where id=$1", [privateId]))
         .rows.length,
-      0,
+      1,
     );
     assert.equal(
       (

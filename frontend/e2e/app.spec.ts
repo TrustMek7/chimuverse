@@ -542,7 +542,7 @@ test("dashboard and all module routes render with mobile navigation and both the
   expect(dark.violations).toEqual([]);
   expect(errors).toEqual([]);
 });
-test("quest creation, cross-verification and private journal persistence use real UI actions", async ({
+test("quest creation, cross-verification and shared journal persistence use real UI actions", async ({
   page,
 }) => {
   const rows = await fixture(page);
@@ -567,7 +567,7 @@ test("quest creation, cross-verification and private journal persistence use rea
   await page.goto("/recuerdos/devlog?crear=1");
   await expect(
     page.getByRole("button", { name: "Solo yo", exact: true }),
-  ).toHaveAttribute("aria-pressed", "true");
+  ).toHaveCount(0);
   await page
     .getByRole("textbox", { name: "Título", exact: true })
     .fill("Un pequeño momento");
@@ -578,5 +578,5 @@ test("quest creation, cross-verification and private journal persistence use rea
   await expect(
     page.getByRole("heading", { name: "Un pequeño momento" }),
   ).toBeVisible();
-  expect(rows.entries[0].visibility).toBe("private");
+  expect(rows.entries[0].visibility).toBe("shared");
 });

@@ -81,8 +81,8 @@ export default function Wrapped() {
           })}
         </div>
         <p className="small">
-          Solo momentos compartidos. Los espacios privados siguen siendo
-          privados.
+          Los momentos que compartimos durante el año. Las cápsulas selladas
+          esperan su fecha de apertura.
         </p>
       </section>
       <p className="home-footnote">

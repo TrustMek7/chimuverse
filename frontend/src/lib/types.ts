@@ -1,4 +1,4 @@
-export type Visibility = "private" | "shared" | "capsule";
+export type Visibility = "shared" | "capsule";
 export type Profile = {
   id: string;
   display_name: string;

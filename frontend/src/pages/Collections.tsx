@@ -157,7 +157,7 @@ function initial(kind: EntryKind, entry?: Entry, capsule = false): Draft {
   return {
     title: entry?.title ?? "",
     content: entry?.entry_bodies?.content ?? "",
-    visibility: entry?.visibility ?? (capsule ? "capsule" : "private"),
+    visibility: entry?.visibility ?? (capsule ? "capsule" : "shared"),
     status: entry?.status ?? "pending",
     occurred_on: entry?.occurred_on ?? localDay(),
     unlock_at: entry?.unlock_at?.slice(0, 16) ?? "",
@@ -204,9 +204,6 @@ export default function Collections() {
         !e.deleted_at &&
         e.kind === kind &&
         (!pathname.includes("capsulas") || e.visibility === "capsule") &&
-        (filter !== "Solo yo" ||
-          (e.owner_id === me.id && e.visibility === "private")) &&
-        (filter !== "Compartidas" || e.visibility === "shared") &&
         (filter !== "Pendientes" || e.status !== "done") &&
         (filter !== "Historial" || e.status === "done") &&
         e.title.toLocaleLowerCase().includes(search.toLocaleLowerCase()),
@@ -228,7 +225,6 @@ export default function Collections() {
       (e) =>
         e.kind === "budget" &&
         !e.deleted_at &&
-        e.owner_id === me.id &&
         e.occurred_on.startsWith(thisMonth),
     )
     .reduce((s, e) => s + Number(e.amount ?? 0), 0);
@@ -391,13 +387,13 @@ export default function Collections() {
               <strong>{money(totals("income") - totals("expense"))}</strong>
             </div>
             <div className="card metric">
-              <small>Mi presupuesto · este mes</small>
+              <small>Nuestro presupuesto · este mes</small>
               <strong>{money(budget)}</strong>
             </div>
           </div>
           <p className="small muted">
-            <Lock size={14} /> Solo se suman tus registros y los compartidos.
-            Los movimientos privados de tu pareja no se incluyen.
+            <Lock size={14} /> Se suman los ingresos, gastos y presupuestos de
+            los dos.
           </p>
           <div className="segments">
             {[
@@ -424,7 +420,7 @@ export default function Collections() {
             <p className="eyebrow">TU ÚLTIMA SEMANA</p>
             <h2>Cada día tiene su propio cielo</h2>
             <p className="muted">
-              Compartir el estado es opcional. Tu nota permanece privada.
+              El estado y la nota se comparten entre los dos.
             </p>
           </div>
           <div className="mood-week">
@@ -457,7 +453,7 @@ export default function Collections() {
         <div className="segments">
           {(kind === "watch" || kind === "date"
             ? ["Todas", "Pendientes", "Historial"]
-            : ["Todas", "Solo yo", "Compartidas"]
+            : ["Todas"]
           ).map((f) => (
             <button
               key={f}
@@ -600,15 +596,12 @@ export default function Collections() {
                           .filter((p) => !p.deleted_at)
                           .map((p) => (
                             <option key={p.id} value={p.id}>
-                              {p.title} ·{" "}
-                              {p.visibility === "private"
-                                ? "Solo yo"
-                                : "Compartido"}
+                              {p.title} · {"Compartido"}
                             </option>
                           ))}
                       </select>
                       <small className="muted">
-                        La imagen conserva su privacidad original.
+                        La imagen también se comparte entre los dos.
                       </small>
                     </label>
                     <div className="row between">
@@ -851,7 +844,7 @@ export default function Collections() {
           )}
           <label className="field">
             {kind === "mood"
-              ? "Una nota solo para ti (nunca se comparte)"
+              ? "Una nota para compartir cómo te sientes"
               : "Lo que quieres guardar"}
             <textarea
               maxLength={30000}

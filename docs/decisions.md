@@ -24,3 +24,5 @@
 - Retención y backups automáticos de fotos/datos personales. La exportación manual ya está implementada.
 
 - YouTube: OAuth independiente (`youtube.force-ssl`), una playlist común por espacio y edición de ambos mediante el propietario. Las invitaciones nativas se aceptan mediante enlace de colaboración generado en YouTube; no hay API para invitar por correo. No listada o privada según elección explícita al crear.
+
+- Se elimina la visibilidad individual de todos los módulos. Registros y fotos existentes/nuevos compartidos entre los dos, incluidas notas de ánimo y finanzas. La migración 009 normaliza clientes antiguos y conserva las cápsulas y controles de acceso externos. Esta decisión sustituye las decisiones previas de privacidad individual.

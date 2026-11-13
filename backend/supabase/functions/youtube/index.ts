@@ -284,7 +284,9 @@ export async function handler(req: Request): Promise<Response> {
         if (mutate) {
           const lock = await service("lock", uid);
           if (!lock.acquired)
-            throw new Error("La playlist se está actualizando. Intenta en un momento.");
+            throw new Error(
+              "La playlist se está actualizando. Intenta en un momento.",
+            );
         }
         try {
           playlist = await service("playlist", uid);
@@ -311,8 +313,7 @@ export async function handler(req: Request): Promise<Response> {
                       "Nuestra playlist compartida desde Chimuverse.",
                   },
                   status: {
-                    privacyStatus:
-                      body.privacy === "private" ? "private" : "unlisted",
+                    privacyStatus: "unlisted",
                   },
                 },
               );

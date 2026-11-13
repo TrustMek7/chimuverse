@@ -13,7 +13,6 @@ import {
   Modal,
   ErrorMessage,
   Empty,
-  VisibilityPicker,
   VisibilityPill,
 } from "../components/ui";
 export function PhotoImage({
@@ -54,21 +53,13 @@ export default function Vault() {
   const [open, setOpen] = useState(params.has("crear"));
   const [title, setTitle] = useState("");
   const [captured, setCaptured] = useState("");
-  const [visibility, setVisibility] = useState<Visibility>("private");
+  const visibility: Visibility = "shared";
   const [trip, setTrip] = useState(params.get("viaje") ?? "");
   const [items, setItems] = useState<UploadItem[]>([]);
   const [selected, setSelected] = useState<Photo | null>(null);
-  const [filter, setFilter] = useState("Todas");
   const action = useAction();
   const photos = data!.photos
-    .filter(
-      (p) =>
-        !p.deleted_at &&
-        (!trip || p.trip_id === trip) &&
-        (filter !== "Solo yo" ||
-          (p.uploaded_by === me.id && p.visibility === "private")) &&
-        (filter !== "Compartidas" || p.visibility === "shared"),
-    )
+    .filter((p) => !p.deleted_at && (!trip || p.trip_id === trip))
     .sort((a, b) => b.captured_at.localeCompare(a.captured_at));
   const trips = data!.entries.filter((e) => e.kind === "trip" && !e.deleted_at);
   function update(index: number, patch: Partial<UploadItem>) {
@@ -204,18 +195,6 @@ export default function Vault() {
           ))}
         </select>
       </div>
-      <div className="segments">
-        {["Todas", "Solo yo", "Compartidas"].map((f) => (
-          <button
-            key={f}
-            aria-pressed={f === filter}
-            onClick={() => setFilter(f)}
-          >
-            {f}
-          </button>
-        ))}
-      </div>
-      <ErrorMessage error={action.error} />
       {photos.length ? (
         <div
           className={`photo-grid ${pathname.includes("linea-de-tiempo") ? "photo-timeline" : ""}`}
@@ -239,7 +218,7 @@ export default function Vault() {
       ) : (
         <Empty
           title="Aquí vivirán nuestros recuerdos"
-          text="Guarda una foto, su fecha y ese detalle que la hace especial. Las fotos nuevas empiezan como Solo yo."
+          text="Guarda una foto, su fecha y ese detalle que la hace especial. Todas las fotos se comparten entre los dos."
         >
           <Button variant="secondary" onClick={() => setOpen(true)}>
             <Images size={18} />
@@ -301,7 +280,7 @@ export default function Vault() {
               ))}
             </select>
           </label>
-          <VisibilityPicker value={visibility} onChange={setVisibility} />
+          <p className="small muted">Esta foto se comparte entre los dos.</p>
           <ErrorMessage error={action.error} />
           <ul className="upload-list">
             {items.map((item, i) => (

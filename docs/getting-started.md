@@ -102,3 +102,6 @@ Our Calendar siempre es compartido. En Repetición se elige frecuencia, días e 
 7. Añadir o quitar canciones en el panel actualiza YouTube inmediatamente. Los cambios externos aparecen al actualizar o en un minuto mientras el panel esté abierto. Exportar canciones compartidas añade sus enlaces de YouTube sin duplicados; las canciones locales privadas y Spotify quedan fuera. Una exportación interrumpida puede añadir algunas canciones: actualizar antes de repetir conserva lo ya añadido.
 
 El scope permite más operaciones que las que usa la app; no existe un scope oficial limitado a una sola playlist. Desconectar quita la credencial guardada sin borrar la playlist. Revocar el cliente desde Google puede afectar también Calendar si comparten cliente OAuth. Documentación: https://developers.google.com/youtube/data/reference/rest/v3/playlists y https://support.google.com/youtube/answer/6109639.
+
+
+Actualización de uso: todos los registros y fotos se comparten automáticamente entre los dos, incluidos los anteriores. Ya no hay opción «Solo yo». Las cápsulas esperan su apertura. Las nuevas playlists son no listadas y pueden verse con el enlace; queda eliminada la opción de creación privada de la guía anterior.

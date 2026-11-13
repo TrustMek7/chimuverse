@@ -1,14 +1,6 @@
 import type { ReactNode, ButtonHTMLAttributes } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
-import {
-  Lock,
-  Users,
-  Hourglass,
-  Sparkles,
-  X,
-  AlertCircle,
-  Star,
-} from "lucide-react";
+import { Users, Hourglass, Sparkles, X, AlertCircle, Star } from "lucide-react";
 import { statusNames } from "../lib/utils";
 import type { Visibility } from "../lib/types";
 export function Button({
@@ -68,16 +60,11 @@ export function Loading() {
   );
 }
 export function VisibilityPill({ value }: { value: Visibility }) {
-  const Icon =
-    value === "private" ? Lock : value === "capsule" ? Hourglass : Users;
+  const Icon = value === "capsule" ? Hourglass : Users;
   return (
     <span className={`pill visibility ${value}`}>
       <Icon size={13} />
-      {value === "private"
-        ? "Solo yo"
-        : value === "capsule"
-          ? "Cápsula"
-          : "Compartido"}
+      {value === "capsule" ? "Cápsula" : "Compartido"}
     </span>
   );
 }
@@ -90,13 +77,12 @@ export function VisibilityPicker({
   onChange: (v: Visibility) => void;
   capsule?: boolean;
 }) {
+  if (!capsule) return <p className="small muted">Compartido entre los dos.</p>;
   return (
     <div className="field">
-      <span>Visibilidad</span>
+      <span>Disponibilidad</span>
       <div className="segments">
-        {(
-          ["private", "shared", ...(capsule ? ["capsule"] : [])] as Visibility[]
-        ).map((v) => (
+        {(["shared", "capsule"] as Visibility[]).map((v) => (
           <button
             type="button"
             key={v}

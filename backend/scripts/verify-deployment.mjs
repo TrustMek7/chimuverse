@@ -19,13 +19,15 @@ const mgmt = await fetch(
     },
     body: JSON.stringify({
       query:
-        "select (select count(*) from supabase_migrations.schema_migrations)::int as migrations,(select count(*) from cron.job where jobname='chimuverse-calendar' and active)::int as scheduled_jobs,(select count(*) from private.allowed_emails)::int as allowed_accounts,(select count(*) from pg_tables where schemaname='public' and rowsecurity)::int as rls_tables",
+        "select (select count(*) from supabase_migrations.schema_migrations)::int as migrations,(select count(*) from cron.job where jobname='chimuverse-calendar' and active)::int as scheduled_jobs,(select count(*) from private.allowed_emails)::int as allowed_accounts,(select count(*) from pg_tables where schemaname='public' and rowsecurity)::int as rls_tables,(select count(*) from public.entries where visibility='private')::int as personal_entries,(select count(*) from public.photos where visibility<>'shared')::int as personal_photos",
       read_only: true,
     }),
   },
 );
 if (!mgmt.ok) throw new Error(`Verification failed: ${mgmt.status}`);
-console.log("Database:", JSON.stringify(await mgmt.json()));
+const database = await mgmt.json();
+if (database.some(row => row.personal_entries || row.personal_photos)) throw new Error("Shared-space backfill incomplete");
+console.log("Database:", JSON.stringify(database));
 const res = await fetch(env.SUPABASE_URL + "/functions/v1/calendar", {
   method: "POST",
   headers: {

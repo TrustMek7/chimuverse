@@ -29,7 +29,6 @@ export function YouTubePlaylist({
   const [busy, setBusy] = useState(false),
     [error, setError] = useState<unknown>(null);
   const [title, setTitle] = useState("Nuestro soundtrack"),
-    [privacy, setPrivacy] = useState("unlisted"),
     [video, setVideo] = useState(""),
     [confirm, setConfirm] = useState<string | null>(null);
   const [choosing, setChoosing] = useState(false),
@@ -160,29 +159,17 @@ export function YouTubePlaylist({
                   onChange={(e) => setTitle(e.target.value)}
                 />
               </label>
-              <label>
-                Visibilidad en YouTube
-                <select
-                  value={privacy}
-                  onChange={(e) => setPrivacy(e.target.value)}
-                >
-                  <option value="unlisted">
-                    No listada · cualquiera con el enlace puede verla
-                  </option>
-                  <option value="private">
-                    Privada · visible en YouTube solo para el propietario
-                  </option>
-                </select>
-              </label>
               <p className="small muted">
-                En Chimuverse ambos pueden editarla. Para colaborar también
-                desde YouTube, elijan «No listada» y activen la colaboración
-                allí.
+                La playlist será no listada: ambos podrán verla con el enlace.
+                Cualquier otra persona que reciba el enlace también podrá verla.
+                Para editar también desde YouTube, activen allí la colaboración.
               </p>
               <div className="row gap wrap">
                 <Button
                   disabled={busy || !title.trim()}
-                  onClick={() => void run("create", { title, privacy })}
+                  onClick={() =>
+                    void run("create", { title, privacy: "unlisted" })
+                  }
                 >
                   Crear nuestra playlist en YouTube
                 </Button>

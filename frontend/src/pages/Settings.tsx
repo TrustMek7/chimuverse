@@ -399,9 +399,9 @@ export default function Settings() {
         <section className="card settings-card">
           <h2>Lo nuestro, también en tus manos</h2>
           <p className="muted">
-            La exportación contiene lo que puedes ver: tus datos privados y los
-            compartidos. Nunca el contenido de una cápsula sellada ni datos
-            privados de tu pareja.
+            La exportación incluye los registros compartidos entre los dos. El
+            contenido de las cápsulas selladas estará disponible en su fecha de
+            apertura.
           </p>
           <div className="row gap wrap">
             <Button
