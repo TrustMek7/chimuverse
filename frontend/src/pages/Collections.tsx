@@ -942,7 +942,7 @@ export default function Collections() {
                       </div>
                     )}
                   </div>
-                  {(kind === "watch" || e.owner_id === me.id) &&
+                  {e.owner_id === me.id &&
                     ["watch", "wish"].includes(kind) &&
                     e.status !== "done" && (
                       <div className="row gap-sm">
