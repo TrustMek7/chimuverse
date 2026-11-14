@@ -117,6 +117,11 @@ async function fixture(page: Page, connected = false) {
     }
     if (table === "save_entry") {
       const body = route.request().postDataJSON();
+      if (body.p_id) {
+        const entry = rows.entries.find((e) => e.id === body.p_id);
+        if (entry) entry.status = body.p_data.status;
+        return route.fulfill({ json: body.p_id });
+      }
       rows.entries.push({
         ...body.p_data,
         id: crypto.randomUUID(),
@@ -688,6 +693,27 @@ test("dashboard and all module routes render with mobile navigation and both the
     .analyze();
   expect(dark.violations).toEqual([]);
   expect(errors).toEqual([]);
+});
+test("both members can start and finish a movie added by the other", async ({ page }) => {
+  const rows = await fixture(page);
+  rows.entries.push({
+    id: "12121212-1212-4121-8121-121212121212",
+    space_id: sid,
+    owner_id: b,
+    kind: "watch",
+    title: "La película compartida",
+    status: "pending",
+    visibility: "shared",
+    occurred_on: new Date().toISOString().slice(0, 10),
+    details: { format: "movie" },
+    deleted_at: null,
+    entry_bodies: { content: "" },
+  });
+  await page.goto("/ocio/watchlist");
+  await page.getByRole("button", { name: "Empezar" }).click();
+  await expect(page.getByText("En progreso", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Marcar como completado" }).click();
+  await expect(page.getByText("Completada", { exact: true })).toBeVisible();
 });
 test("returning to the tab preserves unsaved forms while signing out removes the space", async ({
   page,

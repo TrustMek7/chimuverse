@@ -142,6 +142,7 @@ before(async () => {
     "202611130021_question_management.sql",
     "202611130022_shared_watch_status.sql",
     "202611130023_restore_watch_owner_status.sql",
+    "202611130024_shared_watch_status.sql",
   ]) {
     await db.exec(
       readFileSync(
@@ -1380,6 +1381,17 @@ test("a lost Google permission alerts its owner once a day; outages do not; date
   assert.deepEqual([e.title, e.owner_id, e.ed], ["Picnic en el parque", idea.owner_id, other]);
   await as(other, () => db.query("select public.trash_item('entries',$1)", [idea.id]));
   assert.ok((await db.query("select deleted_at from public.entries where id=$1", [idea.id])).rows[0].deleted_at);
+});
+
+test("either member can start or finish a shared movie/series, but only its creator can edit its details", async () => {
+  const id = (await as(a, () => db.query("select public.save_entry($1) id", [JSON.stringify({ kind: "watch", title: "Una película", details: { format: "movie" } })]))).rows[0].id;
+  await as(b, () => db.query("select public.save_entry($1,'',$2)", [JSON.stringify({ kind: "watch", title: "Una película", status: "progress" }), id]));
+  assert.equal((await db.query("select status from public.entries where id=$1", [id])).rows[0].status, "progress");
+  await as(b, () => db.query("select public.save_entry($1,'',$2)", [JSON.stringify({ kind: "watch", title: "Una película", status: "done" }), id]));
+  assert.equal((await db.query("select status from public.entries where id=$1", [id])).rows[0].status, "done");
+  await as(b, () => db.query("select public.save_entry($1,'',$2)", [JSON.stringify({ kind: "watch", title: "Cambiar título", status: "progress" }), id]));
+  assert.equal((await db.query("select title from public.entries where id=$1", [id])).rows[0].title, "Una película");
+  await assert.rejects(() => as(c, () => db.query("select public.save_entry($1,'',$2)", [JSON.stringify({ kind: "watch", title: "Una película", status: "done" }), id])), /No puedes editar/);
 });
 
 test("our questions are edited and trashed by either member, bank questions are only hidden, and shared trash is visible to both", async () => {
