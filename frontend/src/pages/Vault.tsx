@@ -197,7 +197,7 @@ export default function Vault() {
             <span>JPEG, PNG o WebP · máximo 25 MB por foto</span>
             <input
               type="file"
-              accept="image/jpeg,image/png,image/webp,image/heic"
+              accept=".jpg,.jpeg,.png,.webp,.heic,.heif,image/jpeg,image/jpg,image/png,image/webp,image/heic,image/heif"
               multiple
               onChange={(e) => {
                 const files = Array.from(e.target.files ?? []);

@@ -2,14 +2,22 @@ import * as exifr from "exifr";
 import { check, supabase } from "./supabase";
 export async function preparePhoto(file: File) {
   if (file.size > 25 * 1024 * 1024) throw new Error("La foto supera 25 MB.");
+  // Some browsers (and files shared from phones) report JPG as image/jpg or
+  // leave File.type empty. Trust known image extensions in that case; decoding
+  // below still verifies that the file is actually a supported image.
+  const extension = file.name.split(".").pop()?.toLowerCase();
+  const supportedTypes = [
+    "image/jpeg",
+    "image/jpg",
+    "image/png",
+    "image/webp",
+    "image/heic",
+    "image/heif",
+  ];
+  const supportedExtensions = ["jpg", "jpeg", "png", "webp", "heic", "heif"];
   if (
-    ![
-      "image/jpeg",
-      "image/png",
-      "image/webp",
-      "image/heic",
-      "image/heif",
-    ].includes(file.type)
+    !supportedTypes.includes(file.type.toLowerCase()) &&
+    !(file.type === "" && supportedExtensions.includes(extension ?? ""))
   )
     throw new Error("Usa una foto JPEG, PNG o WebP.");
   let captured: Date | undefined;
