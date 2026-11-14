@@ -7,6 +7,7 @@ import {
 import { YouTubePlaylist } from "../components/YouTubePlaylist";
 import { FinanceRecurring } from "../components/FinanceRecurring";
 import { SavingsGoals } from "../components/SavingsGoals";
+import { EntryReactions } from "../components/EntryReactions";
 import { BOTH, personLabel, personLine, personOf } from "../lib/finance";
 import { useState } from "react";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
@@ -143,6 +144,13 @@ const config: Record<
     singular: "viaje",
     icon: Heart,
   },
+};
+const journalTypeNames: Record<string, string> = {
+  hicimos: "Un momento juntos",
+  nos_paso: "Lo que nos pasó",
+  aprendimos: "Lo que aprendimos",
+  acordamos: "Lo que acordamos",
+  note_for_partner: "Una nota para ti",
 };
 type Draft = {
   title: string;
@@ -738,8 +746,10 @@ export default function Collections() {
                   <div className="row gap wrap">
                     <small className="eyebrow">
                       {e.details.category ||
-                        e.details.subtype ||
-                        formatDate(e.occurred_on)}
+                        (kind === "journal" && e.details.subtype
+                          ? journalTypeNames[String(e.details.subtype)] ??
+                            "Nuestro diario"
+                          : formatDate(e.occurred_on))}
                     </small>
                     {["watch", "date", "goal", "wish"].includes(kind) && (
                       <Status value={e.status} />
@@ -789,6 +799,13 @@ export default function Collections() {
                         {e.entry_bodies.content}
                       </p>
                     )
+                  )}
+                  {!sealed && ["journal", "mood"].includes(kind) && (
+                    <EntryReactions
+                      entry={e}
+                      reactions={data!.entry_reactions}
+                      userId={me.id}
+                    />
                   )}
                   {kind === "goal" && (
                     <>
@@ -1113,10 +1130,10 @@ export default function Collections() {
                 }}
               >
                 {[
-                  ["hicimos", "Lo que hicimos"],
+                  ["hicimos", "Un momento juntos"],
                   ["nos_paso", "Lo que nos pasó"],
                   ["aprendimos", "Lo que aprendimos"],
-                  ["acordamos", "Un acuerdo"],
+                  ["acordamos", "Lo que acordamos"],
                   ["note_for_partner", "Una nota para ti"],
                 ].map(([v, l]) => (
                   <option key={v} value={v}>

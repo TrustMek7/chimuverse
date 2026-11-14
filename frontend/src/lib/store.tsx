@@ -101,6 +101,11 @@ export function useRealtime() {
         { event: "*", schema: "public", table: "calendar_events" },
         () => qc.invalidateQueries({ queryKey: ["snapshot"] }),
       )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "entry_reactions" },
+        () => qc.invalidateQueries({ queryKey: ["snapshot"] }),
+      )
       .subscribe();
     return () => {
       void supabase.removeChannel(channel);
@@ -121,6 +126,7 @@ export function useSnapshot() {
         "task_progress",
         "task_verifications",
         "entries",
+        "entry_reactions",
         "calendar_events",
         "calendar_overrides",
         "task_events",
@@ -139,10 +145,16 @@ export function useSnapshot() {
             const result = await supabase
               .from(table)
               .select(table === "entries" ? "*,entry_bodies(content)" : "*")
-              .order(table === "question_hidden" ? "question_id" : "id")
+              .order(
+                table === "question_hidden"
+                  ? "question_id"
+                  : table === "entry_reactions"
+                    ? "entry_id"
+                    : "id",
+              )
               .range(offset, offset + 499);
             if (
-              ["calendar_overrides", "task_events", "finance_recurring", "savings_goals", "question_hidden"].includes(table) &&
+              ["calendar_overrides", "task_events", "finance_recurring", "savings_goals", "question_hidden", "entry_reactions"].includes(table) &&
               result.error?.code === "PGRST205"
             )
               return [table, []];
@@ -159,6 +171,7 @@ export function useSnapshot() {
               "task_verifications",
               "notifications",
               "entries",
+              "entry_reactions",
             ].includes(table)
           )
             rows.sort((a, b) =>

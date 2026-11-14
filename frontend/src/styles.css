@@ -1185,6 +1185,45 @@ input[type="checkbox"] {
 .collection-card h2 {
   font-size: 24px;
 }
+.entry-reactions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+  padding-top: 10px;
+  border-top: 1px solid var(--color-line);
+}
+.reaction-count,
+.reaction-open,
+.reaction-option {
+  border: 1px solid var(--color-line);
+  border-radius: 999px;
+  background: var(--color-bg-sunk);
+  padding: 5px 10px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+.reaction-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.reaction-count.selected,
+.reaction-option.selected {
+  background: var(--color-primary-soft);
+  border-color: var(--color-primary);
+}
+.reaction-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  width: 100%;
+}
+.reaction-error {
+  width: 100%;
+  color: var(--color-danger, #a32626);
+  font-size: 12px;
+}
 .collection-icon {
   width: 43px;
   height: 43px;

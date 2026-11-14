@@ -113,6 +113,12 @@ export type Entry = {
   updated_at: string;
   entry_bodies: { content: string } | null;
 };
+export type EntryReaction = {
+  entry_id: string;
+  user_id: string;
+  emoji: string;
+  created_at: string;
+};
 export type CalendarEvent = {
   id: string;
   space_id: string;
@@ -190,6 +196,7 @@ export type Snapshot = {
   savings_goals: SavingsGoal[];
   question_hidden: { space_id: string; question_id: string }[];
   entries: Entry[];
+  entry_reactions: EntryReaction[];
   calendar_events: CalendarEvent[];
   photos: Photo[];
   notifications: Notification[];
