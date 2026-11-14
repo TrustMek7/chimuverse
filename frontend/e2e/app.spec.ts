@@ -119,7 +119,10 @@ async function fixture(page: Page, connected = false) {
       const body = route.request().postDataJSON();
       if (body.p_id) {
         const entry = rows.entries.find((e) => e.id === body.p_id);
-        if (entry) entry.status = body.p_data.status;
+        if (entry) {
+          Object.assign(entry, body.p_data);
+          entry.entry_bodies.content = body.p_content;
+        }
         return route.fulfill({ json: body.p_id });
       }
       rows.entries.push({
@@ -714,6 +717,61 @@ test("both members can start and finish a movie added by the other", async ({ pa
   await expect(page.getByText("En progreso", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Marcar como completado" }).click();
   await expect(page.getByText("Completada", { exact: true })).toBeVisible();
+});
+test("both members can edit a shared wish and mark it as gifted", async ({ page }) => {
+  const rows = await fixture(page);
+  rows.entries.push({
+    id: "13131313-1313-4131-8131-131313131313",
+    space_id: sid,
+    owner_id: b,
+    kind: "wish",
+    title: "Un deseo compartido",
+    status: "pending",
+    visibility: "shared",
+    occurred_on: new Date().toISOString().slice(0, 10),
+    details: { category: "Hogar", link: "" },
+    deleted_at: null,
+    entry_bodies: { content: "" },
+  });
+  await page.goto("/ocio/deseos");
+  await page.getByRole("button", { name: "Editar Un deseo compartido" }).click();
+  await page.getByRole("textbox", { name: "Título" }).fill("El regalo elegido");
+  await page.getByRole("button", { name: "Guardar este momento" }).click();
+  await expect(page.getByText("El regalo elegido", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "¡Deseo cumplido!" }).click();
+  await expect(page.getByText("Completada", { exact: true })).toBeVisible();
+  expect(rows.entries[0].title).toBe("El regalo elegido");
+  expect(rows.entries[0].status).toBe("done");
+});
+test("both members can edit a calendar event created by the other", async ({ page }, info) => {
+  test.skip(info.project.name === "mobile", "The month view clips timed events on the mobile viewport");
+  const rows = await fixture(page);
+  const start = new Date(Date.now() + 60 * 60 * 1000);
+  const end = new Date(start.getTime() + 60 * 60 * 1000);
+  rows.calendar_events.push({
+    id: "14141414-1414-4141-8141-141414141414",
+    space_id: sid,
+    owner_id: b,
+    title: "Plan de la otra persona",
+    description: "",
+    start_at: start.toISOString(),
+    end_at: end.toISOString(),
+    all_day: false,
+    visibility: "shared",
+    kind: "event",
+    annual: false,
+    sync_google: false,
+    recurrence: [],
+    recurrence_timezone: "America/Lima",
+    deleted_at: null,
+    version: 1,
+  });
+  await page.goto("/dia/calendario");
+  await page.getByText("Plan de la otra persona").click();
+  await page.getByRole("button", { name: "Editar", exact: true }).click();
+  await page.getByRole("textbox", { name: "Título" }).fill("Nuestro plan editado");
+  await page.getByRole("button", { name: "Guardar el plan" }).click();
+  expect(rows.calendar_events[0].title).toBe("Nuestro plan editado");
 });
 test("returning to the tab preserves unsaved forms while signing out removes the space", async ({
   page,

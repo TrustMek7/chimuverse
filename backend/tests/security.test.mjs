@@ -143,6 +143,7 @@ before(async () => {
     "202611130022_shared_watch_status.sql",
     "202611130023_restore_watch_owner_status.sql",
     "202611130024_shared_watch_status.sql",
+    "202611130025_shared_wishlist_calendar.sql",
   ]) {
     await db.exec(
       readFileSync(
@@ -420,6 +421,8 @@ test("calendar series are shared, retain recurrence, and delete as one sequence"
       1,
     ),
   );
+  await as(b, () => db.query("update public.calendar_events set title='Editado por ambos' where id=$1", [e.id]));
+  assert.deepEqual((await db.query("select title,owner_id from public.calendar_events where id=$1", [e.id])).rows[0], { title: "Editado por ambos", owner_id: a });
   await db.exec("set request.jwt.claim.sub=''");
   await db.query("select public.import_calendar_override($1,$2)", [
     a,
@@ -466,13 +469,10 @@ test("calendar series are shared, retain recurrence, and delete as one sequence"
     db.query("select public.trash_item('calendar_events',$1)", [e.id]),
   );
   await as(b, async () => {
-    assert.equal(
+    assert.ok(
       (
-        await db.query("select * from public.calendar_events where id=$1", [
-          e.id,
-        ])
-      ).rows.length,
-      0,
+        await db.query("select deleted_at from public.calendar_events where id=$1", [e.id])
+      ).rows[0].deleted_at,
     );
     assert.equal(
       (
@@ -537,14 +537,19 @@ test("connected calendar exports inserts, edits and trash automatically without 
     ),
   );
   assert.equal(await generation(), first + 1);
-  await as(a, () =>
-    db.query("select public.trash_item('calendar_events',$1)", [event.id]),
+  await as(b, () =>
+    db.query("update public.calendar_events set title='Editado por mi pareja' where id=$1", [event.id]),
   );
   assert.equal(await generation(), first + 2);
+  await as(b, () =>
+    db.query("select public.trash_item('calendar_events',$1)", [event.id]),
+  );
+  assert.equal(await generation(), first + 3);
+  assert.equal((await as(a, () => db.query("select count(*)::int n from public.calendar_events where id=$1 and deleted_at is not null", [event.id]))).rows[0].n, 1);
   await as(a, () =>
     db.query("select public.trash_item('calendar_events',$1,true)", [event.id]),
   );
-  assert.equal(await generation(), first + 3);
+  assert.equal(await generation(), first + 4);
   await db.query("select public.complete_calendar_sync($1,$2)", [a, first]);
   assert.notEqual(
     (await db.query("select public.pending_calendar_sync($1) as pending", [a]))
@@ -1392,6 +1397,16 @@ test("either member can start or finish a shared movie/series, but only its crea
   await as(b, () => db.query("select public.save_entry($1,'',$2)", [JSON.stringify({ kind: "watch", title: "Cambiar título", status: "progress" }), id]));
   assert.equal((await db.query("select title from public.entries where id=$1", [id])).rows[0].title, "Una película");
   await assert.rejects(() => as(c, () => db.query("select public.save_entry($1,'',$2)", [JSON.stringify({ kind: "watch", title: "Una película", status: "done" }), id])), /No puedes editar/);
+});
+
+test("either member can edit a shared wish, mark it gifted, and restore it from trash", async () => {
+  const id = (await as(a, () => db.query("select public.save_entry($1) id", [JSON.stringify({ kind: "wish", title: "Un regalo", details: { category: "Hogar" } })]))).rows[0].id;
+  await as(b, () => db.query("select public.save_entry($1,'Una nota compartida',$2)", [JSON.stringify({ kind: "wish", title: "El regalo que elegimos", status: "done", details: { category: "Experiencias", link: "https://example.com" } }), id]));
+  assert.deepEqual((await db.query("select title,status,owner_id,details->>'category' category from public.entries where id=$1", [id])).rows[0], { title: "El regalo que elegimos", status: "done", owner_id: a, category: "Experiencias" });
+  assert.equal((await db.query("select content from public.entry_bodies where entry_id=$1", [id])).rows[0].content, "Una nota compartida");
+  await as(b, () => db.query("select public.trash_item('entries',$1)", [id]));
+  await as(a, () => db.query("select public.trash_item('entries',$1,true)", [id]));
+  await assert.rejects(() => as(c, () => db.query("select public.save_entry($1,'',$2)", [JSON.stringify({ kind: "wish", title: "Nope", status: "done" }), id])), /No puedes editar/);
 });
 
 test("our questions are edited and trashed by either member, bank questions are only hidden, and shared trash is visible to both", async () => {

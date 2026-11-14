@@ -914,7 +914,7 @@ export default function Collections() {
                               .find((p) => p.id === e.owner_id)
                               ?.display_name.split(" ")[0])}
                     </small>
-                    {(e.owner_id === me.id || financeKind(kind) || kind === "date") && !sealed && (
+                    {(e.owner_id === me.id || financeKind(kind) || kind === "date" || kind === "wish") && !sealed && (
                       <div className="row gap-sm">
                         <button
                           className="icon-button"
@@ -942,7 +942,7 @@ export default function Collections() {
                       </div>
                     )}
                   </div>
-                  {(kind === "watch" || e.owner_id === me.id) &&
+                  {(kind === "watch" || kind === "wish" || e.owner_id === me.id) &&
                     ["watch", "wish"].includes(kind) &&
                     e.status !== "done" && (
                       <div className="row gap-sm">

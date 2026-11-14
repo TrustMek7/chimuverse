@@ -116,7 +116,7 @@ export default function Settings() {
       .filter((e) => e.deleted_at && e.uploaded_by === me.id)
       .map((e) => ({ ...e, table: "photos" })),
     ...data!.calendar_events
-      .filter((e) => e.deleted_at && e.owner_id === me.id)
+      .filter((e) => e.deleted_at)
       .map((e) => ({ ...e, table: "calendar_events" })),
   ];
   async function exportPhotos() {

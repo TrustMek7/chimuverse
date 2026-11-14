@@ -338,8 +338,7 @@ export default function Calendar() {
             </p>
             <p className="entry-content">{selected.description}</p>
             <p className="muted">{recurrenceText(selected)}</p>
-            {selected.owner_id === me.id ? (
-              <div className="row gap">
+            <div className="row gap">
                 <Button
                   variant="secondary"
                   onClick={() => {
@@ -379,10 +378,7 @@ export default function Calendar() {
                     ? "Eliminar serie"
                     : "Eliminar evento"}
                 </Button>
-              </div>
-            ) : (
-              <p className="muted">Solo quien creó el evento puede editarlo.</p>
-            )}
+            </div>
           </>
         )}
       </Modal>
