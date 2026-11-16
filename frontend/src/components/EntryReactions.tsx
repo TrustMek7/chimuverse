@@ -11,7 +11,7 @@ type Reaction = {
 
 const journalReactions = [
   { emoji: "❤️", label: "Me encanta" },
-  { emoji: "🥹", label: "Me llegó" },
+  { emoji: "🥺", label: "Me conmovió" },
   { emoji: "😂", label: "Me dio risa" },
   { emoji: "✨", label: "Es especial" },
 ];
