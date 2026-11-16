@@ -1,4 +1,4 @@
-import * as exifr from "exifr";
+﻿import * as exifr from "exifr";
 import { check, supabase } from "./supabase";
 export async function preparePhoto(file: File) {
   if (file.size > 25 * 1024 * 1024) throw new Error("La foto supera 25 MB.");
@@ -28,22 +28,46 @@ export async function preparePhoto(file: File) {
   } catch {
     /* Manual date is required if no EXIF. */
   }
-  let bitmap: ImageBitmap;
+  let source: CanvasImageSource;
+  let width: number;
+  let height: number;
+  let release = () => {};
   try {
-    bitmap = await createImageBitmap(file);
+    const bitmap = await createImageBitmap(file);
+    source = bitmap;
+    width = bitmap.width;
+    height = bitmap.height;
+    release = () => bitmap.close();
   } catch {
-    throw new Error(
-      "El navegador no pudo abrir esta foto. Si es HEIC, expórtala como JPEG.",
-    );
+    // createImageBitmap can be missing or unreliable in some mobile browsers.
+    // HTMLImageElement uses the browser's regular image decoder as a fallback.
+    const url = URL.createObjectURL(file);
+    const image = new Image();
+    try {
+      await new Promise<void>((resolve, reject) => {
+        image.onload = () => resolve();
+        image.onerror = () => reject(new Error("decode"));
+        image.src = url;
+      });
+      source = image;
+      width = image.naturalWidth;
+      height = image.naturalHeight;
+      release = () => URL.revokeObjectURL(url);
+    } catch {
+      URL.revokeObjectURL(url);
+      throw new Error(
+        "No se pudo leer esta foto en el celular. Prueba compartirla o guardarla como JPG/JPEG.",
+      );
+    }
   }
   const convert = async (max: number) => {
-    const scale = Math.min(1, max / Math.max(bitmap.width, bitmap.height));
+    const scale = Math.min(1, max / Math.max(width, height));
     const canvas = document.createElement("canvas");
-    canvas.width = Math.max(1, Math.round(bitmap.width * scale));
-    canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+    canvas.width = Math.max(1, Math.round(width * scale));
+    canvas.height = Math.max(1, Math.round(height * scale));
     canvas
       .getContext("2d")!
-      .drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+      .drawImage(source, 0, 0, canvas.width, canvas.height);
     const blob = await new Promise<Blob>((resolve, reject) =>
       canvas.toBlob(
         (b) =>
@@ -61,7 +85,7 @@ export async function preparePhoto(file: File) {
   try {
     return { full: await convert(2560), thumb: await convert(480), captured };
   } finally {
-    bitmap.close();
+    release();
   }
 }
 
