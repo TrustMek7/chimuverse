@@ -119,6 +119,13 @@ export type EntryReaction = {
   emoji: string;
   created_at: string;
 };
+export type EntryComment = {
+  id: string;
+  entry_id: string;
+  author_id: string;
+  body: string;
+  created_at: string;
+};
 export type CalendarEvent = {
   id: string;
   space_id: string;
@@ -197,6 +204,7 @@ export type Snapshot = {
   question_hidden: { space_id: string; question_id: string }[];
   entries: Entry[];
   entry_reactions: EntryReaction[];
+  entry_comments: EntryComment[];
   calendar_events: CalendarEvent[];
   photos: Photo[];
   notifications: Notification[];

@@ -8,6 +8,7 @@ import { YouTubePlaylist } from "../components/YouTubePlaylist";
 import { FinanceRecurring } from "../components/FinanceRecurring";
 import { SavingsGoals } from "../components/SavingsGoals";
 import { EntryReactions } from "../components/EntryReactions";
+import { EntryComments } from "../components/EntryComments";
 import { BOTH, personLabel, personLine, personOf } from "../lib/finance";
 import { useState } from "react";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
@@ -801,11 +802,19 @@ export default function Collections() {
                     )
                   )}
                   {!sealed && ["journal", "mood"].includes(kind) && (
-                    <EntryReactions
-                      entry={e}
-                      reactions={data!.entry_reactions}
-                      userId={me.id}
-                    />
+                    <>
+                      <EntryReactions
+                        entry={e}
+                        reactions={data!.entry_reactions}
+                        userId={me.id}
+                      />
+                      <EntryComments
+                        entry={e}
+                        comments={data!.entry_comments}
+                        profiles={data!.profiles}
+                        userId={me.id}
+                      />
+                    </>
                   )}
                   {kind === "goal" && (
                     <>

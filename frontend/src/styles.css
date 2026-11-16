@@ -1224,6 +1224,109 @@ input[type="checkbox"] {
   color: var(--color-danger, #a32626);
   font-size: 12px;
 }
+.entry-comments {
+  border-top: 1px solid var(--color-line);
+  padding-top: 9px;
+}
+.comments-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 2px;
+  color: var(--color-ink-2);
+  border: 0;
+  background: transparent;
+  font-size: 13px;
+  cursor: pointer;
+}
+.comments-toggle-action {
+  color: var(--color-primary);
+  font-size: 12px;
+}
+.comments-thread {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 8px;
+}
+.entry-comment {
+  position: relative;
+  padding: 10px 34px 10px 12px;
+  border-radius: 12px;
+  background: var(--color-bg-sunk);
+}
+.entry-comment strong {
+  font-size: 12px;
+}
+.entry-comment time {
+  color: var(--color-ink-3);
+  font-size: 10px;
+}
+.entry-comment p {
+  margin: 5px 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 13px;
+  line-height: 1.55;
+}
+.comment-delete,
+.comment-send {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--color-ink-3);
+  cursor: pointer;
+}
+.comment-delete {
+  position: absolute;
+  top: 8px;
+  right: 7px;
+  width: 28px;
+  height: 28px;
+}
+.comment-delete:hover {
+  color: var(--color-danger, #a32626);
+}
+.comments-empty {
+  margin: 0;
+  color: var(--color-ink-3);
+  font-size: 12px;
+}
+.comment-composer {
+  display: flex;
+  align-items: flex-end;
+  gap: 7px;
+}
+.comment-composer textarea {
+  flex: 1;
+  min-width: 0;
+  resize: vertical;
+  padding: 9px 11px;
+  border: 1px solid var(--color-line);
+  border-radius: 12px;
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font: inherit;
+  font-size: 13px;
+}
+.comment-send {
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  background: var(--color-primary);
+  color: white;
+}
+.comment-send:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.comment-error {
+  color: var(--color-danger, #a32626);
+  font-size: 12px;
+}
 .collection-icon {
   width: 43px;
   height: 43px;
